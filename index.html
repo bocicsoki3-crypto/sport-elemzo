@@ -776,40 +776,57 @@ function buildAnalysisHtml(res) {
             const marketMatch = trimmedSection.match(/^\d+\.\s+\*{2}([\s\S]*?)\*{2}/);
             if (marketMatch) {
                 const title = marketMatch[1].trim();
-                let content = trimmedSection.replace(marketMatch[0], '').trim();
-
-                html += '<div class="analysis-market">';
-                html += `<h3>${escapeHtml(title)}</h3>`;
                 
-                const descMatch = content.match(/LEÍRÁS:\s*([\s\S]*?)(?=\n-|\n$)/);
-                if (descMatch) {
-                    html += `<div class="market-summary">${escapeHtml(descMatch[1].trim())}</div>`;
-                    content = content.replace(descMatch[0], '').trim();
-                }
-
+                html += `<div class="analysis-market"><h3>${escapeHtml(title)}</h3>`;
+                
+                const lines = trimmedSection.replace(marketMatch[0], '').trim().split('\n');
+                let description = '';
                 let optionsHtml = '';
-                const optionsRegex = /-\s(.*?):\s([\d\.,]+)%(?:\sCél odds: ≥([\d\.,]+))?/g;
-                let optionMatch;
-                let optionCount = 0;
-                while ((optionMatch = optionsRegex.exec(content)) !== null) {
-                    optionCount++;
-                    const [, label, prob, odds] = optionMatch;
-                    const probValue = prob.replace(',', '.');
-                    let meta = `Valószínűség: <b>${probValue}%</b>`;
-                    if(odds) meta += ` · Cél odds: <b>≥${odds}</b>`;
+                let isDescription = false;
+                let descriptionStarted = false;
 
-                    const isGrid = title.toLowerCase().includes('félidő/végjáték') || title.toLowerCase().includes('pontos eredmény');
-                    if (isGrid) {
-                        optionsHtml += `<div class="grid-item"><div class="grid-item-label">${escapeHtml(label.trim())}</div><div class="grid-item-value">${probValue}%</div></div>`;
-                    } else {
-                        optionsHtml += `<div class="analysis-option"><div class="option-row"><span class="option-label">${escapeHtml(label.trim())}</span><span class="option-meta">${meta}</span></div><div class="option-bar-wrap"><span class="option-badge">${probValue}%</span><div class="option-bar" style="width:${probValue}%"></div></div></div>`;
+                lines.forEach(line => {
+                    const trimmedLine = line.trim();
+                    if (trimmedLine.startsWith('LEÍRÁS:')) {
+                        isDescription = true;
+                        descriptionStarted = true;
+                        description += trimmedLine.replace('LEÍRÁS:', '').trim() + ' ';
+                        return;
                     }
+                    
+                    if (trimmedLine.startsWith('- ') && descriptionStarted) {
+                        isDescription = false;
+                    }
+
+                    if (isDescription) {
+                        description += trimmedLine + ' ';
+                    } else if (trimmedLine.startsWith('- ')) {
+                        const optionsRegex = /-\s(.*?):\s([\d\.,]+)%(?:\sCél odds: ≥([\d\.,]+))?/g;
+                        const optionMatch = optionsRegex.exec(trimmedLine);
+                        if (optionMatch) {
+                            const [, label, prob, odds] = optionMatch;
+                            const probValue = prob.replace(',', '.');
+                            let meta = `Valószínűség: <b>${probValue}%</b>`;
+                            if(odds) meta += ` · Cél odds: <b>≥${odds}</b>`;
+
+                            const isGrid = title.toLowerCase().includes('félidő/végjáték') || title.toLowerCase().includes('pontos eredmény');
+                            if (isGrid) {
+                                optionsHtml += `<div class="grid-item"><div class="grid-item-label">${escapeHtml(label.trim())}</div><div class="grid-item-value">${probValue}%</div></div>`;
+                            } else {
+                                optionsHtml += `<div class="analysis-option"><div class="option-row"><span class="option-label">${escapeHtml(label.trim())}</span><span class="option-meta">${meta}</span></div><div class="option-bar-wrap"><span class="option-badge">${probValue}%</span><div class="option-bar" style="width:${probValue}%"></div></div></div>`;
+                            }
+                        }
+                    }
+                });
+
+                if (description) {
+                    html += `<div class="market-summary">${escapeHtml(description.trim())}</div>`;
                 }
-                
-                if (optionCount > 0) {
+                if (optionsHtml) {
                     const isGrid = title.toLowerCase().includes('félidő/végjáték') || title.toLowerCase().includes('pontos eredmény');
                     html += `<div class="${isGrid ? 'market-options-grid' : ''}">${optionsHtml}</div>`;
                 }
+
                 html += '</div>';
             }
         });
@@ -820,9 +837,11 @@ function buildAnalysisHtml(res) {
         return html;
 
     } catch (e) {
+        console.error("Hiba az elemzés HTML-re alakítása közben:", e);
         return `<div class="analysis-market"><div class="market-summary" style="white-space: pre-wrap; font-size: 0.9em;">Az AI válaszának formázása nem sikerült. A nyers elemzés:<br><br>${escapeHtml(res)}</div></div>`;
     }
 }
+
 
 function saveAnalysis(record){
   let history = getHistory();
