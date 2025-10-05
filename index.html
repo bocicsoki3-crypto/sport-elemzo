@@ -735,54 +735,70 @@ function renderMetrics(resObj){
 
 function buildAnalysisHtml(res) {
     if (!res) {
-        return "<pre class='muted'>Az AI nem adott vissza elemzést.</pre>";
+        return "<div class='analysis-market'><pre class='muted'>Az AI nem adott vissza elemzést.</pre></div>";
     }
-    
-    let html = '';
     
     // Fallback: Ha bármi hiba történik a feldolgozás során, a nyers szöveget mutatjuk
     try {
+        let html = '';
         const sections = res.split(/\n---\n/);
-        const contextSectionText = sections.find(s => s.includes('KÜLSŐ TÉNYEZŐK')) || '';
-        const tipSectionText = sections.find(s => s.includes('AI TIPP ⭐')) || '';
-        const marketSectionTexts = sections.filter(s => /^\d+\.\s/.test(s));
+        
+        sections.forEach(sectionText => {
+            const trimmedSection = sectionText.trim();
+            if (!trimmedSection) return;
 
-        if (contextSectionText) {
-            html += '<div class="analysis-market">';
-            let contextContent = contextSectionText
-                .replace(/\*{2}KÜLSŐ TÉNYEZŐK[\s\S]*?\n/, '<h3>KÜLSŐ TÉNYEZŐK (Google keresés alapján)</h3>')
-                .replace(/- \*\*Forma:\*\* .*/, '')
-                .replace(/- \*\*(.*?):\*\*/g, '<p><strong>$1:</strong>');
-            html += `<div class="market-summary">${contextContent}</div></div>`;
-        }
-
-        marketSectionTexts.forEach(sectionText => {
-            const titleMatch = sectionText.match(/^\d+\.\s*\*\*(.*?)\*\*/);
-            const title = titleMatch ? titleMatch[1].trim() : "Elemzés";
-            const descMatch = sectionText.match(/LEÍRÁS:\s*([\s\S]*?)(?=\n-|\n$)/);
-            const description = descMatch ? descMatch[1].trim() : "";
-            let optionsHtml = '';
-            const optionsRegex = /-\s(.*?):\s([\d\.,]+)%(?:\sCél odds: ≥([\d\.,]+))?/g;
-            let optionMatch;
-            let optionCount = 0;
-            while ((optionMatch = optionsRegex.exec(sectionText)) !== null) {
-                optionCount++;
-                const [, label, prob, odds] = optionMatch;
-                const probValue = prob.replace(',', '.');
-                let meta = `Valószínűség: <b>${probValue}%</b>`;
-                if(odds) meta += ` · Cél odds: <b>≥${odds}</b>`;
-                const isGrid = title.toLowerCase().includes('félidő/végjáték') || title.toLowerCase().includes('pontos eredmény');
-
-                if (isGrid) {
-                    optionsHtml += `<div class="grid-item"><div class="grid-item-label">${escapeHtml(label.trim())}</div><div class="grid-item-value">${probValue}%</div></div>`;
-                } else {
-                    optionsHtml += `<div class="analysis-option"><div class="option-row"><span class="option-label">${escapeHtml(label.trim())}</span><span class="option-meta">${meta}</span></div><div class="option-bar-wrap"><span class="option-badge">${probValue}%</span><div class="option-bar" style="width:${probValue}%"></div></div></div>`;
-                }
+            // AI TIPP ⭐ feldolgozása
+            if (trimmedSection.startsWith('**AI TIPP ⭐:**')) {
+                const tipContent = trimmedSection.replace('**AI TIPP ⭐:**', '').trim();
+                html += `<div class="hero positive"><h3>AI Tipp ⭐</h3><div class="market-summary">${escapeHtml(tipContent)}</div></div>`;
+                return;
             }
-            if (description || optionCount > 0) {
+            
+            // KÜLSŐ TÉNYEZŐK feldolgozása
+            if (trimmedSection.startsWith('**KÜLSŐ TÉNYEZŐK')) {
+                html += '<div class="analysis-market">';
+                let contextContent = trimmedSection
+                    .replace(/\*{2}KÜLSŐ TÉNYEZŐK[\s\S]*?\n/, '<h3>KÜLSŐ TÉNYEZŐK (Google keresés alapján)</h3>')
+                    .replace(/- \*\*Forma:\*\* .*/, '')
+                    .replace(/- \*\*(.*?):\*\*/g, '<p><strong>$1:</strong>');
+                html += `<div class="market-summary">${contextContent}</div></div>`;
+                return;
+            }
+            
+            // Piacok feldolgozása
+            const marketMatch = trimmedSection.match(/^\d+\.\s+\*{2}([\s\S]*?)\*{2}/);
+            if (marketMatch) {
+                const title = marketMatch[1].trim();
+                let content = trimmedSection.replace(marketMatch[0], '').trim();
+
                 html += '<div class="analysis-market">';
                 html += `<h3>${escapeHtml(title)}</h3>`;
-                if (description) html += `<div class="market-summary">${escapeHtml(description)}</div>`;
+                
+                const descMatch = content.match(/LEÍRÁS:\s*([\s\S]*?)(?=\n-|\n$)/);
+                if (descMatch) {
+                    html += `<div class="market-summary">${escapeHtml(descMatch[1].trim())}</div>`;
+                    content = content.replace(descMatch[0], '').trim();
+                }
+
+                let optionsHtml = '';
+                const optionsRegex = /-\s(.*?):\s([\d\.,]+)%(?:\sCél odds: ≥([\d\.,]+))?/g;
+                let optionMatch;
+                let optionCount = 0;
+                while ((optionMatch = optionsRegex.exec(content)) !== null) {
+                    optionCount++;
+                    const [, label, prob, odds] = optionMatch;
+                    const probValue = prob.replace(',', '.');
+                    let meta = `Valószínűség: <b>${probValue}%</b>`;
+                    if(odds) meta += ` · Cél odds: <b>≥${odds}</b>`;
+
+                    const isGrid = title.toLowerCase().includes('félidő/végjáték') || title.toLowerCase().includes('pontos eredmény');
+                    if (isGrid) {
+                        optionsHtml += `<div class="grid-item"><div class="grid-item-label">${escapeHtml(label.trim())}</div><div class="grid-item-value">${probValue}%</div></div>`;
+                    } else {
+                        optionsHtml += `<div class="analysis-option"><div class="option-row"><span class="option-label">${escapeHtml(label.trim())}</span><span class="option-meta">${meta}</span></div><div class="option-bar-wrap"><span class="option-badge">${probValue}%</span><div class="option-bar" style="width:${probValue}%"></div></div></div>`;
+                    }
+                }
+                
                 if (optionCount > 0) {
                     const isGrid = title.toLowerCase().includes('félidő/végjáték') || title.toLowerCase().includes('pontos eredmény');
                     html += `<div class="${isGrid ? 'market-options-grid' : ''}">${optionsHtml}</div>`;
@@ -791,26 +807,15 @@ function buildAnalysisHtml(res) {
             }
         });
 
-        if (tipSectionText) {
-            const tipMatch = tipSectionText.match(/\*\*AI TIPP ⭐:\*\*\s*(.*)/s);
-            if (tipMatch) {
-                html += `<div class="hero positive"><h3>AI Tipp ⭐</h3><div class="market-summary">${escapeHtml(tipMatch[1].trim())}</div></div>`;
-            }
+        if (html.trim().length === 0) {
+           throw new Error("A feldolgozás üres tartalommal végződött.");
         }
-        
-        // Ha a feldolgozás után is üres, akkor a fallback-re lépünk
-        if (html.trim().length < 50) {
-            throw new Error("Parsing resulted in empty content.");
-        }
+        return html;
 
     } catch (e) {
-        html = `<pre class="muted">Az AI válaszának formázása nem sikerült. A nyers elemzés:\n\n${escapeHtml(res)}</pre>`;
+        return `<div class="analysis-market"><pre class="muted">Az AI válaszának formázása nem sikerült. A nyers elemzés:\n\n${escapeHtml(res)}</pre></div>`;
     }
-    
-    return html;
 }
-
-
 
 function saveAnalysis(record){
   let history = getHistory();
