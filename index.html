@@ -90,6 +90,47 @@ details[open] .chev{transform:rotate(90deg)}
 .modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(15,23,42,.85);backdrop-filter:blur(6px)}
 .modal-body{padding:16px}
 .modal-close{background:#1b294d;color:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer}
+
+/* ÚJ RÉSZ: Forma csúszka */
+.slider-container {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+.slider-container label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+}
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: #1a2445;
+    border-radius: 5px;
+    outline: none;
+    margin-top: 0.5rem;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--secondary);
+    cursor: pointer;
+    border-radius: 50%;
+    border: 3px solid var(--card);
+}
+input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--secondary);
+    cursor: pointer;
+    border-radius: 50%;
+    border: 3px solid var(--card);
+}
 </style>
 </head>
 <body>
@@ -137,6 +178,17 @@ details[open] .chev{transform:rotate(90deg)}
         </div>
       </div>
       <datalist id="teamlist"></datalist>
+
+      <!-- ÚJ RÉSZ: Forma csúszka -->
+      <div class="slider-container">
+        <label for="formWeight">
+          <span>Forma Súlyozás</span>
+          <span id="formWeightLabel">50%</span>
+        </label>
+        <input type="range" id="formWeight" min="0" max="100" value="50">
+        <p class="muted" style="margin-top: .2rem;">Befolyásolja, hogy a statisztika mennyire vegye figyelembe az utolsó 5 meccs eredményét a teljes szezonos erőhöz képest.</p>
+      </div>
+
       <div class="actions progress-wrap">
         <button id="goBtn" onclick="go()">Meccselemzés kérése a Gemini AI-tól</button>
         <div id="progress" class="progress-ring"><span class="progress-label">0%</span></div>
@@ -219,6 +271,14 @@ document.addEventListener("DOMContentLoaded", function(){
         __gasUrl = e.target.value;
         localStorage.setItem('gasUrl', __gasUrl);
     });
+
+    // ÚJ: Csúszka eseménykezelő
+    const formWeightSlider = document.getElementById('formWeight');
+    const formWeightLabel = document.getElementById('formWeightLabel');
+    formWeightSlider.addEventListener('input', () => {
+        formWeightLabel.textContent = `${formWeightSlider.value}%`;
+    });
+
 
     renderHistory(getHistory());
     const favsRaw = localStorage.getItem("favLeagues") || "[]";
@@ -342,7 +402,7 @@ async function go(){
 
     setProgress(10, "xG becslése a csapat-specifikus adatokkal...");
     await new Promise(r => setTimeout(r, 50));
-    const { mu_h, mu_a, homeRatingKey, awayRatingKey } = estimateXG(home, away);
+    const { mu_h, mu_a, homeRating, awayRating } = estimateXG(home, away);
     
     setProgress(18, `μ (H:${mu_h.toFixed(2)} / V:${mu_a.toFixed(2)})`);
     await new Promise(r => setTimeout(r, 50));
@@ -352,7 +412,7 @@ async function go(){
     const cards = estimateCards(mu_h, mu_a);
     
     setProgress(88, "Részletes prompt összeállítása...");
-    const { systemPrompt, userPrompt } = buildPrompts(home, away, mu_h, mu_a, sim, corners, cards);
+    const { systemPrompt, userPrompt } = buildPrompts(home, away, mu_h, mu_a, sim, corners, cards, homeRating, awayRating);
     
     setProgress(90, "Gemini AI hívása valós idejű kereséssel...");
     const analysis = await callGeminiApi(systemPrompt, userPrompt);
@@ -364,7 +424,7 @@ async function go(){
       xg: { home: mu_h, away: mu_a },
     };
 
-    document.getElementById("metrics").innerHTML = renderMetrics({ teams: {home, away}, xg: record.xg, homeRatingKey, awayRatingKey });
+    document.getElementById("metrics").innerHTML = renderMetrics({ teams: {home, away}, xg: record.xg, homeRating, awayRating });
     document.getElementById("out").innerHTML = buildAnalysisHtml(analysis);
 
     saveAnalysis(record);
@@ -383,7 +443,7 @@ async function callGeminiApi(systemPrompt, userPrompt) {
     const payload = {
         contents: [{ role: "user", parts: [{ text: userPrompt }] }],
         systemInstruction: { role: "model", parts: [{ text: systemPrompt }] },
-        tools: [{"google_search": {}}], // <-- EZ AZ ÚJ RÉSZ, AMI BEKAPCSOLJA A KERESÉST
+        tools: [{"google_search": {}}], 
         generationConfig: { temperature: 0.4, topK: 32, topP: 1, maxOutputTokens: 4096 }
     };
     const response = await fetch(API_URL + __apiKey, {
@@ -398,22 +458,17 @@ async function callGeminiApi(systemPrompt, userPrompt) {
 }
 
 // --- Promptok összeállítása (KERESÉSSEL TÁMOGATOTT) ---
-function buildPrompts(home, away, mu_h, mu_a, sim, corners, cards) {
-    const homeKey = findBestRatingKey(home, Object.keys(__teamRatings));
-    const awayKey = findBestRatingKey(away, Object.keys(__teamRatings));
-    const homeRating = __teamRatings[homeKey];
-    const awayRating = __teamRatings[awayKey];
-
+function buildPrompts(home, away, mu_h, mu_a, sim, corners, cards, homeRating, awayRating) {
     let ratingsContext = "STATISZTIKAI KONTEXTUS:\n";
     if (homeRating) {
-        ratingsContext += `- ${home} (hazai): Támadóerő: ${homeRating.atk.toFixed(2)}, Védekezőerő: ${homeRating.def.toFixed(2)}. (Az 1.0 a ligaátlag. Támadóerőnél a nagyobb, védekezőnél a kisebb érték a jobb.)\n`;
+        ratingsContext += `- ${home} (hazai): Szezonos Támadóerő: ${homeRating.atk.toFixed(2)}, Szezonos Védekezőerő: ${homeRating.def.toFixed(2)}. Utolsó 5 meccses forma: ${homeRating.form}\n`;
     }
     if (awayRating) {
-        ratingsContext += `- ${away} (vendég): Támadóerő: ${awayRating.atk.toFixed(2)}, Védekezőerő: ${awayRating.def.toFixed(2)}.\n`;
+        ratingsContext += `- ${away} (vendég): Szezonos Támadóerő: ${awayRating.atk.toFixed(2)}, Szezonos Védekezőerő: ${awayRating.def.toFixed(2)}. Utolsó 5 meccses forma: ${awayRating.form}\n`;
     }
 
     const systemPrompt = `Te vagy a "Tippek Mestere", egy profi sportelemző AI. Magyarul, tömören, adatokra alapozva, konkrét érvekkel elemzel.
-- A válaszadáshoz HASZNÁLD A GOOGLE KERESŐT, hogy naprakész információkat szerezz a csapatok aktuális formájáról (utolsó 5 meccs), egymás elleni eredményeiről (H2H), és a fontosabb hírekről (sérülések, eltiltások).
+- A válaszadáshoz HASZNÁLD A GOOGLE KERESŐT, hogy naprakész információkat szerezz a csapatok egymás elleni eredményeiről (H2H), és a fontosabb hírekről (sérülések, eltiltások). A formát már megkaptad.
 - Az elemzésed alapját a megadott statisztikai BASE értékek adják, de ezeket árnyald és egészítsd ki a keresésből szerzett információkkal.
 - A keresési eredményeket egy külön "KÜLSŐ TÉNYEZŐK" blokkban foglald össze.
 - Az egyes piacokhoz (1X2, Over/Under, stb.) adj rövid, 2-3 mondatos leírást, amely megindokolja a valószínűségeket a csapatok erősségei és a friss hírek alapján.
@@ -421,7 +476,7 @@ function buildPrompts(home, away, mu_h, mu_a, sim, corners, cards) {
 - A válaszodnak szigorúan követnie kell a megadott kimeneti formátumot.`.trim();
 
     const userPrompt = `
-Elemezd a ${home} vs ${away} labdarúgó mérkőzést. Használd a Google keresőt a legfrissebb információkhoz, és építsd be az elemzésbe a kapott statisztikai alapértékekkel együtt.
+Elemezd a ${home} vs ${away} labdarúgó mérkőzést. Használd a Google keresőt a H2H és hírek információkhoz, és építsd be az elemzésbe a kapott statisztikai alapértékekkel együtt.
 
 ${ratingsContext}
 **Statisztikai alapértékek (BASE):**
@@ -433,9 +488,9 @@ ${ratingsContext}
 **Kért kimeneti formátum:**
 
 **KÜLSŐ TÉNYEZŐK (Google keresés alapján)**
-- **Forma:** Hazai: [eredmény], Vendég: [eredmény]
-- **H2H:** [Rövid összefoglaló]
-- **Hírek:** [Legfontosabb sérülések, eltiltások vagy egyéb hírek]
+- **Forma:** (Ezt már megadtam a kontextusban, csak hivatkozz rá az elemzésben.)
+- **H2H (Google keresés alapján):** [Rövid összefoglaló]
+- **Hírek (Google keresés alapján):** [Legfontosabb sérülések, eltiltások vagy egyéb hírek]
 
 ---
 
@@ -462,7 +517,7 @@ LEÍRÁS: [Elemzés]
 }
 
 
-// --- Statisztikai Modellek ---
+// --- Statisztikai Modellek (FORMA SÚLYOZÁSSAL) ---
 function findBestRatingKey(teamName, ratingKeys) {
     if (!teamName || ratingKeys.length === 0) return null;
     const normalizedName = normalizeTeamKey(teamName);
@@ -482,20 +537,52 @@ function findBestRatingKey(teamName, ratingKeys) {
     return null;
 }
 
+function calculateFormScore(formString) {
+    if (!formString || formString === 'N/A') return 0.5; // Semleges
+    const points = formString.split('').reduce((acc, result) => {
+        if (result.toUpperCase() === 'W') return acc + 3;
+        if (result.toUpperCase() === 'D') return acc + 1;
+        return acc;
+    }, 0);
+    // 0-15 pontot 0-1 skálára normalizálunk (0.5 a semleges)
+    return points / 15;
+}
+
+
 function estimateXG(homeTeam, awayTeam){
   const ratingKeys = Object.keys(__teamRatings);
   const homeRatingKey = findBestRatingKey(homeTeam, ratingKeys);
   const awayRatingKey = findBestRatingKey(awayTeam, ratingKeys);
   
-  const H = __teamRatings[homeRatingKey] || {atk:1, def:1, ha:0.15};
-  const A = __teamRatings[awayRatingKey] || {atk:1, def:1, ha:0.15};
+  const homeRating = __teamRatings[homeRatingKey] || {atk:1, def:1, ha:0.15, form: 'N/A'};
+  const awayRating = __teamRatings[awayRatingKey] || {atk:1, def:1, ha:0.15, form: 'N/A'};
+
+  // Forma számítás
+  const homeFormScore = calculateFormScore(homeRating.form); // 0-1
+  const awayFormScore = calculateFormScore(awayRating.form); // 0-1
+
+  // A forma score-ból egy szorzót csinálunk, pl. 0.8-1.2 között
+  const homeFormMultiplier = 0.8 + (homeFormScore * 0.4);
+  const awayFormMultiplier = 0.8 + (awayFormScore * 0.4);
+
+  const formWeight = document.getElementById('formWeight').value / 100;
 
   const leagueAvg = 2.65;
   const base = leagueAvg / 2;
-  const mu_h = Math.max(0.05, base * H.atk * A.def * (1 + H.ha));
-  const mu_a = Math.max(0.05, base * A.atk * H.def * (1 - (H.ha * 0.6)));
+
+  // Szezonos xG
+  const base_mu_h = Math.max(0.05, base * homeRating.atk * awayRating.def * (1 + homeRating.ha));
+  const base_mu_a = Math.max(0.05, base * awayRating.atk * homeRating.def * (1 - (homeRating.ha * 0.6)));
   
-  return { mu_h, mu_a, homeRatingKey, awayRatingKey };
+  // Forma-alapú xG
+  const form_mu_h = base_mu_h * homeFormMultiplier;
+  const form_mu_a = base_mu_a * awayFormMultiplier;
+  
+  // Végső, súlyozott xG
+  const mu_h = (base_mu_h * (1 - formWeight)) + (form_mu_h * formWeight);
+  const mu_a = (base_mu_a * (1 - formWeight)) + (form_mu_a * formWeight);
+  
+  return { mu_h, mu_a, homeRating, awayRating };
 }
 function samplePoisson(lambda){ const L=Math.exp(-lambda); let k=0,p=1; do{ k++; p*=Math.random(); }while(p>L); return k-1; }
 function sampleGoalsOD(mu_h, mu_a){ const kappa=0.05*Math.min(mu_h,mu_a), inflate=1.10; const y0=samplePoisson(kappa); const y1=samplePoisson(Math.max(mu_h*inflate-kappa,0.001)); const y2=samplePoisson(Math.max(mu_a*inflate-kappa,0.001)); return { gh:y0+y1, ga:y0+y2 }; }
@@ -525,20 +612,20 @@ function estimateCorners(mu_h, mu_a){ const mean=clamp(8+0.8*(mu_h+mu_a)-0.4*Mat
 function estimateCards(mu_h, mu_a){ const mean=clamp(4.2+0.6*((mu_h+mu_a)-2.6),2.5,7.2),sd=1.8; return {mean,sd,pOver45:probOverNormal(4.5,mean,sd)};}
 
 
-// --- Eredmény Megjelenítés és Előzmények (JAVÍTOTT) ---
+// --- Eredmény Megjelenítés és Előzmények ---
 function renderMetrics(resObj){
   const tH = escapeHtml(resObj.teams?.home || 'Hazai');
   const tA = escapeHtml(resObj.teams?.away || 'Vendég');
   const xh = Number(resObj.xg?.home || 0), xa = Number(resObj.xg?.away || 0);
   const maxX = Math.max(1.2, xh, xa);
 
-  let matchInfoH = resObj.homeRatingKey ? `Statisztika: <b>${resObj.homeRatingKey}</b>` : '<span style="color:#ffcc00;">Nincs statisztika, általános modellel számolva</span>';
-  let matchInfoA = resObj.awayRatingKey ? `Statisztika: <b>${resObj.awayRatingKey}</b>` : '<span style="color:#ffcc00;">Nincs statisztika, általános modellel számolva</span>';
+  let matchInfoH = resObj.homeRating?.form ? `Forma: <b>${resObj.homeRating.form}</b>` : '<span style="color:#ffcc00;">Nincs statisztika, általános modellel számolva</span>';
+  let matchInfoA = resObj.awayRating?.form ? `Forma: <b>${resObj.awayRating.form}</b>` : '<span style="color:#ffcc00;">Nincs statisztika, általános modellel számolva</span>';
 
   return `
   <div class="metrics">
     <div class="xg-card">
-      <div class="badge">Várható gólok (xG) - Statisztikák alapján</div>
+      <div class="badge">Várható gólok (xG) - Statisztikák és forma alapján</div>
       <div class="xg-row">
         <div class="xg-team">${tH} <br><small class="muted">${matchInfoH}</small></div>
         <div class="xg-bar"><div class="xg-fill" style="width:${Math.min(100, (xh/maxX)*100)}%"></div></div>
