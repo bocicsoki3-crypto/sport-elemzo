@@ -38,7 +38,7 @@ textarea { resize: vertical; min-height: 80px; }
 .actions button:hover:not(:disabled) { transform: translateY(-2px); }
 .actions button:disabled { background: #555; cursor: not-allowed; opacity: 0.7; }
 .muted{color:var(--muted);font-size:.9rem}
-.result{min-height:180px;background:#0d1127;border:1px dashed var(--border);border-radius:12px;padding:1rem 1.25rem;overflow:auto; white-space: pre-wrap; line-height: 1.6;}
+.result{min-height:180px;background:transparent;border:none;border-radius:12px;padding:0;overflow:visible; white-space: normal; line-height: 1.6;}
 .league-list{display:flex;flex-direction:column;gap:10px;max-height:360px;overflow:auto;margin-top:8px}
 .league-item{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:12px;padding:10px;background:#0d1127; cursor: pointer; transition: background-color 0.2s;}
 .league-item:hover { background-color: #132042; }
@@ -52,16 +52,14 @@ textarea { resize: vertical; min-height: 80px; }
 .analysis-market{margin-bottom:1.1rem;padding:1rem;border:1px solid var(--border);border-radius:14px;background:#0d1127}
 .analysis-market h3{margin:0 0 .5rem 0;font-weight:800; color: #e5e7eb;}
 .market-summary{margin:.35rem 0 1rem 0;color:#cfe6ff;opacity:.95;line-height:1.45}
-.analysis-option{margin-bottom:.8rem;padding:.7rem;border-radius:12px;background:rgba(255,255,255,.02)}
+.analysis-option{background:rgba(255,255,255,.02); border-radius:12px; padding: 0.7rem;}
 .option-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;gap:12px;flex-wrap:wrap}
 .option-label{font-weight:800}.option-meta{font-size:.95rem;color:#D6DAFF;opacity:.95}
 .option-bar-wrap{position:relative;background:#1a2445;border-radius:12px;height:18px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
 .option-badge{position:absolute;z-index:2;left:8px;top:50%;transform:translateY(-50%);padding:2px 10px;font-size:.78rem;color:#fff;background: var(--primary);border-radius:999px;line-height:1.2}
 .option-bar{position:absolute;inset:0;width:0%;height:100%;background:var(--accent);border-radius:12px;transition:width .35s}
-.analysis-option.recommended{border:2px solid var(--secondary);box-shadow:0 0 10px rgba(20, 184, 166,.35)}
 .hero{margin-top:12px;padding:16px;border-radius:16px;background:radial-gradient(1200px 600px at 10% -20%, rgba(20, 184, 166,.14), transparent 40%),radial-gradient(1200px 600px at 110% 120%, rgba(79, 70, 229,.14), transparent 40%),#0b1026;border:1px solid #22304f}
 .hero.positive{border-color:#10b981;box-shadow:0 0 24px rgba(16,185,129,.25)}
-.hero.negative{border-color:#E84545;box-shadow:0 0 24px rgba(232,69,69,.2)}
 .tag{display:inline-block;background:#121a36;color:#cfe6ff;border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 12px;font-size:.88rem;margin-right:6px; margin-bottom: 6px;}
 .metrics{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px}
 .xg-card{background:#0d1127;border:1px solid var(--border);border-radius:12px;padding:10px 12px}
@@ -136,6 +134,7 @@ input[type="range"]::-moz-range-thumb {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
+    margin-top: 1rem;
 }
 </style>
 </head>
@@ -716,42 +715,57 @@ function renderMetrics(resObj){
   </div>`;
 }
 
+// JAVÍTOTT, "GOLYÓÁLLÓ" MEGJELENÍTŐ FÜGGVÉNY
 function buildAnalysisHtml(res) {
     if (!res) return "";
     let html = '';
-    const sections = res.split(/\n---\n/); 
-    
-    // Process sections
-    sections.forEach(sectionText => {
-        let sectionHtml = '<div class="analysis-market">';
-        let content = sectionText.trim();
-        
-        const h3Match = content.match(/^\s*\*{2}(.*?)\*{2}/) || content.match(/^\d+\.\s*\*{2}(.*?)\*{2}/);
-        if(h3Match) {
-            sectionHtml += `<h3>${escapeHtml(h3Match[1])}</h3>`;
-            content = content.replace(h3Match[0], '').trim();
-        }
+    let remainingText = res;
 
+    // 1. KÜLSŐ TÉNYEZŐK kiemelése és renderelése
+    const contextRegex = /\*{2}KÜLSŐ TÉNYEZŐK[\s\S]*?(- \*\*Hírek:\*\*[\s\S]*?)(?=\n---\n|\n\d\.)/m;
+    const contextMatch = remainingText.match(contextRegex);
+    if (contextMatch) {
+        html += '<div class="analysis-market">';
+        html += '<h3>KÜLSŐ TÉNYEZŐK (Google keresés alapján)</h3>';
+        let contextContent = contextMatch[0]
+            .replace('**KÜLSŐ TÉNYEZŐK (Google keresés alapján)**', '')
+            .replace(/- \*\*Forma:\*\* .*/, '') // Ezt már a metrikáknál kiírjuk
+            .replace(/- \*\*(.*?):\*\*/g, '<p><strong>$1:</strong>')
+            .trim();
+        html += `<div class="market-summary">${contextContent}</div>`;
+        html += '</div>';
+        remainingText = remainingText.replace(contextMatch[0], '');
+    }
+
+    // 2. AI TIPP kiemelése és renderelése
+    const tipRegex = /\*{2}AI TIPP ⭐:\*{2}\s*([\s\S]*)/m;
+    const tipMatch = remainingText.match(tipRegex);
+    let tipHtml = '';
+    if (tipMatch) {
+        tipHtml = `<div class="hero positive"><h3>AI Tipp ⭐</h3><p class="tag">${escapeHtml(tipMatch[1].trim())}</p></div>`;
+        remainingText = remainingText.replace(tipMatch[0], '');
+    }
+
+    // 3. Piacok feldolgozása
+    const marketRegex = /\d+\.\s+\*{2}([\s\S]*?)\*{2}([\s\S]*?)(?=\n\d+\.|\n---|$)/g;
+    let marketMatch;
+    while ((marketMatch = marketRegex.exec(remainingText)) !== null) {
+        const [, title, content] = marketMatch;
+        html += '<div class="analysis-market">';
+        html += `<h3>${escapeHtml(title.trim())}</h3>`;
+        
         const descMatch = content.match(/LEÍRÁS:\s*([\s\S]*?)(?=\n-|\n$)/);
         if (descMatch) {
-            sectionHtml += `<div class="market-summary">${escapeHtml(descMatch[1].trim())}</div>`;
-            content = content.replace(descMatch[0], '').trim();
-        } else if (!h3Match || (h3Match && (h3Match[0].includes('KÜLSŐ TÉNYEZŐK') || h3Match[0].includes('AI TIPP')))) {
-             // Handle context block that has no LEÍRÁS
-             if (h3Match && h3Match[0].includes('KÜLSŐ TÉNYEZŐK')){
-                content = content.replace(/-\s*\*\*(.*?):\*\*/g, '<p><strong>$1:</strong>')
-                                 .replace(/<p><strong>Forma:<\/strong>/, ''); 
-                sectionHtml += `<div class="market-summary">${content}</div>`;
-             }
-            content = '';
+            html += `<div class="market-summary">${escapeHtml(descMatch[1].trim())}</div>`;
         }
 
         let optionsHtml = '';
-        const options = content.matchAll(/-\s(.*?):\s([\d\.,]+)%(?:\sCél odds: ≥([\d\.,]+))?/g);
-        let hasOptions = false;
-        for (const option of options) {
-            hasOptions = true;
-            const [, label, prob, odds] = option;
+        const optionsRegex = /-\s(.*?):\s([\d\.,]+)%(?:\sCél odds: ≥([\d\.,]+))?/g;
+        let optionMatch;
+        let optionCount = 0;
+        while ((optionMatch = optionsRegex.exec(content)) !== null) {
+            optionCount++;
+            const [, label, prob, odds] = optionMatch;
             const probValue = prob.replace(',', '.');
             let meta = `Valószínűség: <b>${probValue}%</b>`;
             if(odds) {
@@ -770,34 +784,22 @@ function buildAnalysisHtml(res) {
               </div>
             </div>`;
         }
-
-        if (hasOptions) {
-            // ÚJ: Ha több opció van, gridbe tesszük
-            const optionCount = (content.match(/-\s(.*?):/g) || []).length;
-            if (optionCount > 2) {
-                 sectionHtml += `<div class="market-options-grid">${optionsHtml}</div>`;
-            } else {
-                 sectionHtml += optionsHtml;
-            }
-        }
         
-        sectionHtml += '</div>';
-
-        if (h3Match && h3Match[0].includes('AI TIPP')) {
-            const tipMatch = content.match(/(.*)/);
-            if (tipMatch && tipMatch[1].trim()) {
-                html += `<div class="hero positive"><h3>AI Tipp ⭐</h3><p class="tag">${escapeHtml(tipMatch[1].trim())}</p></div>`;
-            }
+        if (optionCount > 2 && !title.toLowerCase().includes('pontos') && !title.toLowerCase().includes('félidő/végjáték')) {
+            html += `<div class="market-options-grid">${optionsHtml}</div>`;
         } else {
-            // Csak akkor adjuk hozzá a szekciót, ha van benne valami érdemi
-            if (descMatch || hasOptions) {
-                 html += sectionHtml;
-            }
+            html += optionsHtml;
         }
-    });
+
+        html += '</div>';
+    }
+
+    // Végül hozzáadjuk a tippet
+    html += tipHtml;
 
     return html;
 }
+
 
 function saveAnalysis(record){
   let history = getHistory();
