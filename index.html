@@ -129,7 +129,6 @@ input[type="range"]::-moz-range-thumb {
     border: 3px solid var(--card);
 }
 
-/* ÚJ, DIZÁJNOSABB ELRENDEZÉS */
 .market-options-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -441,7 +440,7 @@ async function go(){
   }
 }
 
-// --- Gemini API hívás (KERESÉSSEL TÁMOGATOTT) ---
+// --- Gemini API hívás ---
 async function callGeminiApi(systemPrompt, userPrompt) {
     const payload = {
         contents: [{ role: "user", parts: [{ text: userPrompt }] }],
@@ -460,7 +459,7 @@ async function callGeminiApi(systemPrompt, userPrompt) {
     return result?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
-// --- Promptok összeállítása (RÉSZLETES) ---
+// --- Promptok összeállítása (BANKÁR TIPPEL) ---
 function buildPrompts(home, away, mu_h, mu_a, sim, corners, cards, homeRating, awayRating) {
     let ratingsContext = "STATISZTIKAI KONTEXTUS:\n";
     if (homeRating) {
@@ -471,15 +470,15 @@ function buildPrompts(home, away, mu_h, mu_a, sim, corners, cards, homeRating, a
     }
 
     const systemPrompt = `Te vagy a "Tippek Mestere", egy profi sportelemző AI. Magyarul, tömören, adatokra alapozva, konkrét érvekkel elemzel.
-- A válaszadáshoz HASZNÁLD A GOOGLE KERESŐT, hogy naprakész információkat szerezz a csapatok egymás elleni eredményeiről (H2H), és a fontosabb hírekről (sérülések, eltiltások). A formát már megkaptad.
+- A válaszadáshoz HASZNÁLD A GOOGLE KERESŐT, hogy naprakész információkat szerezz a csapatok egymás elleni eredményeiről (H2H), a fontosabb hírekről (sérülések, eltiltások), és a MECCS BÍRÓJÁRÓL és annak statisztikáiról (átlagos lapok száma).
 - Az elemzésed alapját a megadott statisztikai BASE értékek adják, de ezeket árnyald és egészítsd ki a keresésből szerzett információkkal.
 - A keresési eredményeket egy külön "KÜLSŐ TÉNYEZŐK" blokkban foglald össze.
-- MINDEN EGYES piachoz adj rövid, 2-3 mondatos LEÍRÁST, amely megindokolja a valószínűségeket.
-- Minden valószínűséghez számolj 'Cél odds'-ot a (1/valószínűség) * 1.07 képlettel, két tizedesjegyre kerekítve.
-- A válaszodnak szigorúan követnie kell a megadott kimeneti formátumot, minden kért piacot beleértve.`.trim();
+- MINDEN EGYES piachoz adj rövid, 2-3 mondatos LEÍRÁST.
+- A válaszod végén az összesített információk alapján azonosíts egyetlen "Legjobb Tipp (Bankár) ⭐" opciót. Ez legyen az a tipp, amiben a leginkább bízol, figyelembe véve a valószínűséget és a várható értéket. Részletesen indokold, miért ezt tartod a legjobb választásnak.
+- A válaszodnak szigorúan követnie kell a megadott kimeneti formátumot.`.trim();
 
     const userPrompt = `
-Elemezd a ${home} vs ${away} labdarúgó mérkőzést a kért formátum alapján. Használd a Google keresőt a H2H és hírek információkhoz.
+Elemezd a ${home} vs ${away} labdarúgó mérkőzést a kért formátum alapján. Használd a Google keresőt a H2H, hírek és a bíró információkhoz.
 
 ${ratingsContext}
 **Statisztikai alapértékek (BASE):**
@@ -487,11 +486,8 @@ ${ratingsContext}
 - 1X2: H: ${sim.pHome.toFixed(1)}%, D: ${sim.pDraw.toFixed(1)}%, A: ${sim.pAway.toFixed(1)}%
 - Gólok O/U 1.5: O: ${sim.pOver15.toFixed(1)}%, U: ${sim.pUnder15.toFixed(1)}%
 - Gólok O/U 2.5: O: ${sim.pOver25.toFixed(1)}%, U: ${sim.pUnder25.toFixed(1)}%
-- Gólok O/U 3.5: O: ${sim.pOver35.toFixed(1)}%, U: ${sim.pUnder35.toFixed(1)}%
 - Félidő 1X2: H: ${sim.pHT_H.toFixed(1)}%, D: ${sim.pHT_D.toFixed(1)}%, A: ${sim.pHT_A.toFixed(1)}%
-- Félidő/Végjáték: ${Object.entries(sim.htft).map(([k,v]) => `${k}: ${v.toFixed(1)}%`).join(', ')}
 - Pontos Eredmény Top 5: ${sim.correctTop6.slice(0,5).map(x => `${x.score}: ${x.p.toFixed(1)}%`).join(", ")}
-- Szögletek O/U 9.5: O: ${(corners.pOver95*100).toFixed(1)}%, U: ${(100 - corners.pOver95*100).toFixed(1)}%
 - Lapok O/U 4.5: O: ${(cards.pOver45*100).toFixed(1)}%, U: ${(100 - cards.pOver45*100).toFixed(1)}%
 
 **Kért kimeneti formátum:**
@@ -499,71 +495,45 @@ ${ratingsContext}
 **KÜLSŐ TÉNYEZŐK (Google keresés alapján)**
 - **Forma:** (Ezt már megadtam, csak hivatkozz rá.)
 - **H2H:** [Rövid összefoglaló]
+- **Bíró:** [Bíró neve és statisztikái, pl. lapátlag]
 - **Hírek:** [Legfontosabb sérülések, eltiltások]
 
 ---
 
 1. **1X2**
 LEÍRÁS: [Elemzés]
-- Hazai: [százalék]% Cél odds: ≥[odds]
-- Döntetlen: [százalék]% Cél odds: ≥[odds]
-- Vendég: [százalék]% Cél odds: ≥[odds]
+- Hazai: [százalék]%
+- Döntetlen: [százalék]%
+- Vendég: [százalék]%
 
 ---
 
 2. **Gólok Száma (Over/Under)**
 LEÍRÁS: [Elemzés]
-- Over 1.5: [százalék]% Cél odds: ≥[odds]
-- Under 1.5: [százalék]% Cél odds: ≥[odds]
-- Over 2.5: [százalék]% Cél odds: ≥[odds]
-- Under 2.5: [százalék]% Cél odds: ≥[odds]
-- Over 3.5: [százalék]% Cél odds: ≥[odds]
-- Under 3.5: [százalék]% Cél odds: ≥[odds]
+- Over 1.5: [százalék]%
+- Under 1.5: [százalék]%
+- Over 2.5: [százalék]%
+- Under 2.5: [százalék]%
 
 ---
 
 3. **Félidei Eredmény (HT)**
 LEÍRÁS: [Elemzés]
-- Hazai (HT): [százalék]% Cél odds: ≥[odds]
-- Döntetlen (HT): [százalék]% Cél odds: ≥[odds]
-- Vendég (HT): [százalék]% Cél odds: ≥[odds]
+- Hazai (HT): [százalék]%
+- Döntetlen (HT): [százalék]%
+- Vendég (HT): [százalék]%
 
 ---
 
-4. **Félidő/Végjáték (HT/FT)**
-LEÍRÁS: [Elemzés]
-- H/H: [százalék]%
-- H/D: [százalék]%
-- D/H: [százalék]%
-- D/D: [százalék]%
-(csak a legvalószínűbb 4-5 opciót listázd)
-
----
-
-5. **Pontos Eredmény (Top 5)**
-LEÍRÁS: [Elemzés]
-- 1-0: [százalék]%
-- 1-1: [százalék]%
-- 2-1: [százalék]%
-- ...
-
----
-
-6. **Szögletek és Lapok**
-LEÍRÁS: [Elemzés]
-- Szöglet Over 9.5: [százalék]% Cél odds: ≥[odds]
-- Szöglet Under 9.5: [százalék]% Cél odds: ≥[odds]
-- Lapok Over 4.5: [százalék]% Cél odds: ≥[odds]
-- Lapok Under 4.5: [százalék]% Cél odds: ≥[odds]
-
----
-**AI TIPP ⭐:** [Piac] – [Opció] (Indoklás)
+**Legjobb Tipp (Bankár) ⭐:**
+[Piac] – [Opció]
+INDOKLÁS: [Részletes, több mondatos indoklás, ami összefoglalja, miért ez a legbiztosabb tipp az összes adat (statisztika, forma, H2H, hírek, bíró) alapján.]
 `.trim();
     return { systemPrompt, userPrompt };
 }
 
 
-// --- Statisztikai Modellek (BŐVÍTETT SZIMULÁCIÓVAL) ---
+// --- Statisztikai Modellek ---
 function findBestRatingKey(teamName, ratingKeys) {
     if (!teamName || ratingKeys.length === 0) return null;
     const normalizedName = normalizeTeamKey(teamName);
@@ -584,7 +554,7 @@ function findBestRatingKey(teamName, ratingKeys) {
 }
 
 function calculateFormScore(formString) {
-    if (!formString || formString === 'N/A') return 0.5; // Semleges
+    if (!formString || formString === 'N/A') return 0.5;
     const points = formString.split('').reduce((acc, result) => {
         if (result.toUpperCase() === 'W') return acc + 3;
         if (result.toUpperCase() === 'D') return acc + 1;
@@ -632,7 +602,6 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
   let over15=0, over25=0, over35=0;
   let ht_h=0, ht_d=0, ht_a=0;
   const cs={}, htft={};
-
   const htShare = 0.45;
 
   for(let i=0;i<sims;i++){
@@ -642,23 +611,15 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
     const ga = ht.ga + sh.ga;
     const totalGoals = gh + ga;
 
-    // FT
     if (gh>ga) home++; else if (gh===ga) draw++; else away++;
     if (gh>0 && ga>0) btts++;
     const keyCS=`${gh}-${ga}`; cs[keyCS]=(cs[keyCS]||0)+1;
-
-    // Over/Under
     if(totalGoals > 1.5) over15++;
     if(totalGoals > 2.5) over25++;
     if(totalGoals > 3.5) over35++;
-
-    // HT & HT/FT
     const htRes = ht.gh > ht.ga ? 'H' : (ht.gh === ht.ga ? 'D' : 'A');
-    const ftRes = gh > ga ? 'H' : (gh === ga ? 'D' : 'A');
     if (htRes === 'H') ht_h++; else if (htRes === 'D') ht_d++; else ht_a++;
-    const htftKey = `${htRes}/${ftRes}`;
-    htft[htftKey] = (htft[htftKey] || 0) + 1;
-
+    
     if (i % 2000 === 0) {
         const pct = (i / sims) * 100;
         if(onProgress) onProgress(pct, `Szimuláció ${i}/${sims}`);
@@ -668,8 +629,6 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
 
   const toPct=x=>(100*x/sims);
   const topCS=Object.entries(cs).map(([k,v])=>({score:k,p:toPct(v)})).sort((a,b)=>b.p-a.p).slice(0,6);
-  const htftPct = {};
-  for(const key in htft) { htftPct[key] = toPct(htft[key]); }
 
   return { 
     pHome:toPct(home), pDraw:toPct(draw), pAway:toPct(away), pBTTS:toPct(btts), 
@@ -677,7 +636,6 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
     pOver25:toPct(over25), pUnder25:100-toPct(over25),
     pOver35:toPct(over35), pUnder35:100-toPct(over35),
     pHT_H: toPct(ht_h), pHT_D: toPct(ht_d), pHT_A: toPct(ht_a),
-    htft: htftPct,
     correctTop6:topCS 
   };
 }
@@ -715,21 +673,19 @@ function renderMetrics(resObj){
   </div>`;
 }
 
-// JAVÍTOTT, "GOLYÓÁLLÓ" MEGJELENÍTŐ FÜGGVÉNY
 function buildAnalysisHtml(res) {
     if (!res) return "";
     let html = '';
     let remainingText = res;
 
-    // 1. KÜLSŐ TÉNYEZŐK kiemelése és renderelése
     const contextRegex = /\*{2}KÜLSŐ TÉNYEZŐK[\s\S]*?(- \*\*Hírek:\*\*[\s\S]*?)(?=\n---\n|\n\d\.)/m;
     const contextMatch = remainingText.match(contextRegex);
     if (contextMatch) {
         html += '<div class="analysis-market">';
         html += '<h3>KÜLSŐ TÉNYEZŐK (Google keresés alapján)</h3>';
         let contextContent = contextMatch[0]
-            .replace('**KÜLSŐ TÉNYEZŐK (Google keresés alapján)**', '')
-            .replace(/- \*\*Forma:\*\* .*/, '') // Ezt már a metrikáknál kiírjuk
+            .replace(/\*{2}KÜLSŐ TÉNYEZŐK[\s\S]*?\n/, '')
+            .replace(/- \*\*Forma:\*\* .*/, '')
             .replace(/- \*\*(.*?):\*\*/g, '<p><strong>$1:</strong>')
             .trim();
         html += `<div class="market-summary">${contextContent}</div>`;
@@ -737,16 +693,14 @@ function buildAnalysisHtml(res) {
         remainingText = remainingText.replace(contextMatch[0], '');
     }
 
-    // 2. AI TIPP kiemelése és renderelése
-    const tipRegex = /\*{2}AI TIPP ⭐:\*{2}\s*([\s\S]*)/m;
+    const tipRegex = /\*{2}Legjobb Tipp \(Bankár\) ⭐:\*{2}([\s\S]*)/m;
     const tipMatch = remainingText.match(tipRegex);
     let tipHtml = '';
     if (tipMatch) {
-        tipHtml = `<div class="hero positive"><h3>AI Tipp ⭐</h3><p class="tag">${escapeHtml(tipMatch[1].trim())}</p></div>`;
+        tipHtml = `<div class="hero positive"><h3>Legjobb Tipp (Bankár) ⭐</h3><div class="market-summary">${tipMatch[1].trim().replace(/INDOKLÁS:/, '<strong>INDOKLÁS:</strong>')}</div></div>`;
         remainingText = remainingText.replace(tipMatch[0], '');
     }
 
-    // 3. Piacok feldolgozása
     const marketRegex = /\d+\.\s+\*{2}([\s\S]*?)\*{2}([\s\S]*?)(?=\n\d+\.|\n---|$)/g;
     let marketMatch;
     while ((marketMatch = marketRegex.exec(remainingText)) !== null) {
@@ -794,7 +748,6 @@ function buildAnalysisHtml(res) {
         html += '</div>';
     }
 
-    // Végül hozzáadjuk a tippet
     html += tipHtml;
 
     return html;
@@ -818,12 +771,12 @@ function renderHistory(history){
   __historyCache = list;
   const fmt = iso => { try{ const d=new Date(iso); return d.toLocaleString('hu-HU', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'}); }catch(_){ return iso||''; } };
   box.innerHTML = list.map((item,i)=>{
-    const teaser = (item.analysis || '').match(/\*\*AI TIPP ⭐:\*\*\s*(.*)/);
+    const teaser = (item.analysis || '').match(/\*\*Legjobb Tipp \(Bankár\) ⭐:\*\*\s*([\s\S]*?)\nINDOKLÁS:/m);
     return `
       <details class="hist-item" data-idx="${i}">
         <summary>
           <div class="hist-title">${escapeHtml(item.home)} vs ${escapeHtml(item.away)}</div>
-          <div class="hist-preview">${teaser ? escapeHtml(teaser[1]) : 'Részletek...'}</div>
+          <div class="hist-preview">${teaser ? escapeHtml(teaser[1].trim()) : 'Részletek...'}</div>
           <div class="hist-date">${escapeHtml(fmt(item.timestamp))}</div>
         </summary>
         <div class="hist-body">
