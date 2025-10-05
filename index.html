@@ -130,6 +130,13 @@ input[type="range"]::-moz-range-thumb {
     border-radius: 50%;
     border: 3px solid var(--card);
 }
+
+/* ÚJ, DIZÁJNOSABB ELRENDEZÉS */
+.market-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
 </style>
 </head>
 <body>
@@ -729,16 +736,21 @@ function buildAnalysisHtml(res) {
         if (descMatch) {
             sectionHtml += `<div class="market-summary">${escapeHtml(descMatch[1].trim())}</div>`;
             content = content.replace(descMatch[0], '').trim();
-        } else if (!h3Match || h3Match[0].includes('KÜLSŐ TÉNYEZŐK') || h3Match[0].includes('AI TIPP')) {
-            // Handle context block that has no LEÍRÁS
-            content = content.replace(/-\s*\*\*(.*?):\*\*/g, '<p><strong>$1:</strong>')
-                             .replace(/<p><strong>Forma:<\/strong>/, ''); // Remove Forma if it's there
-            sectionHtml += `<div class="market-summary">${content}</div>`;
+        } else if (!h3Match || (h3Match && (h3Match[0].includes('KÜLSŐ TÉNYEZŐK') || h3Match[0].includes('AI TIPP')))) {
+             // Handle context block that has no LEÍRÁS
+             if (h3Match && h3Match[0].includes('KÜLSŐ TÉNYEZŐK')){
+                content = content.replace(/-\s*\*\*(.*?):\*\*/g, '<p><strong>$1:</strong>')
+                                 .replace(/<p><strong>Forma:<\/strong>/, ''); 
+                sectionHtml += `<div class="market-summary">${content}</div>`;
+             }
             content = '';
         }
 
+        let optionsHtml = '';
         const options = content.matchAll(/-\s(.*?):\s([\d\.,]+)%(?:\sCél odds: ≥([\d\.,]+))?/g);
+        let hasOptions = false;
         for (const option of options) {
+            hasOptions = true;
             const [, label, prob, odds] = option;
             const probValue = prob.replace(',', '.');
             let meta = `Valószínűség: <b>${probValue}%</b>`;
@@ -746,8 +758,8 @@ function buildAnalysisHtml(res) {
                 meta += ` · Cél odds: <b>≥${odds}</b>`;
             }
 
-            sectionHtml += `
-            <div class="analysis-option purple">
+            optionsHtml += `
+            <div class="analysis-option">
               <div class="option-row">
                 <span class="option-label">${escapeHtml(label.trim())}</span>
                 <span class="option-meta">${meta}</span>
@@ -758,16 +770,29 @@ function buildAnalysisHtml(res) {
               </div>
             </div>`;
         }
+
+        if (hasOptions) {
+            // ÚJ: Ha több opció van, gridbe tesszük
+            const optionCount = (content.match(/-\s(.*?):/g) || []).length;
+            if (optionCount > 2) {
+                 sectionHtml += `<div class="market-options-grid">${optionsHtml}</div>`;
+            } else {
+                 sectionHtml += optionsHtml;
+            }
+        }
         
         sectionHtml += '</div>';
 
         if (h3Match && h3Match[0].includes('AI TIPP')) {
             const tipMatch = content.match(/(.*)/);
-            if (tipMatch) {
+            if (tipMatch && tipMatch[1].trim()) {
                 html += `<div class="hero positive"><h3>AI Tipp ⭐</h3><p class="tag">${escapeHtml(tipMatch[1].trim())}</p></div>`;
             }
         } else {
-            html += sectionHtml;
+            // Csak akkor adjuk hozzá a szekciót, ha van benne valami érdemi
+            if (descMatch || hasOptions) {
+                 html += sectionHtml;
+            }
         }
     });
 
@@ -816,3 +841,4 @@ function closeModal(){ document.getElementById('modal').classList.remove('open')
 </script>
 </body>
 </html>
+
