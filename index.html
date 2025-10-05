@@ -734,8 +734,8 @@ function renderMetrics(resObj){
 }
 
 function buildAnalysisHtml(res) {
-    if (!res) {
-        return "<div class='analysis-market'><pre class='muted'>Az AI nem adott vissza elemzést.</pre></div>";
+    if (!res || res.trim() === "") {
+        return "<div class='analysis-market'><p class='muted'>Az AI nem adott vissza érdemi elemzést.</p></div>";
     }
     
     // Fallback: Ha bármi hiba történik a feldolgozás során, a nyers szöveget mutatjuk
@@ -813,7 +813,7 @@ function buildAnalysisHtml(res) {
         return html;
 
     } catch (e) {
-        return `<div class="analysis-market"><pre class="muted">Az AI válaszának formázása nem sikerült. A nyers elemzés:\n\n${escapeHtml(res)}</pre></div>`;
+        return `<div class="analysis-market"><pre class="muted" style="white-space: pre-wrap; font-size: 0.9em;">Az AI válaszának formázása nem sikerült. A nyers elemzés:\n\n${escapeHtml(res)}</pre></div>`;
     }
 }
 
