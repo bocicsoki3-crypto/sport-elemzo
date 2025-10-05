@@ -91,7 +91,6 @@ details[open] .chev{transform:rotate(90deg)}
 .modal-body{padding:16px}
 .modal-close{background:#1b294d;color:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer}
 
-/* ÚJ RÉSZ: Forma csúszka */
 .slider-container {
     margin-top: 1rem;
     padding-top: 1rem;
@@ -179,7 +178,6 @@ input[type="range"]::-moz-range-thumb {
       </div>
       <datalist id="teamlist"></datalist>
 
-      <!-- ÚJ RÉSZ: Forma csúszka -->
       <div class="slider-container">
         <label for="formWeight">
           <span>Forma Súlyozás</span>
@@ -272,7 +270,6 @@ document.addEventListener("DOMContentLoaded", function(){
         localStorage.setItem('gasUrl', __gasUrl);
     });
 
-    // ÚJ: Csúszka eseménykezelő
     const formWeightSlider = document.getElementById('formWeight');
     const formWeightLabel = document.getElementById('formWeightLabel');
     formWeightSlider.addEventListener('input', () => {
@@ -417,7 +414,7 @@ async function go(){
     setProgress(90, "Gemini AI hívása valós idejű kereséssel...");
     const analysis = await callGeminiApi(systemPrompt, userPrompt);
     
-    setProgress(98, "Eredmények feldolgozása...");
+    setProgress(98, "Eredmények feldlogozása...");
     
     const record = {
       timestamp: new Date().toISOString(), home, away, modelLabel: "Gemini AI", analysis,
@@ -444,7 +441,7 @@ async function callGeminiApi(systemPrompt, userPrompt) {
         contents: [{ role: "user", parts: [{ text: userPrompt }] }],
         systemInstruction: { role: "model", parts: [{ text: systemPrompt }] },
         tools: [{"google_search": {}}], 
-        generationConfig: { temperature: 0.4, topK: 32, topP: 1, maxOutputTokens: 4096 }
+        generationConfig: { temperature: 0.4, topK: 32, topP: 1, maxOutputTokens: 8192 }
     };
     const response = await fetch(API_URL + __apiKey, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
@@ -457,7 +454,7 @@ async function callGeminiApi(systemPrompt, userPrompt) {
     return result?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
-// --- Promptok összeállítása (KERESÉSSEL TÁMOGATOTT) ---
+// --- Promptok összeállítása (RÉSZLETES) ---
 function buildPrompts(home, away, mu_h, mu_a, sim, corners, cards, homeRating, awayRating) {
     let ratingsContext = "STATISZTIKAI KONTEXTUS:\n";
     if (homeRating) {
@@ -471,53 +468,96 @@ function buildPrompts(home, away, mu_h, mu_a, sim, corners, cards, homeRating, a
 - A válaszadáshoz HASZNÁLD A GOOGLE KERESŐT, hogy naprakész információkat szerezz a csapatok egymás elleni eredményeiről (H2H), és a fontosabb hírekről (sérülések, eltiltások). A formát már megkaptad.
 - Az elemzésed alapját a megadott statisztikai BASE értékek adják, de ezeket árnyald és egészítsd ki a keresésből szerzett információkkal.
 - A keresési eredményeket egy külön "KÜLSŐ TÉNYEZŐK" blokkban foglald össze.
-- Az egyes piacokhoz (1X2, Over/Under, stb.) adj rövid, 2-3 mondatos leírást, amely megindokolja a valószínűségeket a csapatok erősségei és a friss hírek alapján.
+- MINDEN EGYES piachoz adj rövid, 2-3 mondatos LEÍRÁST, amely megindokolja a valószínűségeket.
 - Minden valószínűséghez számolj 'Cél odds'-ot a (1/valószínűség) * 1.07 képlettel, két tizedesjegyre kerekítve.
-- A válaszodnak szigorúan követnie kell a megadott kimeneti formátumot.`.trim();
+- A válaszodnak szigorúan követnie kell a megadott kimeneti formátumot, minden kért piacot beleértve.`.trim();
 
     const userPrompt = `
-Elemezd a ${home} vs ${away} labdarúgó mérkőzést. Használd a Google keresőt a H2H és hírek információkhoz, és építsd be az elemzésbe a kapott statisztikai alapértékekkel együtt.
+Elemezd a ${home} vs ${away} labdarúgó mérkőzést a kért formátum alapján. Használd a Google keresőt a H2H és hírek információkhoz.
 
 ${ratingsContext}
 **Statisztikai alapértékek (BASE):**
-- Várható gólok (xG): Hazai: ${mu_h.toFixed(3)}, Vendég: ${mu_a.toFixed(3)}
-- 1X2 valószínűségek: Hazai: ${sim.pHome.toFixed(1)}%, Döntetlen: ${sim.pDraw.toFixed(1)}%, Vendég: ${sim.pAway.toFixed(1)}%
-- Over/Under 2.5: Over: ${sim.pOver25.toFixed(1)}%, Under: ${sim.pUnder25.toFixed(1)}%
-- Mindkét csapat szerez gólt (BTTS): Igen: ${sim.pBTTS.toFixed(1)}%, Nem: ${(100 - sim.pBTTS).toFixed(1)}%
+- Várható gólok (xG): Hazai: ${mu_h.toFixed(2)}, Vendég: ${mu_a.toFixed(2)}
+- 1X2: H: ${sim.pHome.toFixed(1)}%, D: ${sim.pDraw.toFixed(1)}%, A: ${sim.pAway.toFixed(1)}%
+- Gólok O/U 1.5: O: ${sim.pOver15.toFixed(1)}%, U: ${sim.pUnder15.toFixed(1)}%
+- Gólok O/U 2.5: O: ${sim.pOver25.toFixed(1)}%, U: ${sim.pUnder25.toFixed(1)}%
+- Gólok O/U 3.5: O: ${sim.pOver35.toFixed(1)}%, U: ${sim.pUnder35.toFixed(1)}%
+- Félidő 1X2: H: ${sim.pHT_H.toFixed(1)}%, D: ${sim.pHT_D.toFixed(1)}%, A: ${sim.pHT_A.toFixed(1)}%
+- Félidő/Végjáték: ${Object.entries(sim.htft).map(([k,v]) => `${k}: ${v.toFixed(1)}%`).join(', ')}
+- Pontos Eredmény Top 5: ${sim.correctTop6.slice(0,5).map(x => `${x.score}: ${x.p.toFixed(1)}%`).join(", ")}
+- Szögletek O/U 9.5: O: ${(corners.pOver95*100).toFixed(1)}%, U: ${(100 - corners.pOver95*100).toFixed(1)}%
+- Lapok O/U 4.5: O: ${(cards.pOver45*100).toFixed(1)}%, U: ${(100 - cards.pOver45*100).toFixed(1)}%
 
 **Kért kimeneti formátum:**
 
 **KÜLSŐ TÉNYEZŐK (Google keresés alapján)**
-- **Forma:** (Ezt már megadtam a kontextusban, csak hivatkozz rá az elemzésben.)
-- **H2H (Google keresés alapján):** [Rövid összefoglaló]
-- **Hírek (Google keresés alapján):** [Legfontosabb sérülések, eltiltások vagy egyéb hírek]
+- **Forma:** (Ezt már megadtam, csak hivatkozz rá.)
+- **H2H:** [Rövid összefoglaló]
+- **Hírek:** [Legfontosabb sérülések, eltiltások]
 
 ---
 
 1. **1X2**
-LEÍRÁS: [Rövid, 2-3 mondatos elemzés, figyelembe véve a statisztikát ÉS a külső tényezőket]
+LEÍRÁS: [Elemzés]
 - Hazai: [százalék]% Cél odds: ≥[odds]
 - Döntetlen: [százalék]% Cél odds: ≥[odds]
 - Vendég: [százalék]% Cél odds: ≥[odds]
 
-2. **Over/Under 2.5**
+---
+
+2. **Gólok Száma (Over/Under)**
 LEÍRÁS: [Elemzés]
+- Over 1.5: [százalék]% Cél odds: ≥[odds]
+- Under 1.5: [százalék]% Cél odds: ≥[odds]
 - Over 2.5: [százalék]% Cél odds: ≥[odds]
 - Under 2.5: [százalék]% Cél odds: ≥[odds]
-
-3. **BTTS (Mindkét csapat szerez gólt)**
-LEÍRÁS: [Elemzés]
-- Igen: [százalék]% Cél odds: ≥[odds]
-- Nem: [százalék]% Cél odds: ≥[odds]
+- Over 3.5: [százalék]% Cél odds: ≥[odds]
+- Under 3.5: [százalék]% Cél odds: ≥[odds]
 
 ---
-**AI TIPP ⭐:** [Piac] – [Opció] (Indoklás a statisztikák és a hírek alapján)
+
+3. **Félidei Eredmény (HT)**
+LEÍRÁS: [Elemzés]
+- Hazai (HT): [százalék]% Cél odds: ≥[odds]
+- Döntetlen (HT): [százalék]% Cél odds: ≥[odds]
+- Vendég (HT): [százalék]% Cél odds: ≥[odds]
+
+---
+
+4. **Félidő/Végjáték (HT/FT)**
+LEÍRÁS: [Elemzés]
+- H/H: [százalék]%
+- H/D: [százalék]%
+- D/H: [százalék]%
+- D/D: [százalék]%
+(csak a legvalószínűbb 4-5 opciót listázd)
+
+---
+
+5. **Pontos Eredmény (Top 5)**
+LEÍRÁS: [Elemzés]
+- 1-0: [százalék]%
+- 1-1: [százalék]%
+- 2-1: [százalék]%
+- ...
+
+---
+
+6. **Szögletek és Lapok**
+LEÍRÁS: [Elemzés]
+- Szöglet Over 9.5: [százalék]% Cél odds: ≥[odds]
+- Szöglet Under 9.5: [százalék]% Cél odds: ≥[odds]
+- Lapok Over 4.5: [százalék]% Cél odds: ≥[odds]
+- Lapok Under 4.5: [százalék]% Cél odds: ≥[odds]
+
+---
+**AI TIPP ⭐:** [Piac] – [Opció] (Indoklás)
 `.trim();
     return { systemPrompt, userPrompt };
 }
 
 
-// --- Statisztikai Modellek (FORMA SÚLYOZÁSSAL) ---
+// --- Statisztikai Modellek (BŐVÍTETT SZIMULÁCIÓVAL) ---
 function findBestRatingKey(teamName, ratingKeys) {
     if (!teamName || ratingKeys.length === 0) return null;
     const normalizedName = normalizeTeamKey(teamName);
@@ -544,7 +584,6 @@ function calculateFormScore(formString) {
         if (result.toUpperCase() === 'D') return acc + 1;
         return acc;
     }, 0);
-    // 0-15 pontot 0-1 skálára normalizálunk (0.5 a semleges)
     return points / 15;
 }
 
@@ -557,11 +596,9 @@ function estimateXG(homeTeam, awayTeam){
   const homeRating = __teamRatings[homeRatingKey] || {atk:1, def:1, ha:0.15, form: 'N/A'};
   const awayRating = __teamRatings[awayRatingKey] || {atk:1, def:1, ha:0.15, form: 'N/A'};
 
-  // Forma számítás
-  const homeFormScore = calculateFormScore(homeRating.form); // 0-1
-  const awayFormScore = calculateFormScore(awayRating.form); // 0-1
+  const homeFormScore = calculateFormScore(homeRating.form);
+  const awayFormScore = calculateFormScore(awayRating.form);
 
-  // A forma score-ból egy szorzót csinálunk, pl. 0.8-1.2 között
   const homeFormMultiplier = 0.8 + (homeFormScore * 0.4);
   const awayFormMultiplier = 0.8 + (awayFormScore * 0.4);
 
@@ -570,15 +607,12 @@ function estimateXG(homeTeam, awayTeam){
   const leagueAvg = 2.65;
   const base = leagueAvg / 2;
 
-  // Szezonos xG
   const base_mu_h = Math.max(0.05, base * homeRating.atk * awayRating.def * (1 + homeRating.ha));
   const base_mu_a = Math.max(0.05, base * awayRating.atk * homeRating.def * (1 - (homeRating.ha * 0.6)));
   
-  // Forma-alapú xG
   const form_mu_h = base_mu_h * homeFormMultiplier;
   const form_mu_a = base_mu_a * awayFormMultiplier;
   
-  // Végső, súlyozott xG
   const mu_h = (base_mu_h * (1 - formWeight)) + (form_mu_h * formWeight);
   const mu_a = (base_mu_a * (1 - formWeight)) + (form_mu_a * formWeight);
   
@@ -588,27 +622,62 @@ function samplePoisson(lambda){ const L=Math.exp(-lambda); let k=0,p=1; do{ k++;
 function sampleGoalsOD(mu_h, mu_a){ const kappa=0.05*Math.min(mu_h,mu_a), inflate=1.10; const y0=samplePoisson(kappa); const y1=samplePoisson(Math.max(mu_h*inflate-kappa,0.001)); const y2=samplePoisson(Math.max(mu_a*inflate-kappa,0.001)); return { gh:y0+y1, ga:y0+y2 }; }
 async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
   sims = sims || 10000;
-  let home=0,draw=0,away=0,btts=0,over25=0;
-  const cs={};
+  let home=0,draw=0,away=0,btts=0;
+  let over15=0, over25=0, over35=0;
+  let ht_h=0, ht_d=0, ht_a=0;
+  const cs={}, htft={};
+
+  const htShare = 0.45;
+
   for(let i=0;i<sims;i++){
-    const { gh, ga } = sampleGoalsOD(mu_h, mu_a);
+    const ht = sampleGoalsOD(mu_h * htShare, mu_a * htShare);
+    const sh = sampleGoalsOD(mu_h * (1-htShare), mu_a * (1-htShare));
+    const gh = ht.gh + sh.gh;
+    const ga = ht.ga + sh.ga;
+    const totalGoals = gh + ga;
+
+    // FT
     if (gh>ga) home++; else if (gh===ga) draw++; else away++;
     if (gh>0 && ga>0) btts++;
-    if (gh+ga>2.5) over25++;
     const keyCS=`${gh}-${ga}`; cs[keyCS]=(cs[keyCS]||0)+1;
-    if (i % 1000 === 0) {
+
+    // Over/Under
+    if(totalGoals > 1.5) over15++;
+    if(totalGoals > 2.5) over25++;
+    if(totalGoals > 3.5) over35++;
+
+    // HT & HT/FT
+    const htRes = ht.gh > ht.ga ? 'H' : (ht.gh === ht.ga ? 'D' : 'A');
+    const ftRes = gh > ga ? 'H' : (gh === ga ? 'D' : 'A');
+    if (htRes === 'H') ht_h++; else if (htRes === 'D') ht_d++; else ht_a++;
+    const htftKey = `${htRes}/${ftRes}`;
+    htft[htftKey] = (htft[htftKey] || 0) + 1;
+
+    if (i % 2000 === 0) {
         const pct = (i / sims) * 100;
         if(onProgress) onProgress(pct, `Szimuláció ${i}/${sims}`);
         await new Promise(r => setTimeout(r, 0));
     }
   }
-  const toPct=x=>100*x/sims;
+
+  const toPct=x=>(100*x/sims);
   const topCS=Object.entries(cs).map(([k,v])=>({score:k,p:toPct(v)})).sort((a,b)=>b.p-a.p).slice(0,6);
-  return { pHome:toPct(home), pDraw:toPct(draw), pAway:toPct(away), pBTTS:toPct(btts), pOver25:toPct(over25), pUnder25:100-toPct(over25), correctTop6:topCS };
+  const htftPct = {};
+  for(const key in htft) { htftPct[key] = toPct(htft[key]); }
+
+  return { 
+    pHome:toPct(home), pDraw:toPct(draw), pAway:toPct(away), pBTTS:toPct(btts), 
+    pOver15:toPct(over15), pUnder15:100-toPct(over15),
+    pOver25:toPct(over25), pUnder25:100-toPct(over25),
+    pOver35:toPct(over35), pUnder35:100-toPct(over35),
+    pHT_H: toPct(ht_h), pHT_D: toPct(ht_d), pHT_A: toPct(ht_a),
+    htft: htftPct,
+    correctTop6:topCS 
+  };
 }
 function erf(x){const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;const sign=x<0?-1:1;x=Math.abs(x);const t=1/(1+p*x);const y=1-((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);return sign*y;}
 function probOverNormal(threshold, mean, sd){ const z = (threshold - mean) / (sd || 1); return 1 - 0.5 * (1 + erf(z/Math.SQRT2));}
-function estimateCorners(mu_h, mu_a){ const mean=clamp(8+0.8*(mu_h+mu_a)-0.4*Math.abs(mu_h-mu_a),6,12.5),sd=2.6; return {mean,pOver85:probOverNormal(8.5,mean,sd)};}
+function estimateCorners(mu_h, mu_a){ const mean=clamp(8+0.8*(mu_h+mu_a)-0.4*Math.abs(mu_h-mu_a),6,12.5),sd=2.6; return {mean,pOver95:probOverNormal(9.5,mean,sd)};}
 function estimateCards(mu_h, mu_a){ const mean=clamp(4.2+0.6*((mu_h+mu_a)-2.6),2.5,7.2),sd=1.8; return {mean,sd,pOver45:probOverNormal(4.5,mean,sd)};}
 
 
@@ -643,42 +712,45 @@ function renderMetrics(resObj){
 function buildAnalysisHtml(res) {
     if (!res) return "";
     let html = '';
-    const sections = res.split(/\n---\n/); // Főtörzsekre bontás
-
-    // Külső tényezők feldolgozása
-    const contextSection = sections.find(s => s.includes('KÜLSŐ TÉNYEZŐK'));
-    if (contextSection) {
-        html += '<div class="analysis-market">';
-        html += contextSection
-            .replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>')
-            .replace(/-\s*\*\*(.*?):\*\*/g, '<p><strong>$1:</strong>');
-        html += '</div>';
-    }
+    const sections = res.split(/\n---\n/); 
     
-    // Piaci elemzések feldolgozása
-    const marketSections = sections.filter(s => /^\d+\.\s/.test(s));
-    marketSections.forEach(section => {
-        html += '<div class="analysis-market">';
+    // Process sections
+    sections.forEach(sectionText => {
+        let sectionHtml = '<div class="analysis-market">';
+        let content = sectionText.trim();
         
-        const titleMatch = section.match(/^\d+\.\s*\*\*(.*?)\*\*/);
-        if (titleMatch) {
-            html += `<h3>${escapeHtml(titleMatch[1])}</h3>`;
-        }
-        
-        const descMatch = section.match(/LEÍRÁS:\s*([\s\S]*?)(?=\n-|\n$)/);
-        if (descMatch) {
-            html += `<div class="market-summary">${escapeHtml(descMatch[1].trim())}</div>`;
+        const h3Match = content.match(/^\s*\*{2}(.*?)\*{2}/) || content.match(/^\d+\.\s*\*{2}(.*?)\*{2}/);
+        if(h3Match) {
+            sectionHtml += `<h3>${escapeHtml(h3Match[1])}</h3>`;
+            content = content.replace(h3Match[0], '').trim();
         }
 
-        const options = section.matchAll(/-\s(.*?):\s([\d\.,]+)%\sCél odds: ≥([\d\.,]+)/g);
+        const descMatch = content.match(/LEÍRÁS:\s*([\s\S]*?)(?=\n-|\n$)/);
+        if (descMatch) {
+            sectionHtml += `<div class="market-summary">${escapeHtml(descMatch[1].trim())}</div>`;
+            content = content.replace(descMatch[0], '').trim();
+        } else if (!h3Match || h3Match[0].includes('KÜLSŐ TÉNYEZŐK') || h3Match[0].includes('AI TIPP')) {
+            // Handle context block that has no LEÍRÁS
+            content = content.replace(/-\s*\*\*(.*?):\*\*/g, '<p><strong>$1:</strong>')
+                             .replace(/<p><strong>Forma:<\/strong>/, ''); // Remove Forma if it's there
+            sectionHtml += `<div class="market-summary">${content}</div>`;
+            content = '';
+        }
+
+        const options = content.matchAll(/-\s(.*?):\s([\d\.,]+)%(?:\sCél odds: ≥([\d\.,]+))?/g);
         for (const option of options) {
             const [, label, prob, odds] = option;
             const probValue = prob.replace(',', '.');
-            html += `
+            let meta = `Valószínűség: <b>${probValue}%</b>`;
+            if(odds) {
+                meta += ` · Cél odds: <b>≥${odds}</b>`;
+            }
+
+            sectionHtml += `
             <div class="analysis-option purple">
               <div class="option-row">
                 <span class="option-label">${escapeHtml(label.trim())}</span>
-                <span class="option-meta">Valószínűség: <b>${probValue}%</b> · Cél odds: <b>≥${odds}</b></span>
+                <span class="option-meta">${meta}</span>
               </div>
               <div class="option-bar-wrap">
                 <span class="option-badge">${probValue}%</span>
@@ -686,21 +758,21 @@ function buildAnalysisHtml(res) {
               </div>
             </div>`;
         }
-        html += '</div>';
-    });
+        
+        sectionHtml += '</div>';
 
-    // AI Tipp feldolgozása
-    const tipSection = sections.find(s => s.includes('AI TIPP ⭐'));
-    if (tipSection) {
-        const tipMatch = tipSection.match(/\*\*AI TIPP ⭐:\*\*\s*(.*)/);
-        if (tipMatch) {
-            html += `<div class="hero positive"><h3>AI Tipp ⭐</h3><p class="tag">${escapeHtml(tipMatch[1])}</p></div>`;
+        if (h3Match && h3Match[0].includes('AI TIPP')) {
+            const tipMatch = content.match(/(.*)/);
+            if (tipMatch) {
+                html += `<div class="hero positive"><h3>AI Tipp ⭐</h3><p class="tag">${escapeHtml(tipMatch[1].trim())}</p></div>`;
+            }
+        } else {
+            html += sectionHtml;
         }
-    }
+    });
 
     return html;
 }
-
 
 function saveAnalysis(record){
   let history = getHistory();
@@ -744,4 +816,3 @@ function closeModal(){ document.getElementById('modal').classList.remove('open')
 </script>
 </body>
 </html>
-
