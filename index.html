@@ -8,162 +8,59 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#0b1020; --bg-grad-1:#0b1020; --bg-grad-2:#0a112a;
-  --glass:#0f1730cc; --card:#0f172a; --border:#22304f;
-  --muted:#a3b3d9; --primary:#4f46e5; --secondary:#14b8a6;
-  --accent:#10b981; --ring:#14b8a6; --text:#e5e7eb;
-  --font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-}
+:root{--bg:#0b1020;--bg-grad-1:#0b1020;--bg-grad-2:#0a112a;--glass:#0f1730cc;--card:#0f172a;--border:#22304f;--muted:#a3b3d9;--primary:#4f46e5;--secondary:#14b8a6;--accent:#10b981;--ring:#14b8a6;--text:#e5e7eb;--font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 *{box-sizing:border-box}
-body{
-  margin:0;font-family: var(--font-family);color:var(--text);
-  background:
-    radial-gradient(1300px 600px at -10% -20%, rgba(20, 184, 166, .15), transparent 45%),
-    radial-gradient(1100px 500px at 110% 120%, rgba(79, 70, 229, .15), transparent 50%),
-    linear-gradient(180deg, var(--bg-grad-1), var(--bg-grad-2));
-  min-height: 100vh;
-}
-.app-header{background:linear-gradient(90deg, rgba(79, 70, 229,.95), rgba(20, 184, 166,.95));
-  color:#fff;padding:1.1rem;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,.1)}
-.app-header h1 { font-weight: 800; }
+body{margin:0;font-family:var(--font-family);color:var(--text);background:radial-gradient(1300px 600px at -10% -20%,rgba(20,184,166,.15),transparent 45%),radial-gradient(1100px 500px at 110% 120%,rgba(79,70,229,.15),transparent 50%),linear-gradient(180deg,var(--bg-grad-1),var(--bg-grad-2));min-height:100vh}
+.app-header{background:linear-gradient(90deg,rgba(79,70,229,.95),rgba(20,184,166,.95));color:#fff;padding:1.1rem;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,.1)}
+.app-header h1{font-weight:800}
 .container{max-width:1200px;margin:1.8rem auto;padding:0 1rem}
 .layout{display:grid;gap:18px;grid-template-columns:340px 1fr}
 @media (max-width:980px){.layout{grid-template-columns:1fr}}
-.card{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.00)),var(--card);border:1px solid var(--border);border-radius:16px;padding:1.1rem;margin-bottom:1rem;box-shadow:0 20px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);backdrop-filter:blur(6px)}
-h2{margin:0 0 .9rem 0;font-weight:800; color: var(--secondary);}
-h3{ font-weight: 700; margin-top: 0; color: #a3b3d9;}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0)),var(--card);border:1px solid var(--border);border-radius:16px;padding:1.1rem;margin-bottom:1rem;box-shadow:0 20px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04);backdrop-filter:blur(6px)}
+h2{margin:0 0 .9rem 0;font-weight:800;color:var(--secondary)}
+h3{font-weight:700;margin-top:0;color:#a3b3d9}
 label{display:block;font-weight:600;margin-top:.6rem}
-input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#0c1429;color:var(--text);margin-top:.25rem;font-size:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03); font-family: inherit;}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--secondary);box-shadow:0 0 0 3px rgba(20, 184, 166,.25)}
-textarea { resize: vertical; min-height: 80px; }
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#0c1429;color:var(--text);margin-top:.25rem;font-size:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--secondary);box-shadow:0 0 0 3px rgba(20,184,166,.25)}
+textarea{resize:vertical;min-height:80px}
 .row{display:flex;gap:12px;flex-wrap:wrap}.col{flex:1 1 220px}
 .actions{margin-top:1rem;display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;flex-direction:column}
-.actions button{padding:12px 18px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 12px 28px rgba(20, 184, 166,.35),0 4px 12px rgba(79, 70, 229,.25);width:100%; transition: transform 0.2s ease; font-family: var(--font-family);}
-.actions button:hover:not(:disabled) { transform: translateY(-2px); }
-.actions button:disabled { background: #555; cursor: not-allowed; opacity: 0.7; }
+.actions button{padding:12px 18px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 12px 28px rgba(20,184,166,.35),0 4px 12px rgba(79,70,229,.25);width:100%;transition:transform .2s ease;font-family:var(--font-family)}
+.actions button:hover:not(:disabled){transform:translateY(-2px)}
+.actions button:disabled{background:#555;cursor:not-allowed;opacity:.7}
 .muted{color:var(--muted);font-size:.9rem}
-.result{min-height:180px;background:transparent;border:none;border-radius:12px;padding:0;overflow:visible; white-space: normal; line-height: 1.6;}
 .league-list{display:flex;flex-direction:column;gap:10px;max-height:360px;overflow:auto;margin-top:8px}
-.league-item{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:12px;padding:10px;background:#0d1127; cursor: pointer; transition: background-color 0.2s;}
-.league-item:hover { background-color: #132042; }
+.league-item{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:12px;padding:10px;background:#0d1127;cursor:pointer;transition:background-color .2s}
+.league-item:hover{background-color:#132042}
 .league-item input{width:auto;margin:0 8px 0 0}
 .badge{display:inline-block;padding:5px 12px;border-radius:999px;background:#121a36;border:1px solid rgba(255,255,255,.08);font-size:.86rem;color:#cfe6ff}
 .fixtures{max-height:520px;overflow:auto;margin-top:6px;display:flex;flex-direction:column;gap:10px}
 .fx-item{border:1px solid var(--border);border-radius:12px;padding:12px;background:#0d1127;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .fx-title{font-weight:800}.fx-meta{font-size:.9rem;color:#cfe6ff}
-.fx-btn{padding:9px 12px;border:1px solid var(--border);background:#132042;color:#e5e7eb;border-radius:12px;cursor:pointer; transition: border-color 0.2s; font-family: var(--font-family);}
+.fx-btn{padding:9px 12px;border:1px solid var(--border);background:#132042;color:#e5e7eb;border-radius:12px;cursor:pointer;transition:border-color .2s;font-family:var(--font-family)}
 .fx-btn:hover{border-color:var(--secondary)}
-.analysis-market{margin-bottom:1.1rem;padding:1rem;border:1px solid var(--border);border-radius:14px;background:#0d1127}
-.analysis-market h3{margin:0 0 .5rem 0;font-weight:800; color: #e5e7eb;}
-.market-summary{margin:.35rem 0 1rem 0;color:#cfe6ff;opacity:.95;line-height:1.6}
-.analysis-option{background:rgba(255,255,255,.02); border-radius:12px; padding: 0.7rem; margin-bottom: 0.5rem;}
-.option-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;gap:12px;flex-wrap:wrap}
-.option-label{font-weight:600}.option-meta{font-size:.95rem;color:#D6DAFF;opacity:.95}
-.option-bar-wrap{position:relative;background:#1a2445;border-radius:12px;height:18px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
-.option-badge{position:absolute;z-index:2;left:8px;top:50%;transform:translateY(-50%);padding:2px 10px;font-size:.78rem;color:#fff;background: var(--primary);border-radius:999px;line-height:1.2; font-weight: 600;}
-.option-bar{position:absolute;inset:0;width:0%;height:100%;background:var(--accent);border-radius:12px;transition:width .35s}
-.hero{margin-top:12px;padding:16px;border-radius:16px;background:radial-gradient(1200px 600px at 10% -20%, rgba(20, 184, 166,.14), transparent 40%),radial-gradient(1200px 600px at 110% 120%, rgba(79, 70, 229,.14), transparent 40%),#0b1026;border:1px solid #22304f}
-.hero.positive{border-color:#10b981;box-shadow:0 0 24px rgba(16,185,129,.25)}
-.tag{display:inline-block;background:#121a36;color:#cfe6ff;border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 12px;font-size:.88rem;margin-right:6px; margin-bottom: 6px;}
-.metrics{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px}
-.xg-card{background:#0d1127;border:1px solid var(--border);border-radius:12px;padding:10px 12px}
-.xg-row{display:flex;align-items:center;gap:12px;margin:8px 0}
-.xg-team{flex:0 0 160px;opacity:.95; font-weight: 600;}
-.xg-bar{flex:1;background:#1a2445;height:10px;border-radius:999px;position:relative;overflow:hidden}
-.xg-fill{position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,var(--primary),var(--secondary));transition:width .35s}
-.xg-val{flex:0 0 54px;text-align:right;font-weight:800}
 .progress-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.progress-ring{width:42px;height:42px;border-radius:50%;background:conic-gradient(var(--ring) 0deg, rgba(255,255,255,.18) 0deg);display:none;place-items:center;position:relative}
+.progress-ring{width:42px;height:42px;border-radius:50%;background:conic-gradient(var(--ring) 0deg,rgba(255,255,255,.18) 0deg);display:none;place-items:center;position:relative}
 .progress-ring::before{content:"";position:absolute;inset:6px;border-radius:50%;background:#0c1429}
 .progress-label{position:relative;font-size:12px;color:#e5e7eb}
 details.card > summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}
 details.card > summary::-webkit-details-marker{display:none}
 .chev{display:inline-block;transition:transform .2s;opacity:.95}
 details[open] .chev{transform:rotate(90deg)}
-.hist-item{border:1px solid var(--border); background:#0d1127; border-radius:12px; margin:.6rem 0}
-.hist-item > summary{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:.85rem 1rem;cursor:pointer}
-.hist-title{font-weight:800}.hist-date{color:#98a5cc;font-size:.95rem}
-.hist-body{padding:.5rem 1rem 1rem}
-.hist-open{padding:9px 12px;border:1px solid var(--border);background:#132042;color:#e5e7eb;border-radius:12px;cursor:pointer; font-family: var(--font-family);}
-.hist-preview{color:#a9b7e0;font-size:.9rem;margin-left:auto;margin-right:0;max-width:52%;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
-.modal{position:fixed;inset:0;background:rgba(6,10,22,.65);display:none;align-items:center;justify-content:center;z-index:50; backdrop-filter: blur(4px);}
+.modal{position:fixed;inset:0;background:rgba(6,10,22,.65);display:none;align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(4px)}
 .modal.open{display:flex}
-.modal-card{width:min(980px,92vw);max-height:85vh;overflow:auto;background:var(--glass);border:1px solid var(--border);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.modal-card{width:min(980px,92vw);max-height:85vh;overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
 .modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(15,23,42,.85);backdrop-filter:blur(6px)}
 .modal-body{padding:16px}
-.modal-close{background:#1b294d;color:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer; font-family: var(--font-family);}
-
-.slider-container {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
-}
-.slider-container label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 600;
-}
-input[type="range"] {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 8px;
-    background: #1a2445;
-    border-radius: 5px;
-    outline: none;
-    margin-top: 0.5rem;
-}
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    background: var(--secondary);
-    cursor: pointer;
-    border-radius: 50%;
-    border: 3px solid var(--card);
-}
-input[type="range"]::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    background: var(--secondary);
-    cursor: pointer;
-    border-radius: 50%;
-    border: 3px solid var(--card);
-}
-
-.market-options-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 0.75rem;
-    margin-top: 1rem;
-}
-
-.grid-item {
-    background: rgba(255, 255, 255, 0.03);
-    padding: 0.75rem;
-    border-radius: 8px;
-    font-size: 0.9em;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-}
-.grid-item-label {
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    font-size: 0.9em;
-}
-.grid-item-value {
-    font-size: 1.1em;
-    font-weight: 700;
-    color: var(--secondary);
-}
+.modal-close{background:#1b294d;color:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer;font-family:var(--font-family)}
+.slider-container label{display:flex;justify-content:space-between;align-items:center;font-weight:600}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;background:#1a2445;border-radius:5px;outline:none;margin-top:.5rem}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;background:var(--secondary);cursor:pointer;border-radius:50%;border:3px solid var(--card)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;background:var(--secondary);cursor:pointer;border-radius:50%;border:3px solid var(--card)}
 </style>
 </head>
 <body>
+
 <header class="app-header"><h1>SportElemző Gemini AI</h1></header>
 
 <div class="container layout">
@@ -172,13 +69,10 @@ input[type="range"]::-moz-range-thumb {
       <h2>Beállítások</h2>
        <label for="gasUrl">Google Apps Script URL</label>
        <textarea id="gasUrl" placeholder="Illessze be a közzétett backend script URL-jét..."></textarea>
-       
-       <label for="apiKey">Gemini API Kulcs</label>
-       <textarea id="apiKey" placeholder="Illessze be a Gemini API kulcsát..."></textarea>
-       <p class="muted" style="margin-top:.4rem">A kulcsokat a böngésző helyi tárolójában mentjük.</p>
-
-      <label for="leagueSearch">Keresés ligában</label>
-      <input id="leagueSearch" placeholder="pl. Premier, Serie..." />
+       <p class="muted" style="margin-top:.4rem">A kulcsot a böngésző helyi tárolójában mentjük.</p>
+      
+       <label for="leagueSearch">Keresés ligában</label>
+       <input id="leagueSearch" placeholder="pl. Premier, Serie..." />
 
       <div class="actions">
         <button onclick="loadFixtures()">Meccsek frissítése az API-ról</button>
@@ -199,27 +93,26 @@ input[type="range"]::-moz-range-thumb {
       <h2>Mérkőzés adatainak megadása</h2>
       <div class="row">
         <div class="col">
-          <label for="home">Hazai csapat (A)</label>
+          <label for="home">Hazai csapat</label>
           <input id="home" list="teamlist" placeholder="pl. Hazai csapat neve" />
         </div>
         <div class="col">
-          <label for="away">Vendég csapat (B)</label>
+          <label for="away">Vendég csapat</label>
           <input id="away" list="teamlist" placeholder="pl. Vendég csapat neve" />
         </div>
       </div>
       <datalist id="teamlist"></datalist>
 
-      <div class="slider-container">
+      <div class="slider-container" style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
         <label for="formWeight">
           <span>Forma Súlyozás</span>
           <span id="formWeightLabel">50%</span>
         </label>
         <input type="range" id="formWeight" min="0" max="100" value="50">
-        <p class="muted" style="margin-top: .2rem;">Befolyásolja, hogy a statisztika mennyire vegye figyelembe az utolsó 5 meccs eredményét a teljes szezonos erőhöz képest.</p>
       </div>
 
       <div class="actions progress-wrap">
-        <button id="goBtn" onclick="go()">Meccselemzés kérése a Gemini AI-tól</button>
+        <button id="goBtn" onclick="go()">Meccselemzés kérése a szerverről</button>
         <div id="progress" class="progress-ring"><span class="progress-label">0%</span></div>
         <span id="status" class="muted"></span>
       </div>
@@ -228,8 +121,7 @@ input[type="range"]::-moz-range-thumb {
 
     <div class="card">
       <h2>AI elemzés és javaslat</h2>
-      <div id="metrics"></div>
-      <div id="out" class="result"><pre class="muted">Az AI elemzés itt fog megjelenni… Add meg az API kulcsokat, frissítsd a meccseket, válassz egyet, majd kattints az elemzés gombra.</pre></div>
+      <div id="out" class="result"><pre class="muted">Az AI elemzés itt fog megjelenni… Add meg a backend URL-t, frissítsd a meccseket, válassz egyet, majd kattints az elemzés gombra.</pre></div>
     </div>
 
     <details class="card" id="histDetails">
@@ -255,24 +147,17 @@ let __historyCache = [];
 let __allLeagues = [];
 let __favLeagues = new Set();
 let __fixtures = [];
-let __teamRatings = {}; 
-let __apiKey = '';
 let __gasUrl = '';
-
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=';
 
 // --- Segédfüggvények ---
 function escapeHtml(s){return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[m]);}
-function clamp(x,minv,maxv){ return Math.max(minv, Math.min(maxv, x)); }
-function normalizeTeamKey(n){ return String(n||"").toLowerCase().trim().replace(/\sfc$/, ''); }
 
 // --- Folyamatjelző ---
 function setProgress(pct, msg = null) {
   const el = document.getElementById('progress');
   const goBtn = document.getElementById('goBtn');
   const statusEl = document.getElementById('status');
-
-  const v = clamp(Math.round(pct || 0), 0, 100);
+  const v = Math.max(0, Math.min(100, Math.round(pct || 0)));
   if (v > 0 && v < 100) {
       el.style.display = 'grid';
       goBtn.disabled = true;
@@ -287,26 +172,17 @@ function setProgress(pct, msg = null) {
 
 // --- DOM betöltésekor futó inicializáló függvény ---
 document.addEventListener("DOMContentLoaded", function(){
-    __apiKey = localStorage.getItem('geminiApiKey') || '';
     __gasUrl = localStorage.getItem('gasUrl') || '';
-    document.getElementById('apiKey').value = __apiKey;
     document.getElementById('gasUrl').value = __gasUrl;
 
-    document.getElementById('apiKey').addEventListener('input', (e) => {
-        __apiKey = e.target.value;
-        localStorage.setItem('geminiApiKey', __apiKey);
-    });
     document.getElementById('gasUrl').addEventListener('input', (e) => {
         __gasUrl = e.target.value;
         localStorage.setItem('gasUrl', __gasUrl);
     });
-
-    const formWeightSlider = document.getElementById('formWeight');
-    const formWeightLabel = document.getElementById('formWeightLabel');
-    formWeightSlider.addEventListener('input', () => {
-        formWeightLabel.textContent = `${formWeightSlider.value}%`;
+    
+    document.getElementById('formWeight').addEventListener('input', (e) => {
+        document.getElementById('formWeightLabel').textContent = `${e.target.value}%`;
     });
-
 
     renderHistory(getHistory());
     const favsRaw = localStorage.getItem("favLeagues") || "[]";
@@ -326,7 +202,7 @@ function populateTeams(fixtures){
   document.getElementById('teamlist').innerHTML = uniq.map(t => `<option value="${escapeHtml(t)}"></option>`).join('');
 }
 
-// --- Meccsek és RATINGEK betöltése ---
+// --- Kezdeti adatok betöltése ---
 async function loadFixtures() {
     const statusEl = document.getElementById('fxStatus');
     statusEl.textContent = 'Adatok lekérése a szerverről...';
@@ -337,23 +213,17 @@ async function loadFixtures() {
 
     try {
         const response = await fetch(__gasUrl);
-        if (!response.ok) {
-            throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
         const data = await response.json();
-        
-        if (data.error) {
-           throw new Error(`Backend hiba: ${data.error}`);
-        }
+        if (data.error) throw new Error(`Backend hiba: ${data.error}`);
 
         __allLeagues = data.leagues || [];
         __fixtures = data.fixtures || [];
-        __teamRatings = data.ratings || {}; 
-
+        
         renderLeagueList();
         renderFixtureList();
         populateTeams(__fixtures);
-        statusEl.textContent = `Sikeres frissítés! ${__fixtures.length} meccs és ${Object.keys(__teamRatings).length} csapat adatai betöltve.`;
+        statusEl.textContent = `Sikeres frissítés! ${__fixtures.length} meccs betöltve.`;
     } catch (e) {
         statusEl.textContent = `Hiba a frissítés során: ${e.message}`;
         console.error(e);
@@ -390,7 +260,7 @@ function renderFixtureList(){
     const local = new Date(fx.utcKickoff);
     const dt = `${local.getFullYear()}-${String(local.getMonth()+1).padStart(2,'0')}-${String(local.getDate()).padStart(2,'0')} ${String(local.getHours()).padStart(2,'0')}:${String(local.getMinutes()).padStart(2,'0')}`;
     return `
-      <div class="fx-item" data-id="${escapeHtml(fx.id||'')}" data-home="${escapeHtml(fx.home)}" data-away="${escapeHtml(fx.away)}">
+      <div class="fx-item" data-home="${escapeHtml(fx.home)}" data-away="${escapeHtml(fx.away)}">
         <div>
           <div class="fx-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div>
           <div class="fx-meta">${escapeHtml(fx.league)} · ${dt}</div>
@@ -408,311 +278,57 @@ function fillAndAnalyze(home, away){
   go();
 }
 
-// --- Fő Elemzési Folyamat ---
+// --- Fő Elemzési Folyamat (Egyszerűsített) ---
 async function go(){
-  if (!__apiKey) {
-      document.getElementById("status").textContent = "Hiba: Hiányzó Gemini API Kulcs.";
-      alert("Kérlek, add meg a Gemini API kulcsodat a Beállításoknál!");
-      return;
-  }
-  
   const home = document.getElementById("home").value.trim();
   const away = document.getElementById("away").value.trim();
+  const formWeight = document.getElementById("formWeight").value;
+
   if (!home || !away) {
       document.getElementById("status").textContent = "Hiba: Mindkét csapat nevét meg kell adni.";
       return;
   }
+  if (!__gasUrl) {
+      document.getElementById("status").textContent = "Hiba: Hiányzó Google Apps Script URL.";
+      return;
+  }
 
   try{
-    setProgress(1, "Elemzés indítása...");
-    document.getElementById("metrics").innerHTML = "";
-    document.getElementById("out").innerHTML="<pre class='muted'>Számítások és szimulációk futtatása...</pre>";
+    setProgress(25, "Kérés küldése a szervernek...");
+    document.getElementById("out").innerHTML="<pre class='muted'>Szerver válaszára várunk (ez akár 20-30 mp is lehet)...</pre>";
 
-    setProgress(10, "xG becslése a csapat-specifikus adatokkal...");
-    await new Promise(r => setTimeout(r, 50));
-    const { mu_h, mu_a, homeRating, awayRating } = estimateXG(home, away);
+    const analysisUrl = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&formWeight=${formWeight}`;
+    const response = await fetch(analysisUrl);
+    if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
     
-    setProgress(18, `μ (H:${mu_h.toFixed(2)} / V:${mu_a.toFixed(2)})`);
-    await new Promise(r => setTimeout(r, 50));
-    const sim = await simulateMatchProgress(mu_h, mu_a, 50000, (pct, msg) => setProgress(18 + pct * 0.7, msg));
-    
-    setProgress(88, "Részletes elemzés összeállítása...");
-    
-    document.getElementById("metrics").innerHTML = renderMetrics({ teams: {home, away}, xg: { home: mu_h, away: mu_a }, homeRating, awayRating });
-    
-    buildAndRenderSkeleton(sim, { home, away, mu_h, mu_a });
+    setProgress(75, "Válasz feldolgozása...");
+    const data = await response.json();
+    if (data.error) throw new Error(`Szerver oldali hiba: ${data.error}`);
 
-    setProgress(98, "Előzmények mentése...");
+    document.getElementById('out').innerHTML = data.html || '<p class="muted">A szerver nem küldött elemzést.</p>';
+
+    // Előzmények mentése
     const record = {
-      timestamp: new Date().toISOString(), home, away, modelLabel: "Gemini AI (multi-call)", analysis: "<body>placeholder</body>",
-      xg: { home: mu_h, away: mu_a },
+      timestamp: new Date().toISOString(), home, away, 
+      analysis: data.html
     };
     saveAnalysis(record);
     renderHistory(getHistory());
     
     setProgress(100, "Kész.");
   } catch(e) {
-    document.getElementById("status").textContent="Hiba: " + (e.message||e);
+    document.getElementById("status").textContent="Hiba: " + e.message;
     document.getElementById("out").innerHTML = `<pre style="color: #ff5555;">Hiba történt: ${escapeHtml(e.message)}</pre>`;
     setProgress(0);
   }
 }
 
-// --- ÚJ, KIS API HÍVÓ FÜGGVÉNY ---
-async function callGeminiForText(prompt, tools = []) {
-    const payload = {
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4, topK: 32, topP: 1, maxOutputTokens: 2048 }
-    };
-    if (tools.length > 0) {
-        payload.tools = tools;
-    }
-    try {
-        const response = await fetch(API_URL + __apiKey, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-        });
-        if (!response.ok) { 
-            const error = await response.json();
-            return `API hiba: ${error?.error?.message || 'Ismeretlen hiba'}`;
-        }
-        const result = await response.json();
-        return result?.candidates?.[0]?.content?.parts?.[0]?.text || "Az AI nem adott vissza érdemi elemzést.";
-    } catch (e) {
-        return `Hálózati hiba: ${e.message}`;
-    }
-}
-
-
-// --- Statisztikai Modellek ---
-
-function findBestRatingKey(teamName, ratingKeys) {
-    if (!teamName || ratingKeys.length === 0) return null;
-    const normalizedName = normalizeTeamKey(teamName);
-    for (const key of ratingKeys) {
-        if (normalizedName === key) return key;
-    }
-    const containMatches = [];
-    for (const key of ratingKeys) {
-        if (normalizedName.includes(key) || key.includes(normalizedName)) {
-            containMatches.push(key);
-        }
-    }
-    if (containMatches.length > 0) {
-        containMatches.sort((a, b) => a.length - b.length);
-        return containMatches[0];
-    }
-    return null;
-}
-
-function calculateFormScore(formString) {
-    if (!formString || formString === 'N/A') return 0.5;
-    const points = formString.split('').reduce((acc, result) => {
-        if (result.toUpperCase() === 'W') return acc + 3;
-        if (result.toUpperCase() === 'D') return acc + 1;
-        return acc;
-    }, 0);
-    return points / 15;
-}
-
-function estimateXG(homeTeam, awayTeam){
-  const ratingKeys = Object.keys(__teamRatings);
-  const homeRatingKey = findBestRatingKey(homeTeam, ratingKeys);
-  const awayRatingKey = findBestRatingKey(awayTeam, ratingKeys);
-  
-  const homeRating = __teamRatings[homeRatingKey] || {atk:1, def:1, ha:0.15, form: 'N/A'};
-  const awayRating = __teamRatings[awayRatingKey] || {atk:1, def:1, ha:0.15, form: 'N/A'};
-
-  const homeFormScore = calculateFormScore(homeRating.form);
-  const awayFormScore = calculateFormScore(awayRating.form);
-
-  const homeFormMultiplier = 0.8 + (homeFormScore * 0.4);
-  const awayFormMultiplier = 0.8 + (awayFormScore * 0.4);
-
-  const formWeight = document.getElementById('formWeight').value / 100;
-
-  const leagueAvg = 2.65;
-  const base = leagueAvg / 2;
-
-  const base_mu_h = Math.max(0.05, base * homeRating.atk * awayRating.def * (1 + homeRating.ha));
-  const base_mu_a = Math.max(0.05, base * awayRating.atk * homeRating.def * (1 - (homeRating.ha * 0.6)));
-  
-  const form_mu_h = base_mu_h * homeFormMultiplier;
-  const form_mu_a = base_mu_a * awayFormMultiplier;
-  
-  const mu_h = (base_mu_h * (1 - formWeight)) + (form_mu_h * formWeight);
-  const mu_a = (base_mu_a * (1 - formWeight)) + (form_mu_a * formWeight);
-  
-  return { mu_h, mu_a, homeRating, awayRating };
-}
-function samplePoisson(lambda){ const L=Math.exp(-lambda); let k=0,p=1; do{ k++; p*=Math.random(); }while(p>L); return k-1; }
-function sampleGoalsOD(mu_h, mu_a){ const kappa=0.05*Math.min(mu_h,mu_a), inflate=1.10; const y0=samplePoisson(kappa); const y1=samplePoisson(Math.max(mu_h*inflate-kappa,0.001)); const y2=samplePoisson(Math.max(mu_a*inflate-kappa,0.001)); return { gh:y0+y1, ga:y0+y2 }; }
-async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
-  sims = sims || 10000;
-  let home=0,draw=0,away=0,btts=0;
-  let over15=0, over25=0;
-  let ht_h=0, ht_d=0, ht_a=0;
-  const htft={
-    'H/H':0, 'H/D':0, 'H/A':0,
-    'D/H':0, 'D/D':0, 'D/A':0,
-    'A/H':0, 'A/D':0, 'A/A':0
-  };
-  const htShare = 0.45;
-
-  for(let i=0;i<sims;i++){
-    const ht = sampleGoalsOD(mu_h * htShare, mu_a * htShare);
-    const sh = sampleGoalsOD(mu_h * (1-htShare), mu_a * (1-htShare));
-    const gh = ht.gh + sh.gh;
-    const ga = ht.ga + sh.ga;
-    const totalGoals = gh + ga;
-
-    if (gh>ga) home++; else if (gh===ga) draw++; else away++;
-    if (gh>0 && ga>0) btts++;
-    if(totalGoals > 1.5) over15++;
-    if(totalGoals > 2.5) over25++;
-    const htRes = ht.gh > ht.ga ? 'H' : (ht.gh === ht.ga ? 'D' : 'A');
-    if (htRes === 'H') ht_h++; else if (htRes === 'D') ht_d++; else ht_a++;
-    
-    const ftRes = gh > ga ? 'H' : (gh === ga ? 'D' : 'A');
-    const keyHTFT = `${htRes}/${ftRes}`;
-    if (htft.hasOwnProperty(keyHTFT)) {
-        htft[keyHTFT]++;
-    }
-    
-    if (i % 2000 === 0) {
-        const pct = (i / sims) * 100;
-        if(onProgress) onProgress(pct, `Szimuláció ${i}/${sims}`);
-        await new Promise(r => setTimeout(r, 0));
-    }
-  }
-
-  const toPct=x=>(100*x/sims);
-
-  return { 
-    pHome:toPct(home), pDraw:toPct(draw), pAway:toPct(away), pBTTS:toPct(btts), 
-    pOver15:toPct(over15), pUnder15:100-toPct(over15),
-    pOver25:toPct(over25), pUnder25:100-toPct(over25),
-    pHT_H: toPct(ht_h), pHT_D: toPct(ht_d), pHT_A: toPct(ht_a),
-    pHH: toPct(htft['H/H']), pHD: toPct(htft['H/D']), pHA: toPct(htft['H/A']),
-    pDH: toPct(htft['D/H']), pDD: toPct(htft['D/D']), pDA: toPct(htft['D/A']),
-    pAH: toPct(htft['A/H']), pAD: toPct(htft['A/D']), pAA: toPct(htft['A/A']),
-  };
-}
-function erf(x){const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;const sign=x<0?-1:1;x=Math.abs(x);const t=1/(1+p*x);const y=1-((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);return sign*y;}
-function probOverNormal(threshold, mean, sd){ const z = (threshold - mean) / (sd || 1); return 1 - 0.5 * (1 + erf(z/Math.SQRT2));}
-function estimateCorners(mu_h, mu_a){ const mean=clamp(8+0.8*(mu_h+mu_a)-0.4*Math.abs(mu_h-mu_a),6,12.5),sd=2.6; return {mean,pOver95:probOverNormal(9.5,mean,sd)};}
-function estimateCards(mu_h, mu_a){ const mean=clamp(4.2+0.6*((mu_h+mu_a)-2.6),2.5,7.2),sd=1.8; return {mean,sd,pOver45:probOverNormal(4.5,mean,sd)};}
-
-
-// --- Eredmény Megjelenítés és Előzmények ---
-function renderMetrics(resObj){
-  const tH = escapeHtml(resObj.teams?.home || 'Hazai');
-  const tA = escapeHtml(resObj.teams?.away || 'Vendég');
-  const xh = Number(resObj.xg?.home || 0), xa = Number(resObj.xg?.away || 0);
-  const maxX = Math.max(1.2, xh, xa);
-
-  let matchInfoH = resObj.homeRating?.form ? `Forma: <b>${resObj.homeRating.form}</b>` : '<span style="color:#ffcc00;">Nincs statisztika, általános modellel számolva</span>';
-  let matchInfoA = resObj.awayRating?.form ? `Forma: <b>${resObj.awayRating.form}</b>` : '<span style="color:#ffcc00;">Nincs statisztika, általános modellel számolva</span>';
-
-  return `
-  <div class="metrics">
-    <div class="xg-card">
-      <div class="badge">Várható gólok (xG) - Statisztikák és forma alapján</div>
-      <div class="xg-row">
-        <div class="xg-team">${tH} <br><small class="muted">${matchInfoH}</small></div>
-        <div class="xg-bar"><div class="xg-fill" style="width:${Math.min(100, (xh/maxX)*100)}%"></div></div>
-        <div class="xg-val">${xh.toFixed(2)}</div>
-      </div>
-      <div class="xg-row">
-        <div class="xg-team">${tA} <br><small class="muted">${matchInfoA}</small></div>
-        <div class="xg-bar"><div class="xg-fill" style="width:${Math.min(100, (xa/maxX)*100)}%"></div></div>
-        <div class="xg-val">${xa.toFixed(2)}</div>
-      </div>
-    </div>
-  </div>`;
-}
-
-// --- ÚJ, ÁTALAKÍTOTT MEGJELENÍTŐ FÜGGVÉNY ---
-function buildAndRenderSkeleton(sim, matchData) {
-    const { home, away, mu_h, mu_a } = matchData;
-    const corners = estimateCorners(mu_h, mu_a);
-    const cards = estimateCards(mu_h, mu_a);
-
-    const loadingText = `<p class="market-summary muted">Elemzés betöltése...</p>`;
-
-    const markets = [
-        { id: 'synthesis', title: 'Átfogó Szintézis', prompt: `Készíts egy 3-4 mondatos, magyar nyelvű átfogó elemzést a ${home} vs ${away} meccsről. Vedd figyelembe a következő adatokat: Hazai xG: ${mu_h.toFixed(2)}, Vendég xG: ${mu_a.toFixed(2)}. Hazai győzelem esélye: ${sim.pHome.toFixed(1)}%, Döntetlen: ${sim.pDraw.toFixed(1)}%, Vendég győzelem: ${sim.pAway.toFixed(1)}%. Használd a Google Keresőt a legfrissebb hírekért (sérültek, H2H).`, tools: [{"google_search": {}}] },
-        { id: '1x2', title: '1X2 (VÉGEREDMÉNY)', prompt: `Adott a következő valószínűségek a ${home} vs ${away} meccs 1X2 piacára: Hazai győzelem ${sim.pHome.toFixed(1)}%, Döntetlen ${sim.pDraw.toFixed(1)}%, Vendég győzelem ${sim.pAway.toFixed(1)}%. Írj egy 2-3 mondatos, magyar nyelvű elemzést erről a piacról.`, data: [{ label: 'Hazai', value: sim.pHome }, { label: 'Döntetlen', value: sim.pDraw }, { label: 'Vendég', value: sim.pAway }] },
-        { id: 'goals', title: 'GÓLOK SZÁMA (OVER/UNDER)', prompt: `Elemezd a ${home} vs ${away} meccs góljainak számát 2-3 mondatban (magyarul). A szimuláció eredményei: Over 2.5: ${sim.pOver25.toFixed(1)}%, Under 2.5: ${sim.pUnder25.toFixed(1)}%.`, data: [{ label: 'Over 1.5', value: sim.pOver15 }, { label: 'Under 1.5', value: sim.pUnder15 }, { label: 'Over 2.5', value: sim.pOver25 }, { label: 'Under 2.5', value: sim.pUnder25 }] },
-        { id: 'btts', title: 'MINDKÉT CSAPAT SZEREZ GÓLT (BTTS)', prompt: `A ${home} vs ${away} meccsen a "Mindkét csapat szerez gólt" (BTTS) valószínűsége ${sim.pBTTS.toFixed(1)}%. Elemezd ezt 2-3 mondatban magyarul.`, data: [{ label: 'Igen', value: sim.pBTTS }, { label: 'Nem', value: 100 - sim.pBTTS }] },
-        { id: 'ht', title: 'FÉLIDEI EREDMÉNY (HT)', prompt: `A ${home} vs ${away} meccsen a félidei eredmény valószínűségei: Hazai vezet ${sim.pHT_H.toFixed(1)}%, Döntetlen ${sim.pHT_D.toFixed(1)}%, Vendég vezet ${sim.pHT_A.toFixed(1)}%. Írj egy rövid, magyar nyelvű elemzést.`, data: [{ label: 'Hazai (HT)', value: sim.pHT_H }, { label: 'Döntetlen (HT)', value: sim.pHT_D }, { label: 'Vendég (HT)', value: sim.pHT_A }] },
-        { id: 'htft', title: 'FÉLIDŐ/VÉGJÁTÉK (HT/FT)', isGrid: true, prompt: `A ${home} vs ${away} meccs Félidő/Végjáték piacát elemezd röviden magyarul. H/H: ${sim.pHH.toFixed(1)}%, D/D: ${sim.pDD.toFixed(1)}%, V/V (A/A): ${sim.pAA.toFixed(1)}%.`, data: [{l:'H/H',v:sim.pHH},{l:'D/H',v:sim.pDH},{l:'V/H',v:sim.pAH},{l:'H/D',v:sim.pHD},{l:'D/D',v:sim.pDD},{l:'V/D',v:sim.pAD},{l:'H/V',v:sim.pHA},{l:'D/V',v:sim.pDA},{l:'V/V',v:sim.pAA}] },
-        { id: 'cards', title: 'LAPOK (OVER/UNDER)', prompt: `A ${home} vs ${away} meccsen a 4.5 lap feletti esemény valószínűsége ${ (cards.pOver45*100).toFixed(1)}%. Elemezd ezt röviden magyarul, figyelembe véve a meccs várható dinamikáját.`, data: [{ label: 'Over 4.5 lap', value: cards.pOver45*100 }, { label: 'Under 4.5 lap', value: 100 - (cards.pOver45*100) }] },
-        { id: 'corners', title: 'SZÖGLETEK (OVER/UNDER)', prompt: `A ${home} vs ${away} meccsen a 9.5 szöglet feletti esemény valószínűsége ${(corners.pOver95*100).toFixed(1)}%. Elemezd ezt röviden magyarul.`, data: [{ label: 'Over 9.5 szöglet', value: corners.pOver95*100 }, { label: 'Under 9.5 szöglet', value: 100 - (corners.pOver95*100) }] },
-        { id: 'best-tip', title: 'Legjobb Tipp (Bankár) ⭐', isHero: true, prompt: `Az összes adat (xG: H ${mu_h.toFixed(2)}, V ${mu_a.toFixed(2)}; 1X2: H ${sim.pHome.toFixed(1)}%, D ${sim.pDraw.toFixed(1)}%, V ${sim.pAway.toFixed(1)}%; Gólok O/U 2.5: O ${sim.pOver25.toFixed(1)}%) és a ${home} vs ${away} meccshez kapcsolódó Google keresési eredmények (H2H, forma, sérültek) alapján válassz ki egyetlen tippet, amit a legbiztosabbnak tartasz. Adj meg egy bizalmi szintet 1-10-ig, és indokold meg részletesen, magyarul. Formátum: "[Piac] – [Opció]\n**Bizalmi Szint: [X] / 10**\nINDOKLÁS: [Részletes indoklás...]"`, tools: [{"google_search": {}}] },
-    ];
-
-    let html = '';
-    markets.forEach(market => {
-        if (market.isHero) {
-            html += `<div class="hero positive"><h3>${market.title}</h3><div id="desc-${market.id}">${loadingText}</div></div>`;
-        } else {
-            html += `<div class="analysis-market"><h3>${market.title}</h3><div id="desc-${market.id}">${loadingText}</div>`;
-            if (market.data) {
-                if (market.isGrid) {
-                    html += `<div class="market-options-grid">`;
-                    market.data.forEach(opt => {
-                        const label = opt.l.replace('V', 'A').replace(/\//g, ' / ').replace(/A/g, 'V');
-                        const probValue = opt.v.toFixed(1);
-                        html += `<div class="grid-item"><div class="grid-item-label">${label}</div><div class="grid-item-value">${probValue}%</div></div>`;
-                    });
-                    html += `</div>`;
-                } else {
-                    market.data.forEach(opt => {
-                        const probValue = opt.value.toFixed(1);
-                        html += `<div class="analysis-option"><div class="option-row"><span class="option-label">${escapeHtml(opt.label)}</span><span class="option-meta">Valószínűség: <b>${probValue}%</b></span></div><div class="option-bar-wrap"><span class="option-badge">${probValue}%</span><div class="option-bar" style="width:${probValue}%"></div></div></div>`;
-                    });
-                }
-            }
-            html += `</div>`;
-        }
-    });
-    document.getElementById('out').innerHTML = html;
-
-    markets.forEach(market => {
-        callGeminiForText(market.prompt, market.tools).then(text => {
-            const el = document.getElementById(`desc-${market.id}`);
-            if (el) {
-                if (market.isHero) {
-                    const confidenceMatch = text.match(/\*\*Bizalmi Szint: ([\d\.]+\s*\/\s*10)\*\*/);
-                    let mainTip = text;
-                    let bankarHtml = '';
-                    if (confidenceMatch) {
-                        bankarHtml += `<div class="tag">Bizalmi Szint: <b>${confidenceMatch[1]}</b></div>`;
-                        mainTip = mainTip.replace(confidenceMatch[0], '');
-                    }
-                    bankarHtml += `<div class="market-summary">${mainTip.replace(/INDOKLÁS:/, '<strong>INDOKLÁS:</strong>')}</div>`;
-                    el.innerHTML = bankarHtml;
-                } else {
-                    el.innerHTML = `<p class="market-summary">${escapeHtml(text)}</p>`;
-                }
-            }
-        });
-    });
-}
-
+// --- Előzmények Kezelése ---
 function saveAnalysis(record){
   let history = getHistory();
-  const existing = history.find(h => h.home === record.home && h.away === record.away && new Date(h.timestamp).toDateString() === new Date(record.timestamp).toDateString());
-  if (!existing) {
-    history.push(record);
-  }
+  history.push(record);
   if (history.length > 50) history = history.slice(history.length - 50);
-  // Késleltetett mentés, hogy a szövegeknek legyen idejük betöltődni. Ez nem tökéletes megoldás.
-  setTimeout(() => {
-    const finalHtml = document.getElementById('out').innerHTML;
-    record.analysis = finalHtml;
-    localStorage.setItem("analysisHistory", JSON.stringify(history));
-  }, 5000); // 5 másodperc várakozás
+  localStorage.setItem("analysisHistory", JSON.stringify(history));
 }
 function getHistory(){
     const raw = localStorage.getItem("analysisHistory");
@@ -748,4 +364,3 @@ function closeModal(){ document.getElementById('modal').classList.remove('open')
 </script>
 </body>
 </html>
-
