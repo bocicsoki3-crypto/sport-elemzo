@@ -502,7 +502,6 @@ function buildPrompts(home, away, mu_h, mu_a, sim, corners, cards, homeRating, a
 4.  **BANKÁR TIPP:** Végül az összesített tudásod alapján válassz ki egyetlen tippet, amit a legbiztosabbnak tartasz, adj mellé egy bizalmi szintet és részletes indoklást.
 Szigorúan kövesd a kért kimeneti formátumot, egyetlen szekciót se hagyj üresen!`.trim();
 
-    // JAVÍTVA: A Félidő/Végjáték (HT/FT) résznél a szimulációból kapott, javított változóneveket (pl. pHA, pAA) használjuk.
     const userPrompt = `
 Készíts egy teljeskörű, részletes elemzést a ${home} vs ${away} mérkőzésről.
 
@@ -665,7 +664,6 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
   let over15=0, over25=0, over35=0;
   let ht_h=0, ht_d=0, ht_a=0;
   const cs={};
-  // JAVÍTVA: A kulcsokban 'V' (Vendég) helyett végig 'A'-t (Away) használunk, hogy konzisztens legyen a generált htRes/ftRes ('H'/'D'/'A') értékekkel.
   const htft={
     'H/H':0, 'H/D':0, 'H/A':0,
     'D/H':0, 'D/D':0, 'D/A':0,
@@ -705,7 +703,6 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
   const toPct=x=>(100*x/sims);
   const topCS=Object.entries(cs).map(([k,v])=>({score:k,p:toPct(v)})).sort((a,b)=>b.p-a.p).slice(0,6);
 
-  // JAVÍTVA: A return object kulcsai és a htft objektum kulcsai most már megegyeznek.
   return { 
     pHome:toPct(home), pDraw:toPct(draw), pAway:toPct(away), pBTTS:toPct(btts), 
     pOver15:toPct(over15), pUnder15:100-toPct(over15),
@@ -813,7 +810,7 @@ function buildAnalysisHtml(res) {
                     const htftRegex = /-\s(.*?):\s([\d\.,]+)%\s*\|\s(.*?):\s([\d\.,]+)%\s*\|\s(.*?):\s([\d\.,]+)%/g;
                     while ((optionMatch = htftRegex.exec(content)) !== null) {
                         for (let i = 1; i < optionMatch.length; i += 2) {
-                             const label = optionMatch[i].trim().replace(/\//g, ' / ');
+                             const label = optionMatch[i].trim().replace(/\//g, ' / ').replace(/A/g, 'V');
                              const prob = optionMatch[i+1].replace(',', '.');
                              optionsHtml += `<div class="grid-item"><div class="grid-item-label">${escapeHtml(label)}</div><div class="grid-item-value">${prob}%</div></div>`;
                              optionCount++;
