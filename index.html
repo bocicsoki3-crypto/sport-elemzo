@@ -440,11 +440,8 @@ async function go(){
     
     document.getElementById("metrics").innerHTML = renderMetrics({ teams: {home, away}, xg: { home: mu_h, away: mu_a }, homeRating, awayRating });
     
-    // HTML váz kirajzolása és a szövegek párhuzamos lekérése
-    buildAndRenderSkeleton(sim, { home, away, mu_h, mu_a, homeRating, awayRating });
+    buildAndRenderSkeleton(sim, { home, away, mu_h, mu_a });
 
-    // Mivel a szövegek aszinkron módon töltődnek be, a mentést egy későbbi ponton kellene megoldani,
-    // de az egyszerűség kedvéért most egy egyszerűsített mentést végzünk.
     setProgress(98, "Előzmények mentése...");
     const record = {
       timestamp: new Date().toISOString(), home, away, modelLabel: "Gemini AI (multi-call)", analysis: "<body>placeholder</body>",
@@ -487,6 +484,36 @@ async function callGeminiForText(prompt, tools = []) {
 
 
 // --- Statisztikai Modellek ---
+
+function findBestRatingKey(teamName, ratingKeys) {
+    if (!teamName || ratingKeys.length === 0) return null;
+    const normalizedName = normalizeTeamKey(teamName);
+    for (const key of ratingKeys) {
+        if (normalizedName === key) return key;
+    }
+    const containMatches = [];
+    for (const key of ratingKeys) {
+        if (normalizedName.includes(key) || key.includes(normalizedName)) {
+            containMatches.push(key);
+        }
+    }
+    if (containMatches.length > 0) {
+        containMatches.sort((a, b) => a.length - b.length);
+        return containMatches[0];
+    }
+    return null;
+}
+
+function calculateFormScore(formString) {
+    if (!formString || formString === 'N/A') return 0.5;
+    const points = formString.split('').reduce((acc, result) => {
+        if (result.toUpperCase() === 'W') return acc + 3;
+        if (result.toUpperCase() === 'D') return acc + 1;
+        return acc;
+    }, 0);
+    return points / 15;
+}
+
 function estimateXG(homeTeam, awayTeam){
   const ratingKeys = Object.keys(__teamRatings);
   const homeRatingKey = findBestRatingKey(homeTeam, ratingKeys);
@@ -524,7 +551,6 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
   let home=0,draw=0,away=0,btts=0;
   let over15=0, over25=0;
   let ht_h=0, ht_d=0, ht_a=0;
-  const cs={};
   const htft={
     'H/H':0, 'H/D':0, 'H/A':0,
     'D/H':0, 'D/D':0, 'D/A':0,
