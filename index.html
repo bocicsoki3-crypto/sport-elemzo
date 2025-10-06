@@ -259,7 +259,7 @@ let __teamRatings = {};
 let __apiKey = '';
 let __gasUrl = '';
 
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=';
+const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=';
 
 // --- Segédfüggvények ---
 function escapeHtml(s){return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[m]);}
@@ -748,3 +748,4 @@ function closeModal(){ document.getElementById('modal').classList.remove('open')
 </script>
 </body>
 </html>
+
