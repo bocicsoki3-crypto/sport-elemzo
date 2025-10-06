@@ -84,6 +84,19 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;background:var(--seco
 .grid-item{background:rgba(255,255,255,.03);padding:.75rem;border-radius:8px;font-size:.9em;display:flex;flex-direction:column;justify-content:center;text-align:center}
 .grid-item-label{font-weight:600;margin-bottom:.25rem;font-size:.9em}
 .grid-item-value{font-size:1.1em;font-weight:700;color:var(--secondary)}
+
+/* --- ÚJ: Skeleton Loader Stílusok --- */
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+.skeleton { position: relative; overflow: hidden; background-color: #131c3a; }
+.skeleton::after {
+  content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.skeleton-text { height: 1em; margin-bottom: 0.5rem; border-radius: 4px; }
+.skeleton-title { width: 40%; height: 1.5em; margin-bottom: 1rem; border-radius: 6px; }
+.skeleton-bar { height: 52px; border-radius: 12px; }
 </style>
 </head>
 <body>
@@ -175,7 +188,7 @@ let __historyCache = [];
 let __allLeagues = [];
 let __favLeagues = new Set();
 let __fixtures = [];
-let __masterTeamList = []; // ÚJ: A teljes, szűretlen csapatlista tárolása
+let __masterTeamList = [];
 let __gasUrl = '';
 
 // --- Segédfüggvény ---
@@ -213,7 +226,6 @@ document.addEventListener("DOMContentLoaded", function(){
         document.getElementById('formWeightLabel').textContent = `${e.target.value}%`;
     });
 
-    // ÚJ: Eseményfigyelők az autocomplete funkcióhoz
     document.getElementById('home').addEventListener('input', handleTeamInput);
     document.getElementById('away').addEventListener('input', handleTeamInput);
 
@@ -224,7 +236,7 @@ document.addEventListener("DOMContentLoaded", function(){
     document.getElementById('leagueSearch').addEventListener('input', renderLeagueList);
 });
 
-// --- ÚJ: Csapatlista szűrése és frissítése ---
+// --- Csapatlista szűrése és frissítése (Autocomplete) ---
 function updateDatalist(teamArray) {
     document.getElementById('teamlist').innerHTML = teamArray.map(t => `<option value="${escapeHtml(t)}"></option>`).join('');
 }
@@ -232,14 +244,13 @@ function updateDatalist(teamArray) {
 function handleTeamInput(event) {
     const query = event.target.value.toLowerCase();
     if (!query) {
-        updateDatalist(__masterTeamList); // Ha üres a mező, mutasd a teljes listát
+        updateDatalist(__masterTeamList);
         return;
     }
     const filteredTeams = __masterTeamList.filter(team => team.toLowerCase().includes(query));
     updateDatalist(filteredTeams);
 }
 
-// --- Csapatlista feltöltése ---
 function populateTeams(fixtures){
   const teams = new Set();
   (fixtures || []).forEach(f => {
@@ -247,8 +258,8 @@ function populateTeams(fixtures){
       teams.add(f.away);
   });
   const uniq = Array.from(teams).sort((a,b)=>a.localeCompare(b,'hu'));
-  __masterTeamList = uniq; // ÚJ: Mesterlista mentése
-  updateDatalist(__masterTeamList); // Kezdeti lista megjelenítése
+  __masterTeamList = uniq;
+  updateDatalist(__masterTeamList);
 }
 
 // --- Kezdeti adatok betöltése a szerverről ---
@@ -327,6 +338,36 @@ function fillAndAnalyze(home, away){
   go();
 }
 
+// --- ÚJ: Skeleton Loader ---
+function showSkeletonLoader() {
+    const skeletonCard = `
+        <div class="analysis-market">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-text" style="width: 90%;"></div>
+            <div class="skeleton skeleton-text" style="width: 80%;"></div>
+            <div class="skeleton skeleton-bar" style="margin-top: 1rem;"></div>
+        </div>
+    `;
+    const skeletonHero = `
+        <div class="hero">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-text" style="width: 95%;"></div>
+            <div class="skeleton skeleton-text" style="width: 85%;"></div>
+        </div>
+    `;
+    const metricsSkeleton = `
+        <div class="metrics">
+            <div class="xg-card">
+                <div class="skeleton skeleton-title" style="width: 60%; height: 1em;"></div>
+                <div class="skeleton skeleton-bar" style="height: 38px; margin: 8px 0;"></div>
+                <div class="skeleton skeleton-bar" style="height: 38px;"></div>
+            </div>
+        </div>
+    `;
+    document.getElementById('metrics').innerHTML = metricsSkeleton;
+    document.getElementById('out').innerHTML = skeletonCard.repeat(2) + skeletonHero;
+}
+
 // --- Fő Elemzési Folyamat ---
 async function go(){
   const home = document.getElementById("home").value.trim();
@@ -338,22 +379,32 @@ async function go(){
       return;
   }
   if (!__gasUrl) {
-      document.getElementById("status").textContent = "Hiba: Hiányzik a Google Apps Script URL.";
+      document.getElementById("status").textContent = "Hiba: Hiányzó Google Apps Script URL.";
       return;
   }
 
   try{
-    setProgress(25, "Kérés küldése a szervernek...");
-    document.getElementById("out").innerHTML="<pre class='muted'>Szerver válaszára várunk (ez akár 20-30 mp is lehet)...</pre>";
+    setProgress(1, "Elemzés indítása...");
+    showSkeletonLoader(); // ÚJ: A régi szöveg helyett a szellemképet mutatjuk
 
     const analysisUrl = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&formWeight=${formWeight}`;
+    
+    // A hálózati kérést elindítjuk, a progress bar szimulálja a folyamatot
+    let progress = 1;
+    const progressInterval = setInterval(() => {
+        progress = Math.min(90, progress + 2); // Lassan kúszik 90%-ig
+        setProgress(progress, "Szerver válaszára várunk...");
+    }, 500);
+
     const response = await fetch(analysisUrl);
+    clearInterval(progressInterval); // Leállítjuk a szimulációt, amint válasz érkezett
     if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
     
-    setProgress(75, "Válasz feldolgozása...");
+    setProgress(95, "Válasz feldolgozása...");
     const data = await response.json();
     if (data.error) throw new Error(`Szerver oldali hiba: ${data.error}`);
 
+    document.getElementById('metrics').innerHTML = ''; // Kiürítjük a metrika szellemképet
     document.getElementById('out').innerHTML = data.html || '<p class="muted">A szerver nem küldött elemzést.</p>';
 
     const record = {
@@ -365,6 +416,7 @@ async function go(){
     
     setProgress(100, "Kész.");
   } catch(e) {
+    if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
     document.getElementById("status").textContent="Hiba: " + e.message;
     document.getElementById("out").innerHTML = `<pre style="color: #ff5555;">Hiba történt: ${escapeHtml(e.message)}</pre>`;
     setProgress(0);
@@ -402,8 +454,6 @@ function renderHistory(history){
       </details>`;
   }).join('');
 }
-
-// --- Előzmények szűrése ---
 function filterHistory() {
     const query = document.getElementById('historySearch').value.toLowerCase();
     const items = document.querySelectorAll('#history .hist-item');
@@ -416,7 +466,6 @@ function filterHistory() {
         }
     });
 }
-
 function openHistoryModal(idx){
   const item = __historyCache[idx]; if(!item) return;
   document.getElementById('modalTitle').textContent = `${item.home} vs ${item.away}`;
