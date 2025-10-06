@@ -153,6 +153,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;background:var(--seco
 
     <details class="card" id="histDetails">
       <summary><span class="chev">▶</span><h2 style="margin:0">Korábbi elemzések</h2></summary>
+      <input id="historySearch" oninput="filterHistory()" placeholder="Keresés az előzményekben..." style="margin-top: 1rem; margin-bottom: 0.5rem;" />
       <div id="history" style="margin-top:10px"><p class="muted">Betöltés…</p></div>
     </details>
   </main>
@@ -380,6 +381,21 @@ function renderHistory(history){
       </details>`;
   }).join('');
 }
+
+// --- ÚJ: Előzmények szűrése ---
+function filterHistory() {
+    const query = document.getElementById('historySearch').value.toLowerCase();
+    const items = document.querySelectorAll('#history .hist-item');
+    items.forEach(item => {
+        const title = item.querySelector('.hist-title').textContent.toLowerCase();
+        if (title.includes(query)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
 function openHistoryModal(idx){
   const item = __historyCache[idx]; if(!item) return;
   document.getElementById('modalTitle').textContent = `${item.home} vs ${item.away}`;
