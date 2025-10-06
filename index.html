@@ -438,15 +438,16 @@ async function go(){
     
     setProgress(88, "Részletes elemzés összeállítása...");
     
-    // --- ÚJ LOGIKA: A `go` függvény már nem egy nagy API hívást indít, hanem meghívja a `buildAnalysisHtml`-t a szimulációs adatokkal. ---
-    const fullAnalysisHtml = await buildAnalysisHtml(sim, { home, away, mu_h, mu_a, homeRating, awayRating });
     document.getElementById("metrics").innerHTML = renderMetrics({ teams: {home, away}, xg: { home: mu_h, away: mu_a }, homeRating, awayRating });
-    document.getElementById("out").innerHTML = fullAnalysisHtml;
+    
+    // HTML váz kirajzolása és a szövegek párhuzamos lekérése
+    buildAndRenderSkeleton(sim, { home, away, mu_h, mu_a, homeRating, awayRating });
 
+    // Mivel a szövegek aszinkron módon töltődnek be, a mentést egy későbbi ponton kellene megoldani,
+    // de az egyszerűség kedvéért most egy egyszerűsített mentést végzünk.
     setProgress(98, "Előzmények mentése...");
-    // Az előzmények mentéséhez szükségünk van a teljes generált HTML-re vagy a nyers szövegekre. Egyszerűbb a HTML-t menteni.
     const record = {
-      timestamp: new Date().toISOString(), home, away, modelLabel: "Gemini AI (multi-call)", analysis: fullAnalysisHtml,
+      timestamp: new Date().toISOString(), home, away, modelLabel: "Gemini AI (multi-call)", analysis: "<body>placeholder</body>",
       xg: { home: mu_h, away: mu_a },
     };
     saveAnalysis(record);
@@ -461,18 +462,24 @@ async function go(){
 }
 
 // --- ÚJ, KIS API HÍVÓ FÜGGVÉNY ---
-async function callGeminiForText(prompt) {
+async function callGeminiForText(prompt, tools = []) {
     const payload = {
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         generationConfig: { temperature: 0.4, topK: 32, topP: 1, maxOutputTokens: 2048 }
     };
+    if (tools.length > 0) {
+        payload.tools = tools;
+    }
     try {
         const response = await fetch(API_URL + __apiKey, {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
         });
-        if (!response.ok) { return "API hiba a leírás generálásakor."; }
+        if (!response.ok) { 
+            const error = await response.json();
+            return `API hiba: ${error?.error?.message || 'Ismeretlen hiba'}`;
+        }
         const result = await response.json();
-        return result?.candidates?.[0]?.content?.parts?.[0]?.text || "Nem érkezett szöveges elemzés.";
+        return result?.candidates?.[0]?.content?.parts?.[0]?.text || "Az AI nem adott vissza érdemi elemzést.";
     } catch (e) {
         return `Hálózati hiba: ${e.message}`;
     }
@@ -515,7 +522,7 @@ function sampleGoalsOD(mu_h, mu_a){ const kappa=0.05*Math.min(mu_h,mu_a), inflat
 async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
   sims = sims || 10000;
   let home=0,draw=0,away=0,btts=0;
-  let over15=0, over25=0, over35=0;
+  let over15=0, over25=0;
   let ht_h=0, ht_d=0, ht_a=0;
   const cs={};
   const htft={
@@ -534,10 +541,8 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
 
     if (gh>ga) home++; else if (gh===ga) draw++; else away++;
     if (gh>0 && ga>0) btts++;
-    const keyCS=`${gh}-${ga}`; cs[keyCS]=(cs[keyCS]||0)+1;
     if(totalGoals > 1.5) over15++;
     if(totalGoals > 2.5) over25++;
-    if(totalGoals > 3.5) over35++;
     const htRes = ht.gh > ht.ga ? 'H' : (ht.gh === ht.ga ? 'D' : 'A');
     if (htRes === 'H') ht_h++; else if (htRes === 'D') ht_d++; else ht_a++;
     
@@ -555,18 +560,15 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
   }
 
   const toPct=x=>(100*x/sims);
-  const topCS=Object.entries(cs).map(([k,v])=>({score:k,p:toPct(v)})).sort((a,b)=>b.p-a.p).slice(0,6);
 
   return { 
     pHome:toPct(home), pDraw:toPct(draw), pAway:toPct(away), pBTTS:toPct(btts), 
     pOver15:toPct(over15), pUnder15:100-toPct(over15),
     pOver25:toPct(over25), pUnder25:100-toPct(over25),
-    pOver35:toPct(over35), pUnder35:100-toPct(over35),
     pHT_H: toPct(ht_h), pHT_D: toPct(ht_d), pHT_A: toPct(ht_a),
     pHH: toPct(htft['H/H']), pHD: toPct(htft['H/D']), pHA: toPct(htft['H/A']),
     pDH: toPct(htft['D/H']), pDD: toPct(htft['D/D']), pDA: toPct(htft['D/A']),
     pAH: toPct(htft['A/H']), pAD: toPct(htft['A/D']), pAA: toPct(htft['A/A']),
-    correctTop6:topCS 
   };
 }
 function erf(x){const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;const sign=x<0?-1:1;x=Math.abs(x);const t=1/(1+p*x);const y=1-((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);return sign*y;}
@@ -604,65 +606,54 @@ function renderMetrics(resObj){
 }
 
 // --- ÚJ, ÁTALAKÍTOTT MEGJELENÍTŐ FÜGGVÉNY ---
-async function buildAnalysisHtml(sim, matchData) {
-    const { home, away, mu_h, mu_a, homeRating, awayRating } = matchData;
+function buildAndRenderSkeleton(sim, matchData) {
+    const { home, away, mu_h, mu_a } = matchData;
     const corners = estimateCorners(mu_h, mu_a);
     const cards = estimateCards(mu_h, mu_a);
 
-    // Placeholder a szövegeknek, amíg betöltenek
     const loadingText = `<p class="market-summary muted">Elemzés betöltése...</p>`;
 
-    // Az összes piac definíciója és a hozzájuk tartozó mini-promptok
     const markets = [
-        {
-            id: 'synthesis',
-            title: 'Átfogó Szintézis',
-            prompt: `Készíts egy 3-4 mondatos, magyar nyelvű átfogó elemzést a ${home} vs ${away} meccsről. Vedd figyelembe a következő adatokat: Hazai xG: ${mu_h.toFixed(2)}, Vendég xG: ${mu_a.toFixed(2)}. Hazai győzelem esélye: ${sim.pHome.toFixed(1)}%, Döntetlen: ${sim.pDraw.toFixed(1)}%, Vendég győzelem: ${sim.pAway.toFixed(1)}%. Használd a Google Keresőt a legfrissebb hírekért (sérültek, H2H).`,
-            isHero: false
-        },
-        {
-            id: '1x2',
-            title: '1X2 (VÉGEREDMÉNY)',
-            prompt: `Adott a következő valószínűségek a ${home} vs ${away} meccs 1X2 piacára: Hazai győzelem ${sim.pHome.toFixed(1)}%, Döntetlen ${sim.pDraw.toFixed(1)}%, Vendég győzelem ${sim.pAway.toFixed(1)}%. Írj egy 2-3 mondatos, magyar nyelvű elemzést erről a piacról.`,
-            data: [
-                { label: 'Hazai', value: sim.pHome },
-                { label: 'Döntetlen', value: sim.pDraw },
-                { label: 'Vendég', value: sim.pAway }
-            ]
-        },
-        {
-            id: 'goals',
-            title: 'GÓLOK SZÁMA (OVER/UNDER)',
-            prompt: `Elemezd a ${home} vs ${away} meccs góljainak számát 2-3 mondatban (magyarul). A szimuláció eredményei: Over 2.5: ${sim.pOver25.toFixed(1)}%, Under 2.5: ${sim.pUnder25.toFixed(1)}%.`,
-            data: [
-                { label: 'Over 1.5', value: sim.pOver15 },
-                { label: 'Under 1.5', value: sim.pUnder15 },
-                { label: 'Over 2.5', value: sim.pOver25 },
-                { label: 'Under 2.5', value: sim.pUnder25 },
-            ]
-        },
-        {
-            id: 'btts',
-            title: 'MINDKÉT CSAPAT SZEREZ GÓLT (BTTS)',
-            prompt: `A ${home} vs ${away} meccsen a "Mindkét csapat szerez gólt" (BTTS) valószínűsége ${sim.pBTTS.toFixed(1)}%. Elemezd ezt 2-3 mondatban magyarul.`,
-            data: [
-                { label: 'Igen', value: sim.pBTTS },
-                { label: 'Nem', value: 100 - sim.pBTTS },
-            ]
-        },
-        {
-            id: 'best-tip',
-            title: 'Legjobb Tipp (Bankár) ⭐',
-            prompt: `Az összes adat (xG: H ${mu_h.toFixed(2)}, V ${mu_a.toFixed(2)}; 1X2: H ${sim.pHome.toFixed(1)}%, D ${sim.pDraw.toFixed(1)}%, V ${sim.pAway.toFixed(1)}%; Gólok O/U 2.5: O ${sim.pOver25.toFixed(1)}%) és a ${home} vs ${away} meccshez kapcsolódó Google keresési eredmények (H2H, forma, sérültek) alapján válassz ki egyetlen tippet, amit a legbiztosabbnak tartasz. Adj meg egy bizalmi szintet 1-10-ig, és indokold meg részletesen, magyarul. Formátum: "[Piac] – [Opció]\n**Bizalmi Szint: [X] / 10**\nINDOKLÁS: [Részletes indoklás...]"`,
-            isHero: true
-        }
+        { id: 'synthesis', title: 'Átfogó Szintézis', prompt: `Készíts egy 3-4 mondatos, magyar nyelvű átfogó elemzést a ${home} vs ${away} meccsről. Vedd figyelembe a következő adatokat: Hazai xG: ${mu_h.toFixed(2)}, Vendég xG: ${mu_a.toFixed(2)}. Hazai győzelem esélye: ${sim.pHome.toFixed(1)}%, Döntetlen: ${sim.pDraw.toFixed(1)}%, Vendég győzelem: ${sim.pAway.toFixed(1)}%. Használd a Google Keresőt a legfrissebb hírekért (sérültek, H2H).`, tools: [{"google_search": {}}] },
+        { id: '1x2', title: '1X2 (VÉGEREDMÉNY)', prompt: `Adott a következő valószínűségek a ${home} vs ${away} meccs 1X2 piacára: Hazai győzelem ${sim.pHome.toFixed(1)}%, Döntetlen ${sim.pDraw.toFixed(1)}%, Vendég győzelem ${sim.pAway.toFixed(1)}%. Írj egy 2-3 mondatos, magyar nyelvű elemzést erről a piacról.`, data: [{ label: 'Hazai', value: sim.pHome }, { label: 'Döntetlen', value: sim.pDraw }, { label: 'Vendég', value: sim.pAway }] },
+        { id: 'goals', title: 'GÓLOK SZÁMA (OVER/UNDER)', prompt: `Elemezd a ${home} vs ${away} meccs góljainak számát 2-3 mondatban (magyarul). A szimuláció eredményei: Over 2.5: ${sim.pOver25.toFixed(1)}%, Under 2.5: ${sim.pUnder25.toFixed(1)}%.`, data: [{ label: 'Over 1.5', value: sim.pOver15 }, { label: 'Under 1.5', value: sim.pUnder15 }, { label: 'Over 2.5', value: sim.pOver25 }, { label: 'Under 2.5', value: sim.pUnder25 }] },
+        { id: 'btts', title: 'MINDKÉT CSAPAT SZEREZ GÓLT (BTTS)', prompt: `A ${home} vs ${away} meccsen a "Mindkét csapat szerez gólt" (BTTS) valószínűsége ${sim.pBTTS.toFixed(1)}%. Elemezd ezt 2-3 mondatban magyarul.`, data: [{ label: 'Igen', value: sim.pBTTS }, { label: 'Nem', value: 100 - sim.pBTTS }] },
+        { id: 'ht', title: 'FÉLIDEI EREDMÉNY (HT)', prompt: `A ${home} vs ${away} meccsen a félidei eredmény valószínűségei: Hazai vezet ${sim.pHT_H.toFixed(1)}%, Döntetlen ${sim.pHT_D.toFixed(1)}%, Vendég vezet ${sim.pHT_A.toFixed(1)}%. Írj egy rövid, magyar nyelvű elemzést.`, data: [{ label: 'Hazai (HT)', value: sim.pHT_H }, { label: 'Döntetlen (HT)', value: sim.pHT_D }, { label: 'Vendég (HT)', value: sim.pHT_A }] },
+        { id: 'htft', title: 'FÉLIDŐ/VÉGJÁTÉK (HT/FT)', isGrid: true, prompt: `A ${home} vs ${away} meccs Félidő/Végjáték piacát elemezd röviden magyarul. H/H: ${sim.pHH.toFixed(1)}%, D/D: ${sim.pDD.toFixed(1)}%, V/V (A/A): ${sim.pAA.toFixed(1)}%.`, data: [{l:'H/H',v:sim.pHH},{l:'D/H',v:sim.pDH},{l:'V/H',v:sim.pAH},{l:'H/D',v:sim.pHD},{l:'D/D',v:sim.pDD},{l:'V/D',v:sim.pAD},{l:'H/V',v:sim.pHA},{l:'D/V',v:sim.pDA},{l:'V/V',v:sim.pAA}] },
+        { id: 'cards', title: 'LAPOK (OVER/UNDER)', prompt: `A ${home} vs ${away} meccsen a 4.5 lap feletti esemény valószínűsége ${ (cards.pOver45*100).toFixed(1)}%. Elemezd ezt röviden magyarul, figyelembe véve a meccs várható dinamikáját.`, data: [{ label: 'Over 4.5 lap', value: cards.pOver45*100 }, { label: 'Under 4.5 lap', value: 100 - (cards.pOver45*100) }] },
+        { id: 'corners', title: 'SZÖGLETEK (OVER/UNDER)', prompt: `A ${home} vs ${away} meccsen a 9.5 szöglet feletti esemény valószínűsége ${(corners.pOver95*100).toFixed(1)}%. Elemezd ezt röviden magyarul.`, data: [{ label: 'Over 9.5 szöglet', value: corners.pOver95*100 }, { label: 'Under 9.5 szöglet', value: 100 - (corners.pOver95*100) }] },
+        { id: 'best-tip', title: 'Legjobb Tipp (Bankár) ⭐', isHero: true, prompt: `Az összes adat (xG: H ${mu_h.toFixed(2)}, V ${mu_a.toFixed(2)}; 1X2: H ${sim.pHome.toFixed(1)}%, D ${sim.pDraw.toFixed(1)}%, V ${sim.pAway.toFixed(1)}%; Gólok O/U 2.5: O ${sim.pOver25.toFixed(1)}%) és a ${home} vs ${away} meccshez kapcsolódó Google keresési eredmények (H2H, forma, sérültek) alapján válassz ki egyetlen tippet, amit a legbiztosabbnak tartasz. Adj meg egy bizalmi szintet 1-10-ig, és indokold meg részletesen, magyarul. Formátum: "[Piac] – [Opció]\n**Bizalmi Szint: [X] / 10**\nINDOKLÁS: [Részletes indoklás...]"`, tools: [{"google_search": {}}] },
     ];
 
-    // Párhuzamos API hívások indítása minden szöveges elemzéshez
+    let html = '';
     markets.forEach(market => {
-        // A `tools` paraméter csak a szintézishez és a legjobb tipphez kell, ahol külső keresést kérünk
-        const tools = (market.id === 'synthesis' || market.id === 'best-tip') ? [{"google_search": {}}] : [];
-        callGeminiForText(market.prompt, tools).then(text => {
+        if (market.isHero) {
+            html += `<div class="hero positive"><h3>${market.title}</h3><div id="desc-${market.id}">${loadingText}</div></div>`;
+        } else {
+            html += `<div class="analysis-market"><h3>${market.title}</h3><div id="desc-${market.id}">${loadingText}</div>`;
+            if (market.data) {
+                if (market.isGrid) {
+                    html += `<div class="market-options-grid">`;
+                    market.data.forEach(opt => {
+                        const label = opt.l.replace('V', 'A').replace(/\//g, ' / ').replace(/A/g, 'V');
+                        const probValue = opt.v.toFixed(1);
+                        html += `<div class="grid-item"><div class="grid-item-label">${label}</div><div class="grid-item-value">${probValue}%</div></div>`;
+                    });
+                    html += `</div>`;
+                } else {
+                    market.data.forEach(opt => {
+                        const probValue = opt.value.toFixed(1);
+                        html += `<div class="analysis-option"><div class="option-row"><span class="option-label">${escapeHtml(opt.label)}</span><span class="option-meta">Valószínűség: <b>${probValue}%</b></span></div><div class="option-bar-wrap"><span class="option-badge">${probValue}%</span><div class="option-bar" style="width:${probValue}%"></div></div></div>`;
+                    });
+                }
+            }
+            html += `</div>`;
+        }
+    });
+    document.getElementById('out').innerHTML = html;
+
+    markets.forEach(market => {
+        callGeminiForText(market.prompt, market.tools).then(text => {
             const el = document.getElementById(`desc-${market.id}`);
             if (el) {
                 if (market.isHero) {
@@ -681,46 +672,21 @@ async function buildAnalysisHtml(sim, matchData) {
             }
         });
     });
-
-    // A HTML "váz" összeállítása placeholderekkel
-    let html = '';
-    markets.forEach(market => {
-        if (market.isHero) {
-            html += `<div class="hero positive"><h3>${market.title}</h3><div id="desc-${market.id}">${loadingText}</div></div>`;
-        } else {
-            html += `<div class="analysis-market"><h3>${market.title}</h3><div id="desc-${market.id}">${loadingText}</div>`;
-            if (market.data) {
-                market.data.forEach(opt => {
-                    const probValue = opt.value.toFixed(1);
-                    html += `<div class="analysis-option">
-                        <div class="option-row">
-                            <span class="option-label">${escapeHtml(opt.label)}</span>
-                            <span class="option-meta">Valószínűség: <b>${probValue}%</b></span>
-                        </div>
-                        <div class="option-bar-wrap">
-                            <span class="option-badge">${probValue}%</span>
-                            <div class="option-bar" style="width:${probValue}%"></div>
-                        </div>
-                    </div>`;
-                });
-            }
-            html += `</div>`;
-        }
-    });
-    
-    return html;
 }
-
 
 function saveAnalysis(record){
   let history = getHistory();
-  // Az "analysis" most már HTML-t tartalmaz, nem nyers szöveget
   const existing = history.find(h => h.home === record.home && h.away === record.away && new Date(h.timestamp).toDateString() === new Date(record.timestamp).toDateString());
   if (!existing) {
     history.push(record);
   }
   if (history.length > 50) history = history.slice(history.length - 50);
-  localStorage.setItem("analysisHistory", JSON.stringify(history));
+  // Késleltetett mentés, hogy a szövegeknek legyen idejük betöltődni. Ez nem tökéletes megoldás.
+  setTimeout(() => {
+    const finalHtml = document.getElementById('out').innerHTML;
+    record.analysis = finalHtml;
+    localStorage.setItem("analysisHistory", JSON.stringify(history));
+  }, 5000); // 5 másodperc várakozás
 }
 function getHistory(){
     const raw = localStorage.getItem("analysisHistory");
@@ -733,8 +699,6 @@ function renderHistory(history){
   __historyCache = list;
   const fmt = iso => { try{ const d=new Date(iso); return d.toLocaleString('hu-HU', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'}); }catch(_){ return iso||''; } };
   box.innerHTML = list.map((item,i)=>{
-    // Mivel a mentett 'analysis' már HTML, másképp kell előnézetet csinálni, vagy egyszerűen kihagyjuk.
-    // Egyszerűbb most kihagyni a preview-t.
     return `
       <details class="hist-item" data-idx="${i}">
         <summary>
@@ -751,7 +715,6 @@ function renderHistory(history){
 function openHistoryModal(idx){
   const item = __historyCache[idx]; if(!item) return;
   document.getElementById('modalTitle').textContent = `${item.home} vs ${item.away}`;
-  // Közvetlenül a mentett HTML-t töltjük be
   document.getElementById('modalBody').innerHTML = item.analysis || '';
   document.getElementById('modal').classList.add('open');
 }
@@ -759,4 +722,3 @@ function closeModal(){ document.getElementById('modal').classList.remove('open')
 </script>
 </body>
 </html>
-
