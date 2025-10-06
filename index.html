@@ -206,8 +206,18 @@ function setProgress(pct, msg = null) {
 document.addEventListener("DOMContentLoaded", function(){
     __gasUrl = localStorage.getItem('gasUrl') || '';
     
-    document.getElementById('formWeight').addEventListener('input', (e) => {
-        document.getElementById('formWeightLabel').textContent = `${e.target.value}%`;
+    const formWeightSlider = document.getElementById('formWeight');
+    const formWeightLabel = document.getElementById('formWeightLabel');
+    
+    // ÚJ: Forma súlyozás betöltése
+    const savedWeight = localStorage.getItem('formWeight') || '50';
+    formWeightSlider.value = savedWeight;
+    formWeightLabel.textContent = `${savedWeight}%`;
+
+    formWeightSlider.addEventListener('input', (e) => {
+        formWeightLabel.textContent = `${e.target.value}%`;
+        // ÚJ: Forma súlyozás mentése
+        localStorage.setItem('formWeight', e.target.value);
     });
 
     document.getElementById('home').addEventListener('input', handleTeamInput);
@@ -323,7 +333,12 @@ async function go(){
     showSkeletonLoader();
     const analysisUrl = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&formWeight=${formWeight}`;
     
-    progressInterval = setInterval(() => { setProgress(Math.min(90, (p => p + 2)(progress.querySelector('.progress-label').textContent.slice(0, -1))), "Szerver válaszára várunk..."); }, 500);
+    let progress = 1;
+    const progressEl = document.getElementById('progress');
+    progressInterval = setInterval(() => {
+        progress = Math.min(90, progress + 2);
+        setProgress(progress, "Szerver válaszára várunk...");
+    }, 500);
 
     const response = await fetch(analysisUrl);
     clearInterval(progressInterval);
@@ -370,7 +385,7 @@ function filterHistory() {
 }
 function openHistoryModal(idx){ const item = __historyCache[idx]; if(!item) return; document.getElementById('modalTitle').textContent = `${item.home} vs ${item.away}`; document.getElementById('modalBody').innerHTML = item.analysis || ''; document.getElementById('modal').classList.add('open'); }
 function closeModal(){ document.getElementById('modal').classList.remove('open'); }
-// ÚJ: Beállítások Modal
+
 function openSettingsModal() {
     document.getElementById('modalTitle').textContent = 'Beállítások';
     const body = document.getElementById('modalBody');
@@ -386,7 +401,6 @@ function saveSettings() {
     __gasUrl = newUrl;
     localStorage.setItem('gasUrl', __gasUrl);
     closeModal();
-    // Esetleg egy kis visszajelzés a felhasználónak
     const statusEl = document.getElementById('fxStatus');
     if (statusEl) statusEl.textContent = 'Beállítások elmentve.';
 }
