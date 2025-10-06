@@ -259,7 +259,7 @@ let __teamRatings = {};
 let __apiKey = '';
 let __gasUrl = '';
 
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=';
+const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=';
 
 // --- Segédfüggvények ---
 function escapeHtml(s){return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[m]);}
@@ -502,6 +502,7 @@ function buildPrompts(home, away, mu_h, mu_a, sim, corners, cards, homeRating, a
 4.  **BANKÁR TIPP:** Végül az összesített tudásod alapján válassz ki egyetlen tippet, amit a legbiztosabbnak tartasz, adj mellé egy bizalmi szintet és részletes indoklást.
 Szigorúan kövesd a kért kimeneti formátumot, egyetlen szekciót se hagyj üresen!`.trim();
 
+    // JAVÍTVA: A Félidő/Végjáték (HT/FT) résznél a szimulációból kapott, javított változóneveket (pl. pHA, pAA) használjuk.
     const userPrompt = `
 Készíts egy teljeskörű, részletes elemzést a ${home} vs ${away} mérkőzésről.
 
@@ -513,7 +514,7 @@ ${ratingsContext}
 - Gólok O/U 2.5: O: ${sim.pOver25.toFixed(1)}%, U: ${sim.pUnder25.toFixed(1)}%
 - BTTS: Igen: ${sim.pBTTS.toFixed(1)}%
 - Félidei Eredmény (HT): H: ${sim.pHT_H.toFixed(1)}%, D: ${sim.pHT_D.toFixed(1)}%, V: ${sim.pHT_A.toFixed(1)}%
-- Félidő/Végjáték (HT/FT): H/H: ${sim.pHH.toFixed(1)}%, D/H: ${sim.pDH.toFixed(1)}%, V/H: ${sim.pAH.toFixed(1)}%, H/D: ${sim.pHD.toFixed(1)}%, D/D: ${sim.pDD.toFixed(1)}%, V/D: ${sim.pAD.toFixed(1)}%, H/V: ${sim.pHV.toFixed(1)}%, D/V: ${sim.pDV.toFixed(1)}%, V/V: ${sim.pAV.toFixed(1)}%
+- Félidő/Végjáték (HT/FT): H/H: ${sim.pHH.toFixed(1)}%, D/H: ${sim.pDH.toFixed(1)}%, A/H: ${sim.pAH.toFixed(1)}%, H/D: ${sim.pHD.toFixed(1)}%, D/D: ${sim.pDD.toFixed(1)}%, A/D: ${sim.pAD.toFixed(1)}%, H/A: ${sim.pHA.toFixed(1)}%, D/A: ${sim.pDA.toFixed(1)}%, A/A: ${sim.pAA.toFixed(1)}%
 - Lapok O/U 4.5: O: ${(cards.pOver45*100).toFixed(1)}%, U: ${(100 - cards.pOver45*100).toFixed(1)}%
 - Szögletek O/U 9.5: O: ${(corners.pOver95*100).toFixed(1)}%, U: ${(100 - corners.pOver95*100).toFixed(1)}%
 
@@ -566,9 +567,9 @@ LEÍRÁS: [Kötelező, 2-3 mondatos elemzés.]
 
 5. **FÉLIDŐ/VÉGJÁTÉK (HT/FT)**
 LEÍRÁS: [Kötelező, 2-3 mondatos elemzés.]
-- H/H: ${sim.pHH.toFixed(1)}% | D/H: ${sim.pDH.toFixed(1)}% | V/H: ${sim.pAH.toFixed(1)}%
-- H/D: ${sim.pHD.toFixed(1)}% | D/D: ${sim.pDD.toFixed(1)}% | V/D: ${sim.pAD.toFixed(1)}%
-- H/V: ${sim.pHV.toFixed(1)}% | D/V: ${sim.pDV.toFixed(1)}% | V/V: ${sim.pAV.toFixed(1)}%
+- H/H: ${sim.pHH.toFixed(1)}% | D/H: ${sim.pDH.toFixed(1)}% | A/H: ${sim.pAH.toFixed(1)}%
+- H/D: ${sim.pHD.toFixed(1)}% | D/D: ${sim.pDD.toFixed(1)}% | A/D: ${sim.pAD.toFixed(1)}%
+- H/A: ${sim.pHA.toFixed(1)}% | D/A: ${sim.pDA.toFixed(1)}% | A/A: ${sim.pAA.toFixed(1)}%
 
 ---
 
@@ -664,10 +665,11 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
   let over15=0, over25=0, over35=0;
   let ht_h=0, ht_d=0, ht_a=0;
   const cs={};
+  // JAVÍTVA: A kulcsokban 'V' (Vendég) helyett végig 'A'-t (Away) használunk, hogy konzisztens legyen a generált htRes/ftRes ('H'/'D'/'A') értékekkel.
   const htft={
-    'H/H':0, 'H/D':0, 'H/V':0,
-    'D/H':0, 'D/D':0, 'D/V':0,
-    'A/H':0, 'A/D':0, 'A/V':0
+    'H/H':0, 'H/D':0, 'H/A':0,
+    'D/H':0, 'D/D':0, 'D/A':0,
+    'A/H':0, 'A/D':0, 'A/A':0
   };
   const htShare = 0.45;
 
@@ -703,15 +705,16 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
   const toPct=x=>(100*x/sims);
   const topCS=Object.entries(cs).map(([k,v])=>({score:k,p:toPct(v)})).sort((a,b)=>b.p-a.p).slice(0,6);
 
+  // JAVÍTVA: A return object kulcsai és a htft objektum kulcsai most már megegyeznek.
   return { 
     pHome:toPct(home), pDraw:toPct(draw), pAway:toPct(away), pBTTS:toPct(btts), 
     pOver15:toPct(over15), pUnder15:100-toPct(over15),
     pOver25:toPct(over25), pUnder25:100-toPct(over25),
     pOver35:toPct(over35), pUnder35:100-toPct(over35),
     pHT_H: toPct(ht_h), pHT_D: toPct(ht_d), pHT_A: toPct(ht_a),
-    pHH: toPct(htft['H/H']), pHD: toPct(htft['H/D']), pHV: toPct(htft['H/V']),
-    pDH: toPct(htft['D/H']), pDD: toPct(htft['D/D']), pDV: toPct(htft['D/V']),
-    pAH: toPct(htft['A/H']), pAD: toPct(htft['A/D']), pAV: toPct(htft['A/V']),
+    pHH: toPct(htft['H/H']), pHD: toPct(htft['H/D']), pHA: toPct(htft['H/A']),
+    pDH: toPct(htft['D/H']), pDD: toPct(htft['D/D']), pDA: toPct(htft['D/A']),
+    pAH: toPct(htft['A/H']), pAD: toPct(htft['A/D']), pAA: toPct(htft['A/A']),
     correctTop6:topCS 
   };
 }
@@ -810,7 +813,7 @@ function buildAnalysisHtml(res) {
                     const htftRegex = /-\s(.*?):\s([\d\.,]+)%\s*\|\s(.*?):\s([\d\.,]+)%\s*\|\s(.*?):\s([\d\.,]+)%/g;
                     while ((optionMatch = htftRegex.exec(content)) !== null) {
                         for (let i = 1; i < optionMatch.length; i += 2) {
-                             const label = optionMatch[i].trim();
+                             const label = optionMatch[i].trim().replace(/\//g, ' / ');
                              const prob = optionMatch[i+1].replace(',', '.');
                              optionsHtml += `<div class="grid-item"><div class="grid-item-label">${escapeHtml(label)}</div><div class="grid-item-value">${prob}%</div></div>`;
                              optionCount++;
