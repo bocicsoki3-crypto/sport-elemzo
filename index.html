@@ -175,6 +175,7 @@ let __historyCache = [];
 let __allLeagues = [];
 let __favLeagues = new Set();
 let __fixtures = [];
+let __masterTeamList = []; // ÚJ: A teljes, szűretlen csapatlista tárolása
 let __gasUrl = '';
 
 // --- Segédfüggvény ---
@@ -212,12 +213,31 @@ document.addEventListener("DOMContentLoaded", function(){
         document.getElementById('formWeightLabel').textContent = `${e.target.value}%`;
     });
 
+    // ÚJ: Eseményfigyelők az autocomplete funkcióhoz
+    document.getElementById('home').addEventListener('input', handleTeamInput);
+    document.getElementById('away').addEventListener('input', handleTeamInput);
+
     renderHistory(getHistory());
     const favsRaw = localStorage.getItem("favLeagues") || "[]";
     try { __favLeagues = new Set(JSON.parse(favsRaw)); } catch(_) { __favLeagues = new Set(); }
     
     document.getElementById('leagueSearch').addEventListener('input', renderLeagueList);
 });
+
+// --- ÚJ: Csapatlista szűrése és frissítése ---
+function updateDatalist(teamArray) {
+    document.getElementById('teamlist').innerHTML = teamArray.map(t => `<option value="${escapeHtml(t)}"></option>`).join('');
+}
+
+function handleTeamInput(event) {
+    const query = event.target.value.toLowerCase();
+    if (!query) {
+        updateDatalist(__masterTeamList); // Ha üres a mező, mutasd a teljes listát
+        return;
+    }
+    const filteredTeams = __masterTeamList.filter(team => team.toLowerCase().includes(query));
+    updateDatalist(filteredTeams);
+}
 
 // --- Csapatlista feltöltése ---
 function populateTeams(fixtures){
@@ -227,7 +247,8 @@ function populateTeams(fixtures){
       teams.add(f.away);
   });
   const uniq = Array.from(teams).sort((a,b)=>a.localeCompare(b,'hu'));
-  document.getElementById('teamlist').innerHTML = uniq.map(t => `<option value="${escapeHtml(t)}"></option>`).join('');
+  __masterTeamList = uniq; // ÚJ: Mesterlista mentése
+  updateDatalist(__masterTeamList); // Kezdeti lista megjelenítése
 }
 
 // --- Kezdeti adatok betöltése a szerverről ---
@@ -317,7 +338,7 @@ async function go(){
       return;
   }
   if (!__gasUrl) {
-      document.getElementById("status").textContent = "Hiba: Hiányzó Google Apps Script URL.";
+      document.getElementById("status").textContent = "Hiba: Hiányzik a Google Apps Script URL.";
       return;
   }
 
@@ -382,7 +403,7 @@ function renderHistory(history){
   }).join('');
 }
 
-// --- ÚJ: Előzmények szűrése ---
+// --- Előzmények szűrése ---
 function filterHistory() {
     const query = document.getElementById('historySearch').value.toLowerCase();
     const items = document.querySelectorAll('#history .hist-item');
