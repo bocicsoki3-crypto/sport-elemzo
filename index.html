@@ -498,7 +498,7 @@ function buildPrompts(home, away, mu_h, mu_a, sim, corners, cards, homeRating, a
     const systemPrompt = `Te vagy a 'Mester Elemző', egy elit sportelemző AI. A feladatod, hogy egy minden részletre kiterjedő, professzionális, lépésről-lépésre felépített elemzést készíts magyarul.
 1.  **KUTATÁS:** A Google keresővel tárd fel az összes releváns külső körülményt: H2H, sérültek, bíró, és a piaci oddsok mozgása.
 2.  **SZINTÉZIS:** Ezt követően a kapott statisztikai (xG, csapat erősségek) és szimulációs adatokat szintetizáld a kutatási eredményeiddel. Hozz létre egy átfogó, valósághű képet a meccsről.
-3.  **RÉSZLETES PIACI ELEMZÉS:** Elemezd az ÖSSZES kért fogadási piacot. Mindegyikhez kötelezően adj egy informatív, szöveges értékelést.
+3.  **RÉSZLETES PIACI ELEMZÉS:** Elemezd az ÖSSZES kért fogadási piacot. Mindegyikhez kötelezően adj egy informatív, szöveges értékelést. NEM HAGYHATSZ KI EGYETLEN LEÍRÁS SZEKCIÓT SEM.
 4.  **BANKÁR TIPP:** Végül az összesített tudásod alapján válassz ki egyetlen tippet, amit a legbiztosabbnak tartasz, adj mellé egy bizalmi szintet és részletes indoklást.
 Szigorúan kövesd a kért kimeneti formátumot, egyetlen szekciót se hagyj üresen!`.trim();
 
@@ -883,4 +883,3 @@ function closeModal(){ document.getElementById('modal').classList.remove('open')
 </script>
 </body>
 </html>
-
