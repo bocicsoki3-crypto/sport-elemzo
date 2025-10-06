@@ -84,16 +84,9 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;background:var(--seco
 .grid-item{background:rgba(255,255,255,.03);padding:.75rem;border-radius:8px;font-size:.9em;display:flex;flex-direction:column;justify-content:center;text-align:center}
 .grid-item-label{font-weight:600;margin-bottom:.25rem;font-size:.9em}
 .grid-item-value{font-size:1.1em;font-weight:700;color:var(--secondary)}
-
-/* --- ÚJ: Skeleton Loader Stílusok --- */
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 .skeleton { position: relative; overflow: hidden; background-color: #131c3a; }
-.skeleton::after {
-  content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-  animation: shimmer 1.5s infinite;
-}
+.skeleton::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent); animation: shimmer 1.5s infinite; }
 .skeleton-text { height: 1em; margin-bottom: 0.5rem; border-radius: 4px; }
 .skeleton-title { width: 40%; height: 1.5em; margin-bottom: 1rem; border-radius: 6px; }
 .skeleton-bar { height: 52px; border-radius: 12px; }
@@ -240,7 +233,6 @@ document.addEventListener("DOMContentLoaded", function(){
 function updateDatalist(teamArray) {
     document.getElementById('teamlist').innerHTML = teamArray.map(t => `<option value="${escapeHtml(t)}"></option>`).join('');
 }
-
 function handleTeamInput(event) {
     const query = event.target.value.toLowerCase();
     if (!query) {
@@ -338,7 +330,7 @@ function fillAndAnalyze(home, away){
   go();
 }
 
-// --- ÚJ: Skeleton Loader ---
+// --- Skeleton Loader ---
 function showSkeletonLoader() {
     const skeletonCard = `
         <div class="analysis-market">
@@ -355,17 +347,7 @@ function showSkeletonLoader() {
             <div class="skeleton skeleton-text" style="width: 85%;"></div>
         </div>
     `;
-    const metricsSkeleton = `
-        <div class="metrics">
-            <div class="xg-card">
-                <div class="skeleton skeleton-title" style="width: 60%; height: 1em;"></div>
-                <div class="skeleton skeleton-bar" style="height: 38px; margin: 8px 0;"></div>
-                <div class="skeleton skeleton-bar" style="height: 38px;"></div>
-            </div>
-        </div>
-    `;
-    document.getElementById('metrics').innerHTML = metricsSkeleton;
-    document.getElementById('out').innerHTML = skeletonCard.repeat(2) + skeletonHero;
+    document.getElementById('out').innerHTML = skeletonCard.repeat(3) + skeletonHero;
 }
 
 // --- Fő Elemzési Folyamat ---
@@ -383,28 +365,27 @@ async function go(){
       return;
   }
 
+  let progressInterval;
   try{
     setProgress(1, "Elemzés indítása...");
-    showSkeletonLoader(); // ÚJ: A régi szöveg helyett a szellemképet mutatjuk
+    showSkeletonLoader();
 
     const analysisUrl = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&formWeight=${formWeight}`;
     
-    // A hálózati kérést elindítjuk, a progress bar szimulálja a folyamatot
     let progress = 1;
-    const progressInterval = setInterval(() => {
-        progress = Math.min(90, progress + 2); // Lassan kúszik 90%-ig
+    progressInterval = setInterval(() => {
+        progress = Math.min(90, progress + 2);
         setProgress(progress, "Szerver válaszára várunk...");
     }, 500);
 
     const response = await fetch(analysisUrl);
-    clearInterval(progressInterval); // Leállítjuk a szimulációt, amint válasz érkezett
+    clearInterval(progressInterval);
     if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
     
     setProgress(95, "Válasz feldolgozása...");
     const data = await response.json();
     if (data.error) throw new Error(`Szerver oldali hiba: ${data.error}`);
 
-    document.getElementById('metrics').innerHTML = ''; // Kiürítjük a metrika szellemképet
     document.getElementById('out').innerHTML = data.html || '<p class="muted">A szerver nem küldött elemzést.</p>';
 
     const record = {
@@ -416,7 +397,7 @@ async function go(){
     
     setProgress(100, "Kész.");
   } catch(e) {
-    if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
+    if (progressInterval) clearInterval(progressInterval);
     document.getElementById("status").textContent="Hiba: " + e.message;
     document.getElementById("out").innerHTML = `<pre style="color: #ff5555;">Hiba történt: ${escapeHtml(e.message)}</pre>`;
     setProgress(0);
