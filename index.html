@@ -412,81 +412,77 @@ async function callGeminiApi(systemPrompt, userPrompt) {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
     });
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`API hiba: ${response.status} - ${error?.error?.message || 'Ismeretlen hiba'}`);
+        const errorText = await response.text();
+        let errorMessage = `API hiba: ${response.status}`;
+        try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage += ` - ${errorJson?.error?.message || 'Ismeretlen hiba'}`;
+        } catch (e) {
+            errorMessage += ` - A válasz nem dolgozható fel: ${errorText}`;
+        }
+        throw new Error(errorMessage);
     }
     const result = await response.json();
+    if (!result.candidates || result.candidates.length === 0) {
+        let reason = "Ismeretlen ok.";
+        if (result.promptFeedback && result.promptFeedback.blockReason) {
+            reason = `API blokkolta a kérést: ${result.promptFeedback.blockReason}`;
+        }
+        throw new Error(`Az AI nem adott vissza választ. Ok: ${reason}`);
+    }
     return result?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
 // --- JAVÍTOTT, RÉSZLETES Promptok összeállítása ---
 function buildPrompts(home, away, mu_h, mu_a, sim, homeRating, awayRating) {
-    let ratingsContext = "STATISZTIKAI KONTEXTUS:\n";
-    if (homeRating) ratingsContext += `- ${home} (hazai): Szezonos Támadóerő: ${homeRating.atk.toFixed(2)}, Védekezőerő: ${homeRating.def.toFixed(2)}. Utolsó 5 meccses forma: ${homeRating.form}\n`;
-    if (awayRating) ratingsContext += `- ${away} (vendég): Szezonos Támadóerő: ${awayRating.atk.toFixed(2)}, Védekezőerő: ${awayRating.def.toFixed(2)}. Utolsó 5 meccses forma: ${awayRating.form}\n`;
+    let ratingsContext = "STATISZTIKAI ALAPADATOK:\n";
+    if (homeRating) ratingsContext += `- ${home} (hazai): Támadóerő: ${homeRating.atk.toFixed(2)}, Védekezőerő: ${homeRating.def.toFixed(2)}, Forma: ${homeRating.form}\n`;
+    if (awayRating) ratingsContext += `- ${away} (vendég): Támadóerő: ${awayRating.atk.toFixed(2)}, Védekezőerő: ${awayRating.def.toFixed(2)}, Forma: ${awayRating.form}\n`;
 
-    const systemPrompt = `Te vagy a "Stratéga", egy elit sportelemző AI. Feladatod, hogy a kapott statisztikai adatokból és a Google keresésből származó valós idejű információkból egyetlen, összefüggő, mélyreható elemzést készíts magyarul.
-
-**FŐ ELVEID:**
-1.  **Szintézis, nem felsorolás:** Ne csak ismételd a kapott adatokat. Magyarázd el, HOGYAN befolyásolják egymást. Pl. "A hazai csapat statisztikailag esélyesebb (xG: ${mu_h.toFixed(2)}), amit az oddsok csökkenése is megerősít, valószínűleg a vendég csapat kulcsjátékosának sérülése miatt."
-2.  **Odds mozgás értelmezése:** A Google Kereső segítségével próbáld meg kideríteni a meccs nyitó és aktuális oddsait. Az oddsok változása a piac véleményét tükrözi. Elemezd, mit jelezhet az oddsok mozgása (pl. "smart money", sérülés híre, stb.).
-3.  **Mindenre kiterjedő Google Keresés:** Aktívan használd a keresőt a legfrissebb H2H adatokért, sérülésekért, eltiltásokért, a meccs BÍRÓJÁNAK adataiért (lapátlag), ÉS AZ ODDS MOZGÁSOKÉRT. A keresési eredményeket sződd bele az elemzésbe, ne csak külön listázd.
-4.  **Bankár Tipp és Bizalmi Szint:** A végén azonosíts egyetlen "Legjobb Tipp (Bankár) ⭐" opciót. Ezután adj egy "Bizalmi Szintet" 1-től 10-ig, és RÉSZLETESEN indokold, miért pont annyira bízol a tippben, figyelembe véve az összes rendelkezésre álló információt.
-5.  **Formátum:** Szigorúan kövesd a kért kimeneti formátumot. A LEÍRÁS és INDOKLÁS részek kitöltése kötelező!`.trim();
+    const systemPrompt = `Te vagy a "Professzor", egy rendkívül alapos és precíz sportelemző AI. A válaszaidat mindig magyarul, adatokkal alátámasztva, logikusan felépítve adod meg. A célod, hogy a kapott statisztikákat és a Google keresésből szerzett valós idejű információkat egyetlen, könnyen érthető, mégis mély elemzéssé szintetizáld. Szigorúan kövesd a kért kimeneti formátumot, és minden szekciót tölts ki tartalommal.`.trim();
 
     const userPrompt = `
-Elemezd a ${home} vs ${away} labdarúgó mérkőzést a kért formátum alapján. Használd a Google keresőt a H2H, hírek, bíró és az odds mozgás információkhoz, majd szintetizáld azokat az alábbi statisztikai adatokkal.
+Készíts részletes elemzést a ${home} vs ${away} labdarúgó mérkőzésről. Használd a Google keresőt a kulcsfontosságú tényezők feltárásához, majd szintetizáld azokat az alábbi statisztikai adatokkal.
 
 ${ratingsContext}
-**Statisztikai alapértékek (szimuláció alapján):**
+**SZIMULÁCIÓS EREDMÉNYEK:**
 - Várható gólok (xG): Hazai: ${mu_h.toFixed(2)}, Vendég: ${mu_a.toFixed(2)}
 - 1X2 Valószínűségek: H: ${sim.pHome.toFixed(1)}%, D: ${sim.pDraw.toFixed(1)}%, V: ${sim.pAway.toFixed(1)}%
-- Gólok O/U 1.5: O: ${sim.pOver15.toFixed(1)}%, U: ${sim.pUnder15.toFixed(1)}%
 - Gólok O/U 2.5: O: ${sim.pOver25.toFixed(1)}%, U: ${sim.pUnder25.toFixed(1)}%
-- Mindkét csapat szerez gólt (BTTS): Igen: ${sim.pBTTS.toFixed(1)}%, Nem: ${(100 - sim.pBTTS).toFixed(1)}%
+- Mindkét csapat szerez gólt (BTTS): Igen: ${sim.pBTTS.toFixed(1)}%
 - Félidei Eredmény (HT): H: ${sim.pHT_H.toFixed(1)}%, D: ${sim.pHT_D.toFixed(1)}%, V: ${sim.pHT_A.toFixed(1)}%
 
-**Kért kimeneti formátum (MINDEN SZÖVEGES RÉSZ KITÖLTÉSE KÖTELEZŐ):**
+**Kért kimeneti formátum:**
 
-**ÁTFOGÓ ELEMZÉS**
-[Ide írj egy részletes, több mondatos összefoglaló bekezdést, amiben szintetizáld a statisztikát, ÉS a keresési eredményeket (H2H, hírek, bíró, odds mozgás). Ez legyen az elemzésed magja.]
+**KULCSFONTOSSÁGÚ TÉNYEZŐK (Google keresés alapján)**
+[Ebben a szekcióban foglald össze a legfontosabb külső információkat. Törekedj a következőkre, ha releváns információt találsz:
+- **H2H:** Mi jellemzi a csapatok múltbeli összecsapásait?
+- **Sérülések/Eltiltások:** Vannak fontos hiányzók bármelyik oldalon?
+- **Odds Mozgás:** Mit jelez a fogadási piac? Csökken vagy nő valamelyik kimenetel oddsa?
+- **Bíró:** Ismert a bíró stílusa (pl. szigorú, sok lapot ad)?]
 
 ---
 
-**ODDS ELEMZÉS (Google keresés alapján)**
-[Keresd meg és értelmezd az odds mozgásokat. Mit jelez a piac? Egyetértesz vele a statisztikák alapján? Ez a rész nem maradhat üresen!]
+**ÁTFOGÓ MECCSÉRTÉKELÉS**
+[Itt szintetizáld az összes információt. Kösd össze a statisztikai adatokat a fentebb, a keresés során talált kulcsfontosságú tényezőkkel. Adj egy átfogó képet arról, milyen meccsre számíthatunk.]
 
 ---
 
-1. **1X2**
-LEÍRÁS: [Kötelező, 2-3 mondatos elemzés a piacról.]
+1. **1X2 & Gólok Száma**
+LEÍRÁS: [Elemezd egyben a meccs kimenetelét és a várható gólok számát. Melyik csapatnak van nagyobb esélye nyerni és miért? Várhatóan sok vagy kevés gól lesz?]
 - Hazai: ${sim.pHome.toFixed(1)}%
 - Döntetlen: ${sim.pDraw.toFixed(1)}%
 - Vendég: ${sim.pAway.toFixed(1)}%
-
----
-
-2. **Gólok Száma (Over/Under)**
-LEÍRÁS: [Kötelező, 2-3 mondatos elemzés a piacról.]
-- Over 1.5: ${sim.pOver15.toFixed(1)}%
-- Under 1.5: ${sim.pUnder15.toFixed(1)}%
 - Over 2.5: ${sim.pOver25.toFixed(1)}%
 - Under 2.5: ${sim.pUnder25.toFixed(1)}%
 
 ---
 
-3. **Mindkét csapat szerez gólt (BTTS)**
-LEÍRÁS: [Kötelező, 2-3 mondatos elemzés a piacról.]
-- Igen: ${sim.pBTTS.toFixed(1)}%
-- Nem: ${(100 - sim.pBTTS).toFixed(1)}%
-
----
-
-4. **Félidei Eredmény (HT)**
-LEÍRÁS: [Kötelező, 2-3 mondatos elemzés a piacról.]
-- Hazai (HT): ${sim.pHT_H.toFixed(1)}%
-- Döntetlen (HT): ${sim.pHT_D.toFixed(1)}%
-- Vendég (HT): ${sim.pHT_A.toFixed(1)}%
+2. **További Piacok (BTTS & Félidő)**
+LEÍRÁS: [Elemezd a BTTS és a Félidei eredmény piacokat. Várható, hogy mindkét csapat betalál? Milyen eredményre lehet számítani az első félidő végén?]
+- BTTS - Igen: ${sim.pBTTS.toFixed(1)}%
+- Hazai nyer Félidőben: ${sim.pHT_H.toFixed(1)}%
+- Döntetlen Félidőben: ${sim.pHT_D.toFixed(1)}%
 
 ---
 
@@ -496,6 +492,7 @@ LEÍRÁS: [Kötelező, 2-3 mondatos elemzés a piacról.]
 **Bizalmi Szint: [1-10] / 10**
 INDOKLÁS: [Kötelező, részletes indoklás, ami összefoglalja, miért ez a legbiztosabb tipp az ÖSSZES adat (statisztika, forma, H2H, hírek, bíró, odds mozgás) alapján, és miért pont annyi a bizalmi szint.]
 `.trim();
+
     return { systemPrompt, userPrompt };
 }
 
@@ -656,13 +653,13 @@ function buildAnalysisHtml(res) {
                 return;
             }
             
-            if (trimmedSection.startsWith('**ÁTFOGÓ ELEMZÉS**')) {
-                html += `<div class="analysis-market"><h3>Átfogó Elemzés</h3><div class="market-summary">${trimmedSection.replace('**ÁTFOGÓ ELEMZÉS**', '').trim()}</div></div>`;
+            if (trimmedSection.startsWith('**KULCSFONTOSSÁGÚ TÉNYEZŐK')) {
+                 html += `<div class="analysis-market"><h3>Kulcsfontosságú Tényezők (Google keresés alapján)</h3><div class="market-summary">${trimmedSection.replace('**KULCSFONTOSSÁGÚ TÉNYEZŐK (Google keresés alapján)**', '').trim()}</div></div>`;
                 return;
             }
             
-             if (trimmedSection.startsWith('**ODDS ELEMZÉS (Google keresés alapján)**')) {
-                html += `<div class="analysis-market"><h3>Odds Elemzés (Google keresés alapján)</h3><div class="market-summary">${trimmedSection.replace('**ODDS ELEMZÉS (Google keresés alapján)**', '').trim()}</div></div>`;
+             if (trimmedSection.startsWith('**ÁTFOGÓ MECCSÉRTÉKELÉS**')) {
+                html += `<div class="analysis-market"><h3>Átfogó Meccsértékelés</h3><div class="market-summary">${trimmedSection.replace('**ÁTFOGÓ MECCSÉRTÉKELÉS**', '').trim()}</div></div>`;
                 return;
             }
             
@@ -697,7 +694,7 @@ function buildAnalysisHtml(res) {
             }
         });
 
-        if (html.trim().length === 0 && res.length > 0) throw new Error("A feldolgozás üres tartalommal végződött.");
+        if (html.trim().length === 0 && res.length > 0) throw new Error("A válasz feldolgozása nem sikerült, a formátum eltérhet a várttól.");
         return html;
 
     } catch (e) {
