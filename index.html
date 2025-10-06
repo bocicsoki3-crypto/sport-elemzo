@@ -419,7 +419,7 @@ async function callGeminiApi(systemPrompt, userPrompt) {
     return result?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
-// --- AUTOMATIZÁLT Promptok összeállítása ---
+// --- JAVÍTOTT, RÉSZLETES Promptok összeállítása ---
 function buildPrompts(home, away, mu_h, mu_a, sim, homeRating, awayRating) {
     let ratingsContext = "STATISZTIKAI KONTEXTUS:\n";
     if (homeRating) ratingsContext += `- ${home} (hazai): Szezonos Támadóerő: ${homeRating.atk.toFixed(2)}, Védekezőerő: ${homeRating.def.toFixed(2)}. Utolsó 5 meccses forma: ${homeRating.form}\n`;
@@ -432,7 +432,7 @@ function buildPrompts(home, away, mu_h, mu_a, sim, homeRating, awayRating) {
 2.  **Odds mozgás értelmezése:** A Google Kereső segítségével próbáld meg kideríteni a meccs nyitó és aktuális oddsait. Az oddsok változása a piac véleményét tükrözi. Elemezd, mit jelezhet az oddsok mozgása (pl. "smart money", sérülés híre, stb.).
 3.  **Mindenre kiterjedő Google Keresés:** Aktívan használd a keresőt a legfrissebb H2H adatokért, sérülésekért, eltiltásokért, a meccs BÍRÓJÁNAK adataiért (lapátlag), ÉS AZ ODDS MOZGÁSOKÉRT. A keresési eredményeket sződd bele az elemzésbe, ne csak külön listázd.
 4.  **Bankár Tipp és Bizalmi Szint:** A végén azonosíts egyetlen "Legjobb Tipp (Bankár) ⭐" opciót. Ezután adj egy "Bizalmi Szintet" 1-től 10-ig, és RÉSZLETESEN indokold, miért pont annyira bízol a tippben, figyelembe véve az összes rendelkezésre álló információt.
-5.  **Formátum:** Szigorúan kövesd a kért kimeneti formátumot.`.trim();
+5.  **Formátum:** Szigorúan kövesd a kért kimeneti formátumot. A LEÍRÁS és INDOKLÁS részek kitöltése kötelező!`.trim();
 
     const userPrompt = `
 Elemezd a ${home} vs ${away} labdarúgó mérkőzést a kért formátum alapján. Használd a Google keresőt a H2H, hírek, bíró és az odds mozgás információkhoz, majd szintetizáld azokat az alábbi statisztikai adatokkal.
@@ -441,32 +441,52 @@ ${ratingsContext}
 **Statisztikai alapértékek (szimuláció alapján):**
 - Várható gólok (xG): Hazai: ${mu_h.toFixed(2)}, Vendég: ${mu_a.toFixed(2)}
 - 1X2 Valószínűségek: H: ${sim.pHome.toFixed(1)}%, D: ${sim.pDraw.toFixed(1)}%, V: ${sim.pAway.toFixed(1)}%
+- Gólok O/U 1.5: O: ${sim.pOver15.toFixed(1)}%, U: ${sim.pUnder15.toFixed(1)}%
 - Gólok O/U 2.5: O: ${sim.pOver25.toFixed(1)}%, U: ${sim.pUnder25.toFixed(1)}%
+- Mindkét csapat szerez gólt (BTTS): Igen: ${sim.pBTTS.toFixed(1)}%, Nem: ${(100 - sim.pBTTS).toFixed(1)}%
+- Félidei Eredmény (HT): H: ${sim.pHT_H.toFixed(1)}%, D: ${sim.pHT_D.toFixed(1)}%, V: ${sim.pHT_A.toFixed(1)}%
 
-**Kért kimeneti formátum:**
+**Kért kimeneti formátum (MINDEN SZÖVEGES RÉSZ KITÖLTÉSE KÖTELEZŐ):**
 
 **ÁTFOGÓ ELEMZÉS**
-[Ide írj egy összefoglaló bekezdést, amiben szintetizálod a statisztikát, ÉS a keresési eredményeket (H2H, hírek, bíró, odds mozgás). Ez legyen az elemzésed magja.]
+[Ide írj egy részletes, több mondatos összefoglaló bekezdést, amiben szintetizáld a statisztikát, ÉS a keresési eredményeket (H2H, hírek, bíró, odds mozgás). Ez legyen az elemzésed magja.]
 
 ---
 
 **ODDS ELEMZÉS (Google keresés alapján)**
-[Keresd meg és értelmezd az odds mozgásokat. Mit jelez a piac? Egyetértesz vele a statisztikák alapján?]
+[Keresd meg és értelmezd az odds mozgásokat. Mit jelez a piac? Egyetértesz vele a statisztikák alapján? Ez a rész nem maradhat üresen!]
 
 ---
 
 1. **1X2**
-LEÍRÁS: [Rövid, 2-3 mondatos elemzés a piacról.]
+LEÍRÁS: [Kötelező, 2-3 mondatos elemzés a piacról.]
 - Hazai: ${sim.pHome.toFixed(1)}%
 - Döntetlen: ${sim.pDraw.toFixed(1)}%
 - Vendég: ${sim.pAway.toFixed(1)}%
 
 ---
 
-2. **Gólok Száma (Over/Under 2.5)**
-LEÍRÁS: [Rövid, 2-3 mondatos elemzés a piacról.]
+2. **Gólok Száma (Over/Under)**
+LEÍRÁS: [Kötelező, 2-3 mondatos elemzés a piacról.]
+- Over 1.5: ${sim.pOver15.toFixed(1)}%
+- Under 1.5: ${sim.pUnder15.toFixed(1)}%
 - Over 2.5: ${sim.pOver25.toFixed(1)}%
 - Under 2.5: ${sim.pUnder25.toFixed(1)}%
+
+---
+
+3. **Mindkét csapat szerez gólt (BTTS)**
+LEÍRÁS: [Kötelező, 2-3 mondatos elemzés a piacról.]
+- Igen: ${sim.pBTTS.toFixed(1)}%
+- Nem: ${(100 - sim.pBTTS).toFixed(1)}%
+
+---
+
+4. **Félidei Eredmény (HT)**
+LEÍRÁS: [Kötelező, 2-3 mondatos elemzés a piacról.]
+- Hazai (HT): ${sim.pHT_H.toFixed(1)}%
+- Döntetlen (HT): ${sim.pHT_D.toFixed(1)}%
+- Vendég (HT): ${sim.pHT_A.toFixed(1)}%
 
 ---
 
@@ -474,7 +494,7 @@ LEÍRÁS: [Rövid, 2-3 mondatos elemzés a piacról.]
 [Piac] – [Opció]
 
 **Bizalmi Szint: [1-10] / 10**
-INDOKLÁS: [Részletes, több mondatos indoklás, ami összefoglalja, miért ez a legbiztosabb tipp az ÖSSZES adat (statisztika, forma, H2H, hírek, bíró, odds mozgás) alapján, és miért pont annyi a bizalmi szint.]
+INDOKLÁS: [Kötelező, részletes indoklás, ami összefoglalja, miért ez a legbiztosabb tipp az ÖSSZES adat (statisztika, forma, H2H, hírek, bíró, odds mozgás) alapján, és miért pont annyi a bizalmi szint.]
 `.trim();
     return { systemPrompt, userPrompt };
 }
@@ -544,15 +564,24 @@ function samplePoisson(lambda){ const L=Math.exp(-lambda); let k=0,p=1; do{ k++;
 function sampleGoalsOD(mu_h, mu_a){ const kappa=0.05*Math.min(mu_h,mu_a), inflate=1.10; const y0=samplePoisson(kappa); const y1=samplePoisson(Math.max(mu_h*inflate-kappa,0.001)); const y2=samplePoisson(Math.max(mu_a*inflate-kappa,0.001)); return { gh:y0+y1, ga:y0+y2 }; }
 async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
   sims = sims || 10000;
-  let home=0,draw=0,away=0;
-  let over25=0;
+  let home=0,draw=0,away=0,btts=0;
+  let over15=0, over25=0;
+  let ht_h=0, ht_d=0, ht_a=0;
+  const htShare = 0.45;
 
   for(let i=0;i<sims;i++){
-    const { gh, ga } = sampleGoalsOD(mu_h, mu_a);
+    const ht = sampleGoalsOD(mu_h * htShare, mu_a * htShare);
+    const sh = sampleGoalsOD(mu_h * (1-htShare), mu_a * (1-htShare));
+    const gh = ht.gh + sh.gh;
+    const ga = ht.ga + sh.ga;
     const totalGoals = gh + ga;
 
     if (gh>ga) home++; else if (gh===ga) draw++; else away++;
+    if (gh>0 && ga>0) btts++;
+    if(totalGoals > 1.5) over15++;
     if(totalGoals > 2.5) over25++;
+    const htRes = ht.gh > ht.ga ? 'H' : (ht.gh === ht.ga ? 'D' : 'A');
+    if (htRes === 'H') ht_h++; else if (htRes === 'D') ht_d++; else ht_a++;
     
     if (i % 2000 === 0) {
         const pct = (i / sims) * 100;
@@ -564,8 +593,10 @@ async function simulateMatchProgress(mu_h, mu_a, sims, onProgress){
   const toPct=x=>(100*x/sims);
 
   return { 
-    pHome:toPct(home), pDraw:toPct(draw), pAway:toPct(away), 
+    pHome:toPct(home), pDraw:toPct(draw), pAway:toPct(away), pBTTS:toPct(btts), 
+    pOver15:toPct(over15), pUnder15:100-toPct(over15),
     pOver25:toPct(over25), pUnder25:100-toPct(over25),
+    pHT_H: toPct(ht_h), pHT_D: toPct(ht_d), pHT_A: toPct(ht_a),
   };
 }
 
