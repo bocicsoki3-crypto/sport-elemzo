@@ -80,6 +80,10 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;background:var(--seco
 .hist-title{font-weight:800}.hist-date{color:#98a5cc;font-size:.95rem}
 .hist-body{padding:.5rem 1rem 1rem}
 .hist-open{padding:9px 12px;border:1px solid var(--border);background:#132042;color:#e5e7eb;border-radius:12px;cursor:pointer;font-family:var(--font-family)}
+.market-options-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-top:1rem}
+.grid-item{background:rgba(255,255,255,.03);padding:.75rem;border-radius:8px;font-size:.9em;display:flex;flex-direction:column;justify-content:center;text-align:center}
+.grid-item-label{font-weight:600;margin-bottom:.25rem;font-size:.9em}
+.grid-item-value{font-size:1.1em;font-weight:700;color:var(--secondary)}
 .add-to-slip-btn { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); background: var(--accent); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; transition: background-color 0.2s; }
 .add-to-slip-btn:hover { background: #12cca4; }
 .slip-item { background: #0d1127; border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 0.5rem; }
@@ -184,19 +188,36 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;background:var(--seco
             <label for="backtestLeague">Bajnokság</label>
             <select id="backtestLeague">
               <option value="E0">Anglia - Premier League</option>
+              <option value="E1">Anglia - Championship</option>
+              <option value="E2">Anglia - League One</option>
+              <option value="E3">Anglia - League Two</option>
+              <option value="EC">Anglia - Conference</option>
               <option value="SP1">Spanyolország - La Liga</option>
+              <option value="SP2">Spanyolország - La Liga 2</option>
               <option value="D1">Németország - Bundesliga</option>
+              <option value="D2">Németország - 2. Bundesliga</option>
               <option value="I1">Olaszország - Serie A</option>
+              <option value="I2">Olaszország - Serie B</option>
               <option value="F1">Franciaország - Ligue 1</option>
+              <option value="F2">Franciaország - Ligue 2</option>
+              <option value="N1">Hollandia - Eredivisie</option>
+              <option value="B1">Belgium - Jupiler Pro League</option>
+              <option value="P1">Portugália - Liga Portugal</option>
+              <option value="T1">Törökország - Super Lig</option>
+              <option value="G1">Görögország - Super League</option>
+              <option value="SC0">Skócia - Premiership</option>
+              <option value="SC1">Skócia - Division 1</option>
+              <option value="SC2">Skócia - Division 2</option>
+              <option value="SC3">Skócia - Division 3</option>
             </select>
           </div>
           <div class="col">
             <label for="backtestSeason">Szezon</label>
             <select id="backtestSeason">
+              <option value="2425">2024/2025</option>
               <option value="2324">2023/2024</option>
               <option value="2223">2022/2023</option>
               <option value="2122">2021/2022</option>
-              <option value="2021">2020/2021</option>
             </select>
           </div>
         </div>
@@ -279,8 +300,6 @@ function removeBet(index){if(!confirm('Biztosan törlöd ezt a tippet a szelvén
 function renderSlip(){const container=document.getElementById('betSlip');const evaluationContainer=document.getElementById('slipEvaluation');const resultInputsContainer=document.getElementById('slipResultInputs');if(__betSlip.length === 0){container.innerHTML = '<p class="muted">A szelvény üres. Kattints a \'+\' gombra egy tipp hozzáadásához.</p>';evaluationContainer.style.display = 'none';return;}let slipHTML = __betSlip.map((bet,index) => `<div class="slip-item"><div class="slip-item-header"><div><div class="slip-title">${escapeHtml(bet.match)}</div><div class="slip-market">${escapeHtml(bet.market)}</div></div><button onclick="removeBet(${index})" style="background:transparent; border:none; color: #ff6b6b; font-size: 24px; cursor:pointer;">&times;</button></div><div class="slip-details">${escapeHtml(bet.selection)} @ ${bet.odds}</div></div>`).join('');const totalOdds = __betSlip.reduce((acc, bet) => acc * bet.odds, 1);const potentialWinnings = (document.getElementById('comboStake')?.value || 0) * totalOdds;slipHTML += `<div class="slip-summary-card"><div class="summary-row"><span>Események száma:</span><strong>${__betSlip.length}</strong></div><div class="summary-row"><span>Eredő Odds:</span><strong>${totalOdds.toFixed(2)}</strong></div><div class="summary-row"><label for="comboStake">Teljes Tét:</label><input type="number" id="comboStake" placeholder="0" oninput="renderSlip()"></div><hr style="border-color: var(--border); margin: 1rem 0;"><div class="summary-row"><span>Várható Nyeremény:</span><strong>${potentialWinnings.toFixed(2)}</strong></div></div>`;container.innerHTML = slipHTML;const uniqueMatches = [...new Map(__betSlip.map(bet => [bet.match, bet])).values()];resultInputsContainer.innerHTML = uniqueMatches.map((bet, index) => `<div class="slip-item"><div class="slip-title">${escapeHtml(bet.match)}</div><div class="slip-results-input-grid"><label>Hazai</label><span>-</span><label>Vendég</label><input type="number" id="home-score-${index}" placeholder="H" size="2"><span></span><input type="number" id="away-score-${index}" placeholder="V" size="2"></div></div>`).join('');evaluationContainer.style.display = 'block';}
 function evaluateSlip() {const stake = parseFloat(document.getElementById('comboStake').value);if (isNaN(stake) || stake <= 0) {alert('Kérlek, adj meg érvényes tétet!');return;}const uniqueMatches = [...new Map(__betSlip.map(bet => [bet.match, bet])).values()];const results = {};let allScoresEntered = true;uniqueMatches.forEach((bet, index) => {const homeScore = parseInt(document.getElementById(`home-score-${index}`).value);const awayScore = parseInt(document.getElementById(`away-score-${index}`).value);if (isNaN(homeScore) || isNaN(awayScore)) {allScoresEntered = false;}results[bet.match] = { home: homeScore, away: awayScore };});if (!allScoresEntered) {alert('Kérlek, add meg az összes meccs eredményét!');return;}let isSlipWinner = true;for (const bet of __betSlip) {const result = results[bet.match];const homeScore = result.home;const awayScore = result.away;const totalGoals = homeScore + awayScore;let isBetWinner = false;if (bet.market.includes('1X2') || bet.market.includes('MONEYLINE')) {if (bet.selection === 'Hazai' && homeScore > awayScore) isBetWinner = true;else if (bet.selection === 'Döntetlen' && homeScore === awayScore) isBetWinner = true;else if (bet.selection === 'Vendég' && awayScore > homeScore) isBetWinner = true;} else if (bet.market.includes('GÓLOK')) {const point = parseFloat(bet.selection.match(/[\d\.]+/)[0]);if (bet.selection.includes('Over') && totalGoals > point) isBetWinner = true;else if (bet.selection.includes('Under') && totalGoals < point) isBetWinner = true;} else if (bet.market.includes('BTTS')) {if(bet.selection === 'Igen' && homeScore > 0 && awayScore > 0) isBetWinner = true;else if (bet.selection === 'Nem' && (homeScore === 0 || awayScore === 0)) isBetWinner = true;}if (!isBetWinner) {isSlipWinner = false;break;}}const totalOdds = __betSlip.reduce((acc, bet) => acc * bet.odds, 1);const profit = isSlipWinner ? (stake * totalOdds) - stake : -stake;const slipRecord = {id: new Date().toISOString(),bets: [...__betSlip],stake: stake,totalOdds: totalOdds,status: isSlipWinner ? 'win' : 'loss',profit: profit};__slipHistory.push(slipRecord);saveSlipHistory();alert(`A szelvény ${isSlipWinner ? 'NYERT' : 'VESZTETT'}! Profit: ${profit.toFixed(2)}`);__betSlip = [];saveSlip();renderSlip();calculateStats();}
 function calculateStats() {let initialBankroll = parseFloat(localStorage.getItem('bankroll')) || 10000;const totalProfit = __slipHistory.reduce((acc, slip) => acc + slip.profit, 0);const currentBankroll = initialBankroll + totalProfit;const totalSlips = __slipHistory.length;const winningSlips = __slipHistory.filter(s => s.status === 'win').length;const winRate = totalSlips > 0 ? (winningSlips / totalSlips * 100).toFixed(1) : 0;document.getElementById('slipStats').innerHTML = `<div class="slip-stats"><div class="stat-item"><div class="stat-title">Kezdő Bankroll</div><div class="stat-value">${initialBankroll.toFixed(2)}</div></div><div class="stat-item"><div class="stat-title">Aktuális Bankroll</div><div class="stat-value ${currentBankroll >= initialBankroll ? 'profit' : 'loss'}">${currentBankroll.toFixed(2)}</div></div><div class="stat-item"><div class="stat-title">Teljes Profit</div><div class="stat-value ${totalProfit >= 0 ? 'profit' : 'loss'}">${totalProfit.toFixed(2)}</div></div><div class="stat-item"><div class="stat-title">Találati Arány</div><div class="stat-value">${winRate}% (${winningSlips}/${totalSlips})</div></div></div>`;}
-
-// --- VISSZATESZTELÉS FUNKCIÓ (ÚJ) ---
 async function runBacktest() {
     const league = document.getElementById('backtestLeague').value;
     const season = document.getElementById('backtestSeason').value;
@@ -305,11 +324,10 @@ async function runBacktest() {
         const data = await response.json();
         if (data.error) throw new Error(`Backend hiba: ${data.error}`);
 
-        // Eredmények megjelenítése
         const profitColor = data.totalProfit >= 0 ? 'var(--accent)' : '#ff6b6b';
         resultDiv.innerHTML = `
             <div class="slip-summary-card">
-                <div class="summary-row"><span>Tesztelt Szezon:</span> <strong>${league} / ${season}</strong></div>
+                <div class="summary-row"><span>Tesztelt Szezon:</span> <strong>${season.substring(0,2)}/${season.substring(2,4)}</strong></div>
                 <hr style="border-color: var(--border); margin: 1rem 0;">
                 <div class="summary-row"><span>Összes Meccs:</span> <strong>${data.totalMatches}</strong></div>
                 <div class="summary-row"><span>Értékalapú Fogadások:</span> <strong>${data.betsPlaced}</strong></div>
