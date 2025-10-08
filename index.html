@@ -157,7 +157,7 @@ input[type="range"] {
     -webkit-appearance: none;
     width: 100%;
     height: 8px;
-    background: #444; /* Sötétszürke háttér (az, ami még nincs kitöltve) */
+    background: #444; 
     border-radius: 10px;
     outline: none;
     opacity: 0.9;
@@ -170,42 +170,21 @@ input[type="range"]:hover {
     opacity: 1;
 }
 
-/* Különleges WebKit (Chrome, Safari) CSS a kitöltött rész és a hüvelyk (thumb) stílusához */
-input[type="range"]::-webkit-slider-runnable-track {
-    background: #444; /* Háttér */
-    height: 8px;
-    border-radius: 10px;
-}
-
+/* Chrome/Safari - Hüvelyk */
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 20px;
     height: 20px;
-    background: var(--secondary); /* Élénk színű hüvelyk */
+    background: var(--secondary); 
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 0 0 3px var(--bg), 0 2px 5px rgba(0,0,0,0.4); /* Kiemeljük a hüvelyk körüli buborék hatást */
+    box-shadow: 0 0 0 3px var(--bg), 0 2px 5px rgba(0,0,0,0.4); 
     margin-top: -6px;
     border: none;
 }
 
-/* JAVÍTÁS: Kitöltött rész színezése (jobban illeszkedő technika a WebKit-hez) */
-input[type=range]::-webkit-slider-runnable-track {
-    background: linear-gradient(to right, var(--primary) 0%, var(--primary) 50%, #444 50%, #444 100%);
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-}
-input[type=range].slider {
-    /* Az értéknek megfelelően állítjuk be a háttér színátmenetét JavaScripttel */
-}
-
-/* Firefox */
-input[type="range"]::-moz-range-track {
-    background: #444;
-    height: 8px;
-    border-radius: 10px;
-}
+/* Firefox - Hüvelyk */
 input[type="range"]::-moz-range-thumb {
     width: 20px;
     height: 20px;
@@ -216,13 +195,27 @@ input[type="range"]::-moz-range-thumb {
     border: none;
 }
 
-/* Hiba üzenet stílusának javítása */
+/* Chrome/Safari - Kitöltött rész (JS kezeli a háttérátmenetet) */
+input[type=range]::-webkit-slider-runnable-track {
+    background: #444; 
+    height: 8px;
+    border-radius: 10px;
+}
+/* Firefox - Kitöltött rész (JS kezeli a háttérátmenetet) */
+input[type=range]::-moz-range-track {
+    background: #444;
+    height: 8px;
+    border-radius: 10px;
+}
+
+
+/* Hiba üzenet stílusának javítása (a meccsek betöltési hibájához) */
 .error-message {
     padding: 10px;
     border-radius: 8px;
-    background-color: #3b0707; /* Sötét piros háttér */
+    background-color: #3b0707; 
     border: 1px solid #ff6b6b;
-    color: #ffcccc; /* Világos piros szöveg */
+    color: #ffcccc; 
     font-size: 0.9rem;
     font-weight: 600;
     margin-top: 1rem;
@@ -233,6 +226,7 @@ input[type="range"]::-moz-range-thumb {
 <body>
 <header class="app-header">
     <h1>SportElemző Gemini AI</h1>
+    <div id="criticalError" class="error-message" style="display:none; margin: 10px auto; max-width: 800px; font-weight: 700;"></div>
     <div id="userInfo" class="user-info">Adatok betöltése...</div>
 </header>
 <div class="container layout">
@@ -362,19 +356,19 @@ document.addEventListener("DOMContentLoaded", async function() {
     formWeightSlider.value = savedWeight;
     formWeightLabel.textContent = `${savedWeight}%`;
     
-    // JS funkció a kitöltött sáv színezéséhez (a CSS nem tudja megtenni egyszerűen)
+    // JS funkció a kitöltött sáv színezéséhez (A CSS-t felülírva, a cross-browser kompatibilitás érdekében)
     const updateSliderFill = (slider) => {
         const value = slider.value;
         const fill = `linear-gradient(to right, var(--primary) 0%, var(--primary) ${value}%, #444 ${value}%, #444 100%)`;
         slider.style.background = fill;
     };
 
-    updateSliderFill(formWeightSlider); // Kezdeti beállítás
+    updateSliderFill(formWeightSlider);
     
     formWeightSlider.addEventListener('input', (e) => { 
         formWeightLabel.textContent = `${e.target.value}%`; 
         localStorage.setItem('formWeight', e.target.value); 
-        updateSliderFill(e.target); // Frissítjük a kitöltést is
+        updateSliderFill(e.target);
     });
     
     ['home', 'away'].forEach(id => document.getElementById(id).addEventListener('input', handleTeamInput));
@@ -393,18 +387,31 @@ document.addEventListener("DOMContentLoaded", async function() {
 async function loadUserDataFromCloud() {
     if (!__gasUrl) return;
     try {
+        const criticalErrorEl = document.getElementById('criticalError');
         document.getElementById('userInfo').textContent = 'Felhasználói adatok betöltése...';
+        
         const response = await fetch(`${__gasUrl}?action=loadUserData`);
         if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
         
         const data = await response.json();
-        if (data.error) throw new Error(`Backend hiba: ${data.error}`);
+        
+        // Hiba a szerveroldali GAS kód futtatásakor (pl. jogosultságok)
+        if (data.error) throw new Error(data.error);
         
         __user.email = data.userEmail;
         __user.initialBankroll = data.bankroll || 10000;
-        __slipHistory = data.slipHistory ? JSON.parse(data.slipHistory) : [];
-        try { __favLeagues = new Set(JSON.parse(data.favLeagues || "[]")); } catch(e) { __favLeagues = new Set(); }
+        
+        // CRITICAL FIX: Biztosítjuk, hogy az adat tömb legyen, ha string (a GAS stringként adja vissza)
+        try { 
+            __slipHistory = JSON.parse(data.slipHistory || "[]");
+        } catch(e) {
+            criticalErrorEl.textContent = "Hiba: A szelvénytörténet adatai sérültek. Alaphelyzetbe állítva. (" + e.message + ")";
+            criticalErrorEl.style.display = 'block';
+            __slipHistory = [];
+        }
 
+        try { __favLeagues = new Set(JSON.parse(data.favLeagues || "[]")); } catch(e) { __favLeagues = new Set(); }
+        
         document.getElementById('userInfo').textContent = `Bejelentkezve: ${__user.email}`;
         
         renderSlip();
@@ -413,6 +420,8 @@ async function loadUserDataFromCloud() {
         
     } catch (e) {
         document.getElementById('userInfo').textContent = `Hiba: ${e.message}. Ellenőrizd a backend URL-t és az engedélyeket.`;
+        document.getElementById('criticalError').textContent = `CRITICAL Hiba: ${e.message}. Ellenőrizd a backend URL-t és a GAS jogosultságokat!`;
+        document.getElementById('criticalError').style.display = 'block';
         console.error(e);
     }
 }
@@ -421,6 +430,11 @@ async function saveDataToCloud(dataObject) {
     if (!__gasUrl || isSaving) return;
     isSaving = true;
     try {
+        // A slipHistory-t stringként küldjük vissza
+        if(dataObject.slipHistory) {
+            dataObject.slipHistory = JSON.stringify(__slipHistory);
+        }
+
         let params = new URLSearchParams({ action: 'saveUserData' });
         for (const key in dataObject) {
             params.append(key, dataObject[key]);
@@ -470,7 +484,7 @@ async function loadFixtures() {
         
         statusEl.textContent = `Sikeres frissítés! ${__fixtures.length} meccs betöltve.`;
         if(__fixtures.length === 0) {
-             errorEl.textContent = 'Backend hiba: Nem sikerült egyetlen meccset sem betölteni (Ellenőrizd a SPORT_CONFIG-ot a kódban).';
+             errorEl.textContent = 'Backend hiba: Nem sikerült egyetlen meccset sem betölteni (Ellenőrizd a SPORT_CONFIG-ot a kódban, vagy a külső API-kat).';
              errorEl.style.display = 'block';
         }
         
