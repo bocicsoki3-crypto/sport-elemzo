@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* CSS VÁLTOZÓK */
 :root{--bg:#0b1020;--bg-grad-1:#0b1020;--bg-grad-2:#0a112a;--glass:#0f1730cc;--card:#0f172a;--border:#22304f;--muted:#a3b3d9;--primary:#4f46e5;--secondary:#14b8a6;--accent:#10b981;--ring:#14b8a6;--text:#e5e7eb;--font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-family);color:var(--text);background:radial-gradient(1300px 600px at -10% -20%,rgba(20,184,166,.15),transparent 45%),radial-gradient(1100px 500px at 110% 120%,rgba(79,70,229,.15),transparent 50%),linear-gradient(180deg,var(--bg-grad-1),var(--bg-grad-2));min-height:100vh}
@@ -26,72 +27,89 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--secondar
 textarea{resize:vertical;min-height:80px}
 .row{display:flex;gap:12px;flex-wrap:wrap}.col{flex:1 1 220px}
 .actions{margin-top:1rem;display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;flex-direction:column}
-/* FŐ AKCIÓ GOMB SZÍNSÉMA: Elemzés Futtatása */
 .actions button, .btn-primary {padding:12px 18px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 12px 28px rgba(20,184,166,.35),0 4px 12px rgba(79,70,229,.25);width:100%;transition:transform .2s ease;font-family:var(--font-family); text-align: center;}
 .actions button:hover:not(:disabled), .btn-primary:hover:not(:disabled) {transform:translateY(-2px)}
 .actions button:disabled, .btn-primary:disabled {background:#555;cursor:not-allowed;opacity:.7}
 .muted{color:var(--muted);font-size:.9rem}
 
-/* MECCSLISTA GOMB STÍLUSA */
-.fx-btn { 
-  background: var(--primary); /* Kék-lila alapú háttér */
-  color: #fff; 
-  border: none; 
-  padding: 8px 12px; 
-  border-radius: 8px; 
-  font-size: 0.85rem; 
-  font-weight: 700; 
-  cursor: pointer; 
-  transition: background 0.2s; 
-  box-shadow: 0 4px 10px rgba(79,70,229,.3); /* Kék-lila árnyék */
+/* 🟢 LIGÁK (buborékos) STÍLUSA */
+.league-list { margin-top: 0.8rem; }
+.league-item { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 10px 12px; 
+    font-size: 0.95rem; 
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.05); /* Enyhe áttetsző háttér */
+    border-radius: 10px; 
+    border: 1px solid rgba(255,255,255,0.1); /* Finom keret */
+    cursor: pointer; 
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Enyhe lebegés */
 }
-.fx-btn:hover { background: #6c63ff; } 
-
-
-/* KÉP 2 - Pénzügyi Statisztikák DIZÁJN */
-.slip-stats { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Rácsos elrendezés */
-    gap: 10px; 
-    margin-top: 10px; 
-}
-.stat-item { 
-    text-align: center; 
-    background: #1a2441; /* Sötétebb háttér */
-    padding: 15px 10px; 
-    border-radius: 8px; 
-    border: 1px solid var(--border);
-    transition: transform 0.2s;
-}
-.stat-item:hover {
+.league-item:hover {
+    background: rgba(255,255,255,0.1);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
 }
-.stat-title { 
-    font-size: 0.85rem; 
-    color: var(--muted); 
-    font-weight: 600;
-}
-.stat-value { 
-    font-weight: 800; /* Kiemelt vastagság */
-    font-size: 1.3rem; 
-    margin-top: 5px;
-    color: var(--text); /* Alapértelmezett szövegszín */
-}
-.stat-value.profit { color: var(--accent); } /* Zöld a profitnak */
-.stat-value.loss { color: #ff6b6b; } /* Piros a veszteségnek */
+.league-item input[type="checkbox"] { margin-right: 8px; transform: scale(1.1); }
+.badge { background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
 
-/* KÉP 4 - Sávok és Színek javítása */
-.analysis-option { padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,.1); }
-.option-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.5s ease-out; }
-.option-meta b { color: var(--accent); } /* A százalékérték színe zöld legyen */
+/* 🔴 MECCSEK (buborékos) STÍLUSA */
+.fixtures { margin-top: 0.8rem; }
+.fx-item { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    background: rgba(255,255,255,0.05); /* Enyhe áttetsző háttér */
+    border-radius: 12px; /* Nagyobb lekerekítés */
+    padding: 15px; 
+    margin-bottom: 10px; 
+    border: 1px solid rgba(255,255,255,0.15); 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease;
+}
+.fx-item:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.1);
+}
+.fx-title { font-weight: 700; font-size: 1.1rem; color: var(--text); }
+.fx-meta { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
 
-/* NYITHATÓ/ZÁRHATÓ ELEMEK JAVÍTÁSA */
+/* 🔵 AI ELEMZÉS GOMB STÍLUSA */
+.fx-btn { 
+  background: linear-gradient(90deg, var(--accent), #10b981); /* Élénk zöld gradient */
+  color: #0b1020; /* Fekete szöveg a kontraszt miatt */
+  border: none; 
+  padding: 8px 14px; 
+  border-radius: 10px; 
+  font-size: 0.85rem; 
+  font-weight: 800; 
+  cursor: pointer; 
+  transition: all 0.2s; 
+  white-space: nowrap;
+  box-shadow: 0 6px 15px rgba(16,185,129,0.4); /* Zöld lebegő árnyék */
+}
+.fx-btn:hover { background: var(--accent); color: #fff; transform: scale(1.05); } 
+
+
+/* Statisztikák (megtartjuk a korábbi javítást) */
+.slip-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 10px; }
+.stat-item { text-align: center; background: #1a2441; padding: 15px 10px; border-radius: 8px; border: 1px solid var(--border); transition: transform 0.2s; }
+.stat-item:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+.stat-title { font-size: 0.85rem; color: var(--muted); font-weight: 600;}
+.stat-value { font-weight: 800; font-size: 1.3rem; margin-top: 5px; color: var(--text); }
+.stat-value.profit { color: var(--accent); }
+.stat-value.loss { color: #ff6b6b; }
+
+
+/* Nyitható/zárható elemek (megtartjuk a korábbi javítást) */
 .details-summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; padding: 5px 0;}
 .details-summary::before { content: '▶'; margin-right: 10px; font-size: 0.8em; color: var(--secondary); transition: transform 0.2s; }
 details[open] > .details-summary::before { content: '▼'; transform: rotate(90deg); }
 .details-summary h2 { margin: 0; }
-.details-summary::-webkit-details-marker { display: none; } /* eltávolítjuk az alap nyíl ikont */
+.details-summary::-webkit-details-marker { display: none; }
 
 </style>
 </head>
@@ -210,7 +228,7 @@ details[open] > .details-summary::before { content: '▼'; transform: rotate(90d
 </div>
 
 <script>
-// --- A TELJES JAVÍTOTT JAVASCRIPT KÓD ---
+// --- A JAVÍTOTT JAVASCRIPT KÓD ---
 let __historyCache = [], __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', __betSlip = [], __slipHistory = [], __user = { email: null, initialBankroll: 10000 };
 let isSaving = false;
 
