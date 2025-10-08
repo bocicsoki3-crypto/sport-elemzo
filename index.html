@@ -41,19 +41,65 @@ textarea{resize:vertical;min-height:80px}
     padding: 10px 12px; 
     font-size: 0.95rem; 
     margin-bottom: 8px;
-    background: rgba(255,255,255,0.05); /* Enyhe áttetsző háttér */
+    background: rgba(255,255,255,0.05);
     border-radius: 10px; 
-    border: 1px solid rgba(255,255,255,0.1); /* Finom keret */
+    border: 1px solid rgba(255,255,255,0.1); 
     cursor: pointer; 
     transition: all 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Enyhe lebegés */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    font-weight: 600; /* Szebb betűvastagság */
 }
 .league-item:hover {
-    background: rgba(255,255,255,0.1);
+    background: rgba(79,70,229,0.2); /* Enyhe primary szín hoveren */
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.4);
 }
-.league-item input[type="checkbox"] { margin-right: 8px; transform: scale(1.1); }
+/* JAVÍTÁS: A checkbox négyzetét elrejtjük, és a label-re hagyjuk a kattintást. */
+.league-item input[type="checkbox"] { 
+    position: absolute; /* Eltoljuk az eredeti checkboxot */
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.league-item input[type="checkbox"]:checked + span {
+    color: var(--text);
+}
+/* A CHECKBOX helye, ha be van jelölve (egyébként üres marad a bal oldalon) */
+.league-item input[type="checkbox"]:checked ~ .league-name {
+    color: var(--text);
+}
+.league-item span {
+    display: flex;
+    align-items: center;
+}
+.league-item span:first-child {
+    flex-grow: 1; /* A szöveg kitölti a helyet */
+}
+.league-item input[type="checkbox"] ~ span::before {
+    content: ''; 
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 10px;
+    border-radius: 4px;
+    border: 2px solid var(--muted); /* Üres keret */
+    background-color: transparent;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.league-item input[type="checkbox"]:checked ~ span::before {
+    content: '✓'; 
+    background-color: var(--secondary); /* Zöld háttér bejelölve */
+    border-color: var(--secondary);
+    color: var(--bg); /* Sötét pipa */
+    text-align: center;
+    line-height: 12px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+
 .badge { background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
 
 /* 🔴 MECCSEK (buborékos) STÍLUSA */
@@ -62,8 +108,8 @@ textarea{resize:vertical;min-height:80px}
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
-    background: rgba(255,255,255,0.05); /* Enyhe áttetsző háttér */
-    border-radius: 12px; /* Nagyobb lekerekítés */
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
     padding: 15px; 
     margin-bottom: 10px; 
     border: 1px solid rgba(255,255,255,0.15); 
@@ -79,8 +125,8 @@ textarea{resize:vertical;min-height:80px}
 
 /* 🔵 AI ELEMZÉS GOMB STÍLUSA */
 .fx-btn { 
-  background: linear-gradient(90deg, var(--accent), #10b981); /* Élénk zöld gradient */
-  color: #0b1020; /* Fekete szöveg a kontraszt miatt */
+  background: linear-gradient(90deg, var(--accent), #10b981);
+  color: #0b1020;
   border: none; 
   padding: 8px 14px; 
   border-radius: 10px; 
@@ -89,7 +135,7 @@ textarea{resize:vertical;min-height:80px}
   cursor: pointer; 
   transition: all 0.2s; 
   white-space: nowrap;
-  box-shadow: 0 6px 15px rgba(16,185,129,0.4); /* Zöld lebegő árnyék */
+  box-shadow: 0 6px 15px rgba(16,185,129,0.4);
 }
 .fx-btn:hover { background: var(--accent); color: #fff; transform: scale(1.05); } 
 
@@ -110,7 +156,9 @@ textarea{resize:vertical;min-height:80px}
 details[open] > .details-summary::before { content: '▼'; transform: rotate(90deg); }
 .details-summary h2 { margin: 0; }
 .details-summary::-webkit-details-marker { display: none; }
-
+.analysis-option { padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,.1); }
+.option-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.5s ease-out; }
+.option-meta b { color: var(--accent); } 
 </style>
 </head>
 <body>
@@ -327,7 +375,7 @@ async function loadFixtures() {
         statusEl.textContent = `Sikeres frissítés! ${__fixtures.length} meccs betöltve.`;
     } catch (e) { statusEl.textContent = `Hiba a frissítés során: ${e.message}`; console.error(e); }
 }
-function renderLeagueList(){const box=document.getElementById('leagueList');const q=(document.getElementById('leagueSearch').value||'').toLowerCase();const list=(__allLeagues||[]).filter(x=>!q||x.name.toLowerCase().includes(q));box.innerHTML=list.map(x=>{const checked=__favLeagues.has(x.name)?'checked':'';return`<label class="league-item"><span><input type="checkbox" data-league="${escapeHtml(x.name)}" ${checked}/> ${escapeHtml(x.name)}</span><span class="badge">${x.count}</span></label>`;}).join('');box.querySelectorAll('input[type=checkbox]').forEach(cb=>{cb.addEventListener('change',e=>{const name=e.target.dataset.league;if(e.target.checked)__favLeagues.add(name);else __favLeagues.delete(name);renderFixtureList();});});}
+function renderLeagueList(){const box=document.getElementById('leagueList');const q=(document.getElementById('leagueSearch').value||'').toLowerCase();const list=(__allLeagues||[]).filter(x=>!q||x.name.toLowerCase().includes(q));box.innerHTML=list.map(x=>{const checked=__favLeagues.has(x.name)?'checked':'';return`<label class="league-item ${checked ? 'league-checked' : ''}"><span><input type="checkbox" data-league="${escapeHtml(x.name)}" ${checked}/> ${escapeHtml(x.name)}</span><span class="badge">${x.count}</span></label>`;}).join('');box.querySelectorAll('input[type=checkbox]').forEach(cb=>{cb.addEventListener('change',e=>{const name=e.target.dataset.league;const item=e.target.closest('.league-item');if(e.target.checked){__favLeagues.add(name);item.classList.add('league-checked');}else{__favLeagues.delete(name);item.classList.remove('league-checked');}renderFixtureList();});});}
 function renderFixtureList(){const box=document.getElementById('fixtures');const fav=__favLeagues.size>0?new Set(__favLeagues):null;const list=(__fixtures||[]).filter(fx=>!fav||fav.has(fx.league));if(list.length===0){box.innerHTML=`<div class="muted">Nincs megjeleníthető meccs.</div>`;return;}box.innerHTML=list.map(fx=>{const local=new Date(fx.utcKickoff);const dt=`${local.getFullYear()}-${String(local.getMonth()+1).padStart(2,'0')}-${String(local.getDate()).padStart(2,'0')} ${String(local.getHours()).padStart(2,'0')}:${String(local.getMinutes()).padStart(2,'0')}`;return`<div class="fx-item" data-home="${escapeHtml(fx.home)}" data-away="${escapeHtml(fx.away)}"><div><div class="fx-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div><div class="fx-meta">${escapeHtml(fx.league)} · ${dt}</div></div><div><button class="fx-btn" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">AI elemzés</button></div></div>`;}).join('');}
 function fillAndAnalyze(home,away){document.getElementById('home').value=home;document.getElementById('away').value=away;document.querySelector('main').scrollIntoView({behavior:'smooth'});go();}
 function showSkeletonLoader(){const skeletonCard=`<div class="analysis-market"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text" style="width: 90%;"></div><div class="skeleton skeleton-text" style="width: 80%;"></div><div class="skeleton skeleton-bar" style="margin-top: 1rem;"></div></div>`;const skeletonHero=`<div class="hero"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text" style="width: 95%;"></div><div class="skeleton skeleton-text" style="width: 85%;"></div></div>`;document.getElementById('out').innerHTML=skeletonCard.repeat(3)+skeletonHero;}
