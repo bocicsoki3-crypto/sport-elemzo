@@ -42,6 +42,9 @@ details[open] > .details-summary::before { transform: rotate(90deg); }
 .stylish-label { text-transform: uppercase; font-size: 0.8rem; color: var(--muted); letter-spacing: 0.05em;}
 .stylish-input { background: #0b1020; border: 1px solid var(--border); padding: 16px; font-size: 1.5rem; font-weight: 700; color: var(--secondary); text-align: center; }
 .stylish-input:focus { border-color: var(--accent); }
+input[type="range"] { -webkit-appearance: none; width: 100%; height: 8px; background: linear-gradient(to right, var(--primary), var(--secondary)); border-radius: 10px; outline: none; opacity: 0.9; transition: opacity .2s; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+input[type="range"]:hover { opacity: 1; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #fff; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4); margin-top: -6px; border: 2px solid var(--primary); }
 </style>
 </head>
 <body>
@@ -69,7 +72,6 @@ details[open] > .details-summary::before { transform: rotate(90deg); }
       </div>
       <div class="league-list" id="leagueList"></div>
     </div>
-    
     <div class="card">
       <h2>Közelgő meccsek</h2>
       <div id="fixtures" class="fixtures"><p class="muted">Válassz sportágat és frissíts!</p></div>
@@ -85,8 +87,8 @@ details[open] > .details-summary::before { transform: rotate(90deg); }
           <div class="col"><label for="away">Vendég csapat</label><input id="away" list="teamlist" placeholder="Pl. Manchester City" /></div>
         </div>
         <div class="row" style="margin-top: .7rem;">
-          <div class="col"><label for="homeFormWeight">Hazai Forma Súlya: <span id="homeFormWeightLabel">50%</span></label><input type="range" min="0" max="100" value="50" id="homeFormWeight"></div>
-          <div class="col"><label for="awayFormWeight">Vendég Forma Súlya: <span id="awayFormWeightLabel">50%</span></label><input type="range" min="0" max="100" value="50" id="awayFormWeight"></div>
+          <div class="col"><label for="homeFormWeight">Hazai Forma Súlya: <span id="homeFormWeightLabel">50%</span></label><input type="range" class="slider" min="0" max="100" value="50" id="homeFormWeight"></div>
+          <div class="col"><label for="awayFormWeight">Vendég Forma Súlya: <span id="awayFormWeightLabel">50%</span></label><input type="range" class="slider" min="0" max="100" value="50" id="awayFormWeight"></div>
         </div>
         <div class="actions">
           <button id="goBtn" class="btn-primary" onclick="go()">Elemzés Futtatása a Gemini AI-val</button>
@@ -97,12 +99,7 @@ details[open] > .details-summary::before { transform: rotate(90deg); }
     <div class="card">
         <h2>AI Szelvény Generátor</h2>
         <p class="muted">Az AI a mai nap legvalószínűbb ("bankár") meccseiből összeállít neked egy szelvényt a megadott célodds közelében.</p>
-        <div class="row">
-            <div class="col">
-                <label for="targetOdds" class="stylish-label">Cél odds</label>
-                <input type="number" id="targetOdds" class="stylish-input" value="2.5" />
-            </div>
-        </div>
+        <div class="row"><div class="col"><label for="targetOdds" class="stylish-label">Cél odds</label><input type="number" id="targetOdds" class="stylish-input" value="2.5" /></div></div>
         <div class="actions"><button id="generateSlipBtn" class="btn-primary" onclick="generateAutoSlip()">Szelvény Generálása</button></div>
         <div id="autoSlipResult" style="margin-top: 1rem; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2);"><p class="muted">Az AI indoklása itt fog megjelenni.</p></div>
     </div>
@@ -143,13 +140,18 @@ details[open] > .details-summary::before { transform: rotate(90deg); }
 
 <script>
 let __historyCache = [], __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', __betSlip = [], __slipHistory = [], __user = { email: null, initialBankroll: 10000 };
+let isSaving = false;
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);}
 
 document.addEventListener("DOMContentLoaded", async function() {
     __gasUrl = localStorage.getItem('gasUrl') || '';
     ['homeFormWeight', 'awayFormWeight'].forEach(id => {
         const slider = document.getElementById(id);
         const label = document.getElementById(id + 'Label');
-        slider.addEventListener('input', (e) => { label.textContent = `${e.target.value}%`; });
+        if (slider && label) {
+            slider.addEventListener('input', (e) => { label.textContent = `${e.target.value}%`; });
+        }
     });
     ['home', 'away'].forEach(id => document.getElementById(id).addEventListener('input', handleTeamInput));
     document.getElementById('leagueSearch').addEventListener('input', renderLeagueList);
@@ -232,24 +234,34 @@ function clearSlip() {
 }
 
 function renderSlip(){
+    const container=document.getElementById('betSlip');
+    const evaluationContainer=document.getElementById('slipEvaluation');
+    const resultInputsContainer=document.getElementById('slipResultInputs');
     const slipActions = document.getElementById('slipActions');
-    const container = document.getElementById('betSlip');
-    const evalContainer = document.getElementById('slipEvaluation');
+
     if(__betSlip.length === 0){
         container.innerHTML = '<p class="muted">A szelvény üres.</p>';
-        evalContainer.style.display = 'none';
+        evaluationContainer.style.display = 'none';
         slipActions.style.display = 'none';
         return;
     }
+    
     slipActions.style.display = 'block';
-    // A renderSlip többi része (HTML generálás) változatlan, a teljesség igénye nélkül itt nem ismétlem
+    let slipHTML = __betSlip.map((bet,index) => `<div class="slip-item"><div class="slip-item-header"><div><div class="slip-title">${escapeHtml(bet.match)}</div><div class="slip-market">${escapeHtml(bet.market)}</div></div><button onclick="removeBet(${index})" style="background:transparent; border:none; color: #ff6b6b; font-size: 24px; cursor:pointer;">&times;</button></div><div class="slip-details">${escapeHtml(bet.selection)} @ ${bet.odds}</div></div>`).join('');
+    const totalOdds = __betSlip.reduce((acc, bet) => acc * bet.odds, 1);
+    const potentialWinnings = (parseFloat(document.getElementById('comboStake')?.value) || 0) * totalOdds;
+    slipHTML += `<div class="slip-summary-card"><div class="summary-row"><span>Események száma:</span><strong>${__betSlip.length}</strong></div><div class="summary-row"><span>Eredő Odds:</span><strong>${totalOdds.toFixed(2)}</strong></div><div class="summary-row"><label for="comboStake">Teljes Tét:</label><input type="number" id="comboStake" placeholder="0" oninput="renderSlip()" value="${document.getElementById('comboStake')?.value || 0}"></div><hr style="border-color: var(--border); margin: 1rem 0;"><div class="summary-row"><span>Várható Nyeremény:</span><strong>${potentialWinnings.toFixed(2)}</strong></div></div>`;
+    container.innerHTML = slipHTML;
+    const uniqueMatches = [...new Map(__betSlip.map(bet => [bet.match, bet])).values()];
+    resultInputsContainer.innerHTML = uniqueMatches.map((bet, index) => `<div class="slip-item"><div class="slip-title">${escapeHtml(bet.match)}</div><div class="slip-results-input-grid"><label>Hazai</label><span>-</span><label>Vendég</label><input type="number" id="home-score-${index}" placeholder="H" size="2"><span></span><input type="number" id="away-score-${index}" placeholder="V" size="2"></div></div>`).join('');
+    evaluationContainer.style.display = 'block';
 }
 
 function getSportFromBet(bet) {
     if (!bet.market) return 'egyéb';
     if (bet.market.toLowerCase().includes('pontok')) return 'basketball';
-    if (bet.market.toLowerCase().includes('gólok')) return 'soccer';
-    if (bet.market.toLowerCase().includes('győztes')) return 'hockey'; // Feltételezés
+    if (bet.market.toLowerCase().includes('gólok') || bet.market.toLowerCase().includes('1x2')) return 'soccer';
+    if (bet.market.toLowerCase().includes('győztes')) return 'hockey';
     return 'egyéb';
 }
 
@@ -276,25 +288,24 @@ function calculateStats() {
     const sportFilter = document.getElementById('statFilterSport').value;
     const leagueFilter = document.getElementById('statFilterLeague').value;
     const marketFilter = document.getElementById('statFilterMarket').value;
-
     const filteredHistory = (__slipHistory || []).filter(slip => {
         if (!slip.bets || slip.bets.length === 0) return false;
-        const sportCheck = sportFilter === 'all' || slip.bets.some(bet => getSportFromBet(bet) === sportFilter);
-        const leagueCheck = leagueFilter === 'all' || slip.bets.some(bet => bet.league === leagueFilter);
-        const marketCheck = marketFilter === 'all' || slip.bets.some(bet => bet.market === marketFilter);
-        return sportCheck && leagueCheck && marketCheck;
+        // Szűrés minden tippre a szelvényen belül
+        return slip.bets.every(bet => {
+            const sportCheck = sportFilter === 'all' || getSportFromBet(bet) === sportFilter;
+            const leagueCheck = leagueFilter === 'all' || bet.league === leagueFilter;
+            const marketCheck = marketFilter === 'all' || bet.market === marketFilter;
+            return sportCheck && leagueCheck && marketCheck;
+        });
     });
-    
     if (filteredHistory.length === 0) {
         document.getElementById('slipStats').innerHTML = '<p class="muted">A jelenlegi szűrési feltételekkel nincsenek szelvények.</p>';
         return;
     }
-
     const totalProfit = filteredHistory.reduce((acc, slip) => acc + slip.profit, 0);
     const totalSlips = filteredHistory.length;
     const winningSlips = filteredHistory.filter(s => s.status === 'win');
     const winRate = totalSlips > 0 ? (winningSlips.length / totalSlips * 100).toFixed(1) : 0;
-    
     let longestWinStreak = 0, longestLossStreak = 0, currentWinStreak = 0, currentLossStreak = 0;
     filteredHistory.forEach(slip => {
         if (slip.status === 'win') { currentWinStreak++; currentLossStreak = 0; if (currentWinStreak > longestWinStreak) longestWinStreak = currentWinStreak;
@@ -302,7 +313,6 @@ function calculateStats() {
     });
     const avgWinningOdds = winningSlips.length > 0 ? (winningSlips.reduce((a, s) => a + s.totalOdds, 0) / winningSlips.length).toFixed(2) : 'N/A';
     const profitColor = totalProfit >= 0 ? 'profit' : 'loss';
-    
     document.getElementById('slipStats').innerHTML = `
         <p class="muted" style="width: 100%; text-align: center; grid-column: 1 / -1; margin-bottom: 0.5rem;">${totalSlips} szelvény alapján</p>
         <div class="stat-item"><div class="stat-title">Teljes Profit</div><div class="stat-value ${profitColor}">${totalProfit.toFixed(2)}</div></div>
@@ -320,37 +330,31 @@ async function generateAutoSlip() {
     if (isNaN(targetOdds) || targetOdds <= 1) { alert('Adj meg érvényes céloddsot.'); return; }
     if (!__gasUrl) { resultDiv.innerHTML = `<p style="color: #ff5555;">Hiba: Hiányzó URL.</p>`; return; }
     try {
-        btn.disabled = true;
-        btn.textContent = 'Generálás...';
+        btn.disabled = true; btn.textContent = 'Generálás...';
         resultDiv.innerHTML = `<p class="muted">Az AI tippeket keres... Ez eltarthat egy percig.</p>`;
         const url = `${__gasUrl}?action=generateAutoSlip&targetOdds=${targetOdds}&sport=${__currentSport}`;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-
         if (data.slip && data.slip.length > 0) {
             __betSlip = [];
             data.slip.forEach(bet => { addToSlip(bet.match, bet.market, bet.selection, bet.odds, bet.prob); });
             resultDiv.innerHTML = `<p style="font-weight: 600; color: var(--accent);">Siker! A tippek a szelvényre kerültek.</p><hr style="border-color: var(--border); margin: 0.8rem 0;"><p>${data.narrative.replace(/\n/g, '<br>')}</p>`;
         } else {
             let reasonText = "Nem találtunk megfelelő, nagy valószínűségű tippet a szelvény összeállításához.";
-            if (data.reason === 'kevés meccs') {
-                reasonText = `Sajnos nem találtunk elég meccset a listában a kereséshez. (${data.details}) Próbálj meg később frissíteni.`;
-            } else if (data.reason === 'nincs magabiztos tipp') {
-                reasonText = `Bár találtunk meccseket, egyik kimenetel sem érte el a beállított bizalmi küszöböt. (${data.details}) Próbálj meg más céloddsot!`;
-            }
+            if (data.reason === 'kevés meccs') { reasonText = `Sajnos nem találtunk elég meccset a listában a kereséshez. (${data.details}) Próbálj meg később frissíteni.`; } 
+            else if (data.reason === 'nincs magabiztos tipp') { reasonText = `Bár találtunk meccseket, egyik kimenetel sem érte el a beállított bizalmi küszöböt. (${data.details}) Próbálj meg más céloddsot!`; }
             resultDiv.innerHTML = `<p>${reasonText}</p>`;
         }
     } catch (e) {
         resultDiv.innerHTML = `<p style="color: #ff5555;">Hiba: ${e.message}</p>`;
     } finally {
-        btn.disabled = false;
-        btn.textContent = 'Szelvény Generálása';
+        btn.disabled = false; btn.textContent = 'Szelvény Generálása';
     }
 }
-// A fájl többi része (pl. save, load, render, evaluate, backtest funkciók) változatlan.
-// A teljesség kedvéért itt hagyom őket, de a tartalmuk megegyezik a korábbi verziókkal.
+
+// A fájl többi része változatlan
 async function saveDataToCloud(dataObject) {}
 async function saveFavLeagues() {}
 function handleSportChange() {}
