@@ -32,113 +32,29 @@ textarea{resize:vertical;min-height:80px}
 .actions button:disabled, .btn-primary:disabled {background:#555;cursor:not-allowed;opacity:.7}
 .muted{color:var(--muted);font-size:.9rem}
 
-/* 🟢 LIGÁK (buborékos) STÍLUSA */
+/* LIGÁK STÍLUSA */
 .league-list { margin-top: 0.8rem; }
-.league-item { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    padding: 10px 12px; 
-    font-size: 0.95rem; 
-    margin-bottom: 8px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 10px; 
-    border: 1px solid rgba(255,255,255,0.1); 
-    cursor: pointer; 
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    font-weight: 600;
-}
-.league-item:hover {
-    background: rgba(79,70,229,0.2);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-}
-.league-item input[type="checkbox"] { 
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-.league-item input[type="checkbox"]:checked + span {
-    color: var(--text);
-}
-.league-item input[type="checkbox"]:checked ~ .league-name {
-    color: var(--text);
-}
-.league-item span {
-    display: flex;
-    align-items: center;
-}
-.league-item span:first-child {
-    flex-grow: 1;
-}
-.league-item input[type="checkbox"] ~ span::before {
-    content: ''; 
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    margin-right: 10px;
-    border-radius: 4px;
-    border: 2px solid var(--muted);
-    background-color: transparent;
-    transition: all 0.2s;
-    flex-shrink: 0;
-}
-
-.league-item input[type="checkbox"]:checked ~ span::before {
-    content: '✓'; 
-    background-color: var(--secondary);
-    border-color: var(--secondary);
-    color: var(--bg);
-    text-align: center;
-    line-height: 12px;
-    font-size: 10px;
-    font-weight: 800;
-}
-
-
+.league-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; font-size: 0.95rem; margin-bottom: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-weight: 600; }
+.league-item:hover { background: rgba(79,70,229,0.2); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+.league-item input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
+.league-item input[type="checkbox"]:checked + span { color: var(--text); }
+.league-item input[type="checkbox"]:checked ~ .league-name { color: var(--text); }
+.league-item span { display: flex; align-items: center; }
+.league-item span:first-child { flex-grow: 1; }
+.league-item input[type="checkbox"] ~ span::before { content: '';  display: inline-block; width: 14px; height: 14px; margin-right: 10px; border-radius: 4px; border: 2px solid var(--muted); background-color: transparent; transition: all 0.2s; flex-shrink: 0; }
+.league-item input[type="checkbox"]:checked ~ span::before { content: '✓';  background-color: var(--secondary); border-color: var(--secondary); color: var(--bg); text-align: center; line-height: 12px; font-size: 10px; font-weight: 800; }
 .badge { background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
 
-/* 🔴 MECCSEK (buborékos) STÍLUSA */
+/* MECCSEK STÍLUSA */
 .fixtures { margin-top: 0.8rem; }
-.fx-item { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    background: rgba(255,255,255,0.05);
-    border-radius: 12px;
-    padding: 15px; 
-    margin-bottom: 10px; 
-    border: 1px solid rgba(255,255,255,0.15); 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    transition: transform 0.2s ease;
-}
-.fx-item:hover {
-    transform: translateY(-2px);
-    background: rgba(255,255,255,0.1);
-}
+.fx-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s ease; }
+.fx-item:hover { transform: translateY(-2px); background: rgba(255,255,255,0.1); }
 .fx-title { font-weight: 700; font-size: 1.1rem; color: var(--text); }
 .fx-meta { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
-
-/* 🔵 AI ELEMZÉS GOMB STÍLUSA */
-.fx-btn { 
-  background: linear-gradient(90deg, var(--accent), #10b981);
-  color: #0b1020;
-  border: none; 
-  padding: 8px 14px; 
-  border-radius: 10px; 
-  font-size: 0.85rem; 
-  font-weight: 800; 
-  cursor: pointer; 
-  transition: all 0.2s; 
-  white-space: nowrap;
-  box-shadow: 0 6px 15px rgba(16,185,129,0.4);
-}
+.fx-btn { background: linear-gradient(90deg, var(--accent), #10b981); color: #0b1020; border: none; padding: 8px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 800; cursor: pointer; transition: all 0.2s; white-space: nowrap; box-shadow: 0 6px 15px rgba(16,185,129,0.4); }
 .fx-btn:hover { background: var(--accent); color: #fff; transform: scale(1.05); } 
 
-
-/* Statisztikák (megtartjuk a korábbi javítást) */
+/* STATISZTIKÁK */
 .slip-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 10px; }
 .stat-item { text-align: center; background: #1a2441; padding: 15px 10px; border-radius: 8px; border: 1px solid var(--border); transition: transform 0.2s; }
 .stat-item:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
@@ -147,8 +63,7 @@ textarea{resize:vertical;min-height:80px}
 .stat-value.profit { color: var(--accent); }
 .stat-value.loss { color: #ff6b6b; }
 
-
-/* Nyitható/zárható elemek (megtartjuk a korábbi javítást) */
+/* NYITHATÓ/ZÁRHATÓ ELEMEK */
 .details-summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; padding: 5px 0;}
 .details-summary::before { content: '▶'; margin-right: 10px; font-size: 0.8em; color: var(--secondary); transition: transform 0.2s; }
 details[open] > .details-summary::before { content: '▼'; transform: rotate(90deg); }
@@ -158,58 +73,12 @@ details[open] > .details-summary::before { content: '▼'; transform: rotate(90d
 .option-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.5s ease-out; }
 .option-meta b { color: var(--accent); } 
 
-/* 🛝 CSÚSZKA STÍLUSA */
-input[type="range"] {
-    -webkit-appearance: none; /* Alapértelmezett böngésző stílus eltávolítása */
-    width: 100%;
-    height: 8px; /* Magasság */
-    background: linear-gradient(to right, var(--primary), var(--secondary)); /* Szép színátmenetes háttér */
-    border-radius: 10px; /* Lekerekített élek */
-    outline: none;
-    opacity: 0.9;
-    transition: opacity .2s;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); /* Enyhe belső árnyék */
-}
-
-input[type="range"]:hover {
-    opacity: 1;
-}
-
-/* Chrome/Opera/Safari */
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px; /* Hüvelyk mérete */
-    height: 20px;
-    background: #fff; /* Fehér hüvelyk */
-    border-radius: 50%; /* Kör alakú */
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4); /* Elegáns lebegő árnyék */
-    margin-top: -6px; /* Hogy középen legyen a sávon */
-    border: 2px solid var(--primary); /* Színátmenetes keret */
-}
-
-/* Firefox */
-input[type="range"]::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    background: #fff;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-    border: 2px solid var(--primary);
-}
-
-/* IE */
-input[type="range"]::-ms-thumb {
-    width: 20px;
-    height: 20px;
-    background: #fff;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-    border: 2px solid var(--primary);
-}
+/* CSÚSZKA */
+input[type="range"] { -webkit-appearance: none; width: 100%; height: 8px; background: linear-gradient(to right, var(--primary), var(--secondary)); border-radius: 10px; outline: none; opacity: 0.9; transition: opacity .2s; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+input[type="range"]:hover { opacity: 1; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #fff; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4); margin-top: -6px; border: 2px solid var(--primary); }
+input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; background: #fff; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 2px solid var(--primary); }
+input[type="range"]::-ms-thumb { width: 20px; height: 20px; background: #fff; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 2px solid var(--primary); }
 </style>
 </head>
 <body>
@@ -273,6 +142,22 @@ input[type="range"]::-ms-thumb {
         <p id="status" class="muted" style="text-align:center;"></p>
     </div>
 
+    <div class="card">
+        <h2>AI Szelvény Generátor</h2>
+        <p class="muted">A Gemini AI a mai nap legjobb ár-érték arányú meccseiből összeállít neked egy szelvényt a megadott célodds közelében.</p>
+        <div class="row">
+            <div class="col">
+                <label for="targetOdds">Célodds</label>
+                <input type="number" id="targetOdds" placeholder="pl. 2.5" value="2.5" />
+            </div>
+        </div>
+        <div class="actions">
+            <button id="generateSlipBtn" class="btn-primary" onclick="generateAutoSlip()">Szelvény Generálása</button>
+        </div>
+        <div id="autoSlipResult" style="margin-top: 1rem; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2);">
+            <p class="muted">A generált szelvény és az AI indoklása itt fog megjelenni.</p>
+        </div>
+    </div>
     <div id="out" class="card" style="min-height: 200px;"><p class="muted">A meccselemzés eredménye itt jelenik meg.</p></div>
     
     <details class="card">
@@ -452,6 +337,52 @@ async function saveSettings(){
     document.getElementById('fxStatus').textContent='Beállítások elmentve.';
     
     await loadUserDataFromCloud();
+}
+// === ÚJ FUNKCIÓ: AI SZELVÉNY GENERÁTOR ===
+async function generateAutoSlip() {
+    const btn = document.getElementById('generateSlipBtn');
+    const resultDiv = document.getElementById('autoSlipResult');
+    const targetOdds = parseFloat(document.getElementById('targetOdds').value);
+
+    if (isNaN(targetOdds) || targetOdds <= 1) {
+        alert('Kérlek, adj meg érvényes céloddsot (1-nél nagyobbat).');
+        return;
+    }
+
+    if (!__gasUrl) {
+        resultDiv.innerHTML = `<p style="color: #ff5555;">Hiba: Hiányzik a Google Apps Script URL.</p>`;
+        return;
+    }
+
+    try {
+        btn.disabled = true;
+        btn.textContent = 'Generálás Folyamatban...';
+        resultDiv.innerHTML = `<p class="muted">Az AI a legjobb tippeket keresi... Ez akár egy percig is eltarthat.</p>`;
+        
+        const url = `${__gasUrl}?action=generateAutoSlip&targetOdds=${targetOdds}&sport=${__currentSport}`;
+        const response = await fetch(url);
+
+        if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        if (data.slip && data.slip.length > 0) {
+            __betSlip = []; // Régi szelvény törlése
+            data.slip.forEach(bet => {
+                // Az addToSlip paraméterei: match, market, selection, odds, ourProb
+                addToSlip(bet.match, bet.market, bet.selection, bet.odds, bet.prob);
+            });
+            resultDiv.innerHTML = `<p style="font-weight: 600; color: var(--accent);">Sikeres generálás! A tippek a szelvényre kerültek.</p><hr style="border-color: var(--border); margin: 0.8rem 0;"><p>${data.narrative.replace(/\n/g, '<br>')}</p>`;
+        } else {
+            resultDiv.innerHTML = `<p>Nem találtunk megfelelő értékalapú tippeket a szelvény összeállításához. Próbálj meg más céloddsot, vagy frissítsd a meccseket később!</p>`;
+        }
+
+    } catch (e) {
+        resultDiv.innerHTML = `<p style="color: #ff5555;">Hiba történt a generálás során: ${escapeHtml(e.message)}</p>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Szelvény Generálása';
+    }
 }
 function addToSlip(match,market,selection,odds,ourProb){const betId = `${match}-${selection}`;if (__betSlip.some(bet => bet.id.startsWith(match))) {alert('Ebből a meccsből már van egy tipp a szelvényen!');return;}const bet={id:betId,match,market,selection,odds,ourProb};__betSlip.push(bet);renderSlip();}
 function removeBet(index){if(!confirm('Biztosan törlöd ezt a tippet a szelvényről?')) return;__betSlip.splice(index,1);renderSlip();}
