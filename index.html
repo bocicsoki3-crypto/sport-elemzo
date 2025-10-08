@@ -47,16 +47,15 @@ textarea{resize:vertical;min-height:80px}
     cursor: pointer; 
     transition: all 0.2s ease;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    font-weight: 600; /* Szebb betűvastagság */
+    font-weight: 600;
 }
 .league-item:hover {
-    background: rgba(79,70,229,0.2); /* Enyhe primary szín hoveren */
+    background: rgba(79,70,229,0.2);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.4);
 }
-/* JAVÍTÁS: A checkbox négyzetét elrejtjük, és a label-re hagyjuk a kattintást. */
 .league-item input[type="checkbox"] { 
-    position: absolute; /* Eltoljuk az eredeti checkboxot */
+    position: absolute;
     opacity: 0;
     width: 0;
     height: 0;
@@ -64,7 +63,6 @@ textarea{resize:vertical;min-height:80px}
 .league-item input[type="checkbox"]:checked + span {
     color: var(--text);
 }
-/* A CHECKBOX helye, ha be van jelölve (egyébként üres marad a bal oldalon) */
 .league-item input[type="checkbox"]:checked ~ .league-name {
     color: var(--text);
 }
@@ -73,7 +71,7 @@ textarea{resize:vertical;min-height:80px}
     align-items: center;
 }
 .league-item span:first-child {
-    flex-grow: 1; /* A szöveg kitölti a helyet */
+    flex-grow: 1;
 }
 .league-item input[type="checkbox"] ~ span::before {
     content: ''; 
@@ -82,7 +80,7 @@ textarea{resize:vertical;min-height:80px}
     height: 14px;
     margin-right: 10px;
     border-radius: 4px;
-    border: 2px solid var(--muted); /* Üres keret */
+    border: 2px solid var(--muted);
     background-color: transparent;
     transition: all 0.2s;
     flex-shrink: 0;
@@ -90,9 +88,9 @@ textarea{resize:vertical;min-height:80px}
 
 .league-item input[type="checkbox"]:checked ~ span::before {
     content: '✓'; 
-    background-color: var(--secondary); /* Zöld háttér bejelölve */
+    background-color: var(--secondary);
     border-color: var(--secondary);
-    color: var(--bg); /* Sötét pipa */
+    color: var(--bg);
     text-align: center;
     line-height: 12px;
     font-size: 10px;
@@ -159,6 +157,59 @@ details[open] > .details-summary::before { content: '▼'; transform: rotate(90d
 .analysis-option { padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,.1); }
 .option-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.5s ease-out; }
 .option-meta b { color: var(--accent); } 
+
+/* 🛝 CSÚSZKA STÍLUSA */
+input[type="range"] {
+    -webkit-appearance: none; /* Alapértelmezett böngésző stílus eltávolítása */
+    width: 100%;
+    height: 8px; /* Magasság */
+    background: linear-gradient(to right, var(--primary), var(--secondary)); /* Szép színátmenetes háttér */
+    border-radius: 10px; /* Lekerekített élek */
+    outline: none;
+    opacity: 0.9;
+    transition: opacity .2s;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); /* Enyhe belső árnyék */
+}
+
+input[type="range"]:hover {
+    opacity: 1;
+}
+
+/* Chrome/Opera/Safari */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px; /* Hüvelyk mérete */
+    height: 20px;
+    background: #fff; /* Fehér hüvelyk */
+    border-radius: 50%; /* Kör alakú */
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4); /* Elegáns lebegő árnyék */
+    margin-top: -6px; /* Hogy középen legyen a sávon */
+    border: 2px solid var(--primary); /* Színátmenetes keret */
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    border: 2px solid var(--primary);
+}
+
+/* IE */
+input[type="range"]::-ms-thumb {
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    border: 2px solid var(--primary);
+}
 </style>
 </head>
 <body>
