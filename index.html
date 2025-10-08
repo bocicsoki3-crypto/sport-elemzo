@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* A stílusok a mellékelt fájlból származnak. Néhány szükséges stílust hozzáadunk/frissítünk a teljes működéshez. */
 :root{--bg:#0b1020;--bg-grad-1:#0b1020;--bg-grad-2:#0a112a;--glass:#0f1730cc;--card:#0f172a;--border:#22304f;--muted:#a3b3d9;--primary:#4f46e5;--secondary:#14b8a6;--accent:#10b981;--ring:#14b8a6;--text:#e5e7eb;--font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-family);color:var(--text);background:radial-gradient(1300px 600px at -10% -20%,rgba(20,184,166,.15),transparent 45%),radial-gradient(1100px 500px at 110% 120%,rgba(79,70,229,.15),transparent 50%),linear-gradient(180deg,var(--bg-grad-1),var(--bg-grad-2));min-height:100vh}
@@ -217,7 +216,7 @@ textarea{resize:vertical;min-height:80px}
 </div>
 
 <script>
-// --- A TELJES JAVÍTOTT JAVASCRIPT KÓD A MELLÉKELT FÁJLBÓL ---
+// --- A TELJES JAVÍTOTT JAVASCRIPT KÓD ---
 let __historyCache = [], __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', __betSlip = [], __slipHistory = [], __user = { email: null, initialBankroll: 10000 };
 let isSaving = false;
 
