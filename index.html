@@ -156,6 +156,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance
     </details>
   </main>
 </div>
+
 <script>
 let __historyCache = [], __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', __betSlip = [], __slipHistory = [], __user = { email: null, initialBankroll: 10000 };
 let isSaving = false;
@@ -202,7 +203,11 @@ async function saveDataToCloud(dataObject) {
     if (!__gasUrl || isSaving) return;
     isSaving = true;
     try {
-        const response = await fetch(`${__gasUrl}?action=saveUserData`, { method: 'POST', body: JSON.stringify(dataObject) });
+        const response = await fetch(`${__gasUrl}?action=saveUserData`, {
+            method: 'POST',
+            body: JSON.stringify(dataObject),
+            headers: { 'Content-Type': 'application/json' }
+        });
         if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
         const result = await response.json();
         if (result.error) throw new Error(`Backend hiba: ${result.error}`);
@@ -270,7 +275,7 @@ async function go(){
         
         __currentAnalysisContext = data.context || {};
         __chatHistory.push({ role: "user", parts: [{ text: __currentAnalysisContext.initialPrompt }] });
-        __chatHistory.push({ role: "model", parts: [{ text: "Initial analysis was generated." }] });
+        __chatHistory.push({ role: "model", parts: [{ text: "Az alap elemzés legenerálva." }] });
 
         const simButtonContainer = document.createElement('div');
         simButtonContainer.className = 'actions';
@@ -331,24 +336,66 @@ async function sendChatMessage() {
     }
 }
 
-async function runVisualSimulator() { /* ... Teljes, változatlan függvény ... */ }
-function clearSlip() { /* ... Teljes, változatlan függvény ... */ }
-function renderSlip(){ /* ... Teljes, változatlan függvény ... */ }
-function getSportFromBet(bet) { /* ... Teljes, változatlan függvény ... */ }
-function populateStatFilters() { /* ... Teljes, változatlan függvény ... */ }
-function calculateStats() { /* ... Teljes, változatlan függvény ... */ }
-async function generateAutoSlip() { /* ... Teljes, változatlan függvény ... */ }
+async function runVisualSimulator() {
+    const home = document.getElementById("home").value.trim();
+    const away = document.getElementById("away").value.trim();
+    const resultsDiv = document.getElementById('visualSimResults');
+    if (!home || !away) return;
+    resultsDiv.innerHTML = `<p class="muted">Szimuláció fut...</p>`;
+    try {
+        const url = `${__gasUrl}?action=runQuickSim&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&homeFormWeight=${document.getElementById("homeFormWeight").value}&awayFormWeight=${document.getElementById("awayFormWeight").value}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if(data.error) throw new Error(data.error);
+        resultsDiv.innerHTML = data.results.map(res => `<div class="sim-item">${res.gh} - ${res.ga}</div>`).join('');
+    } catch(e) { resultsDiv.innerHTML = `<p style="color: #ff5555;">Hiba: ${e.message}</p>`; }
+}
+
+function clearSlip() {
+    if (__betSlip.length > 0 && confirm('Biztosan törlöd a szelvény összes elemét?')) {
+        __betSlip = [];
+        renderSlip();
+    }
+}
+
+function renderSlip(){
+    const container=document.getElementById('betSlip');
+    const evaluationContainer=document.getElementById('slipEvaluation');
+    const resultInputsContainer=document.getElementById('slipResultInputs');
+    const slipActions = document.getElementById('slipActions');
+    if(__betSlip.length === 0){
+        container.innerHTML = '<p class="muted">A szelvény üres.</p>';
+        evaluationContainer.style.display = 'none';
+        slipActions.style.display = 'none';
+        return;
+    }
+    slipActions.style.display = 'block';
+    let slipHTML = __betSlip.map((bet,index) => `<div class="slip-item"><div class="slip-item-header"><div><div class="slip-title">${escapeHtml(bet.match)}</div><div class="slip-market">${escapeHtml(bet.market)}</div></div><button onclick="removeBet(${index})" style="background:transparent; border:none; color: #ff6b6b; font-size: 24px; cursor:pointer;">&times;</button></div><div class="slip-details">${escapeHtml(bet.selection)} @ ${bet.odds}</div></div>`).join('');
+    const totalOdds = __betSlip.reduce((acc, bet) => acc * bet.odds, 1);
+    const potentialWinnings = (parseFloat(document.getElementById('comboStake')?.value) || 0) * totalOdds;
+    slipHTML += `<div class="slip-summary-card"><div class="summary-row"><span>Események száma:</span><strong>${__betSlip.length}</strong></div><div class="summary-row"><span>Eredő Odds:</span><strong>${totalOdds.toFixed(2)}</strong></div><div class="summary-row"><label for="comboStake">Teljes Tét:</label><input type="number" id="comboStake" placeholder="0" oninput="renderSlip()" value="${document.getElementById('comboStake')?.value || 0}"></div><hr style="border-color: var(--border); margin: 1rem 0;"><div class="summary-row"><span>Várható Nyeremény:</span><strong>${potentialWinnings.toFixed(2)}</strong></div></div>`;
+    container.innerHTML = slipHTML;
+    const uniqueMatches=[...new Map(__betSlip.map(bet=>[bet.match,bet])).values()];
+    resultInputsContainer.innerHTML=uniqueMatches.map((bet,index)=>`<div class="slip-item"><div class="slip-title">${escapeHtml(bet.match)}</div><div class="slip-results-input-grid"><label>Hazai</label><span>-</span><label>Vendég</label><input type="number" id="home-score-${index}" placeholder="H" size="2"><span></span><input type="number" id="away-score-${index}" placeholder="V" size="2"></div></div>`).join('');
+    evaluationContainer.style.display='block';
+}
+
 function saveAnalysis(record){let h=getHistoryFromLocalStorage();h.unshift(record);if(h.length>50)h=h.slice(0,50);localStorage.setItem("analysisHistory",JSON.stringify(h));}
 function getHistoryFromLocalStorage(){try{return JSON.parse(localStorage.getItem("analysisHistory"))||[];}catch(_){return[];}}
-function renderHistory(history){const box=document.getElementById("history");if(!history||!history.length){__historyCache=[];box.innerHTML='<p class="muted">Nincs előzmény.</p>';return;}__historyCache=history;const fmt=iso=>new Date(iso).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});box.innerHTML=history.map((item,i)=>`<details class="card"><summary class="details-summary"><h3>${escapeHtml(item.home)} vs ${escapeHtml(item.away)}</h3><small>${fmt(item.timestamp)}</small></summary><div class="card-body">${item.analysis||''}<button onclick="openHistoryModal(${i})">Megnyitás</button></div></details>`).join('');}
+function renderHistory(history){const box=document.getElementById("history");if(!history||!history.length){__historyCache=[];box.innerHTML='<p class="muted">Nincs előzmény.</p>';return;}__historyCache=history;const fmt=iso=>new Date(iso).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});box.innerHTML=history.map((item,i)=>`<details class="card"><summary class="details-summary"><h3>${escapeHtml(item.home)} vs ${escapeHtml(item.away)}</h3><small>${fmt(item.timestamp)}</small></summary><div class="card-body" style="padding-top: 1rem;">${item.analysis||''}<button class="btn-primary" style="width:auto; padding: 8px 12px; font-size: 0.8rem; margin-top: 1rem;" onclick="openHistoryModal(${i})">Megnyitás nagyban</button></div></details>`).join('');}
 function filterHistory(){const q=document.getElementById('historySearch').value.toLowerCase();document.querySelectorAll('#history details').forEach(item=>{const title=item.querySelector('h3').textContent.toLowerCase();item.style.display=title.includes(q)?'':'none';});}
 function openHistoryModal(idx){/* ... Teljes, változatlan függvény ... */}
 function closeModal(){/* ... Teljes, változatlan függvény ... */}
 async function saveSettings(){/* ... Teljes, változatlan függvény ... */}
-function addToSlip(match,market,selection,odds,ourProb, league){/* ... Teljes, változatlan függvény ... */}
-function removeBet(index){/* ... Teljes, változatlan függvény ... */}
+function addToSlip(match,market,selection,odds,ourProb, league){const betId=`${match}-${selection}`;if(__betSlip.some(b=>b.id.startsWith(match)))return;__betSlip.push({id:betId,match,market,selection,odds,ourProb, league: league});renderSlip();}
+function removeBet(index){if(!confirm('Biztosan törlöd?'))return;__betSlip.splice(index,1);renderSlip();}
 async function evaluateSlip(){/* ... Teljes, változatlan függvény ... */}
+function getSportFromBet(bet) { /* ... Teljes, változatlan függvény ... */ }
+function populateStatFilters() { /* ... Teljes, változatlan függvény ... */ }
+function calculateStats() { /* ... Teljes, változatlan függvény ... */ }
+async function generateAutoSlip() { /* ... Teljes, változatlan függvény ... */ }
 async function runBacktest(){ /* ... Teljes, változatlan függvény ... */ }
+
 </script>
 </body>
 </html>
