@@ -26,25 +26,72 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--secondar
 textarea{resize:vertical;min-height:80px}
 .row{display:flex;gap:12px;flex-wrap:wrap}.col{flex:1 1 220px}
 .actions{margin-top:1rem;display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;flex-direction:column}
+/* FŐ AKCIÓ GOMB SZÍNSÉMA: Elemzés Futtatása */
 .actions button, .btn-primary {padding:12px 18px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 12px 28px rgba(20,184,166,.35),0 4px 12px rgba(79,70,229,.25);width:100%;transition:transform .2s ease;font-family:var(--font-family); text-align: center;}
 .actions button:hover:not(:disabled), .btn-primary:hover:not(:disabled) {transform:translateY(-2px)}
 .actions button:disabled, .btn-primary:disabled {background:#555;cursor:not-allowed;opacity:.7}
 .muted{color:var(--muted);font-size:.9rem}
-/* KIEGÉSZÍTETT STÍLUSOK a vizuális hibák javításához */
+
+/* MECCSLISTA GOMB STÍLUSA */
+.fx-btn { 
+  background: var(--primary); /* Kék-lila alapú háttér */
+  color: #fff; 
+  border: none; 
+  padding: 8px 12px; 
+  border-radius: 8px; 
+  font-size: 0.85rem; 
+  font-weight: 700; 
+  cursor: pointer; 
+  transition: background 0.2s; 
+  box-shadow: 0 4px 10px rgba(79,70,229,.3); /* Kék-lila árnyék */
+}
+.fx-btn:hover { background: #6c63ff; } 
+
+
+/* KÉP 2 - Pénzügyi Statisztikák DIZÁJN */
+.slip-stats { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Rácsos elrendezés */
+    gap: 10px; 
+    margin-top: 10px; 
+}
+.stat-item { 
+    text-align: center; 
+    background: #1a2441; /* Sötétebb háttér */
+    padding: 15px 10px; 
+    border-radius: 8px; 
+    border: 1px solid var(--border);
+    transition: transform 0.2s;
+}
+.stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.stat-title { 
+    font-size: 0.85rem; 
+    color: var(--muted); 
+    font-weight: 600;
+}
+.stat-value { 
+    font-weight: 800; /* Kiemelt vastagság */
+    font-size: 1.3rem; 
+    margin-top: 5px;
+    color: var(--text); /* Alapértelmezett szövegszín */
+}
+.stat-value.profit { color: var(--accent); } /* Zöld a profitnak */
+.stat-value.loss { color: #ff6b6b; } /* Piros a veszteségnek */
+
+/* KÉP 4 - Sávok és Színek javítása */
 .analysis-option { padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,.1); }
-.option-bar-wrap { height: 8px; background: rgba(255,255,255,.1); border-radius: 4px; margin-top: 4px; overflow: hidden; }
-/* VISSZATÖLTJÜK A KÉPEN LÉVŐ ZÖLD SZÍNT AZ AKCENTRE, hgy ne olvadjon be */
 .option-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.5s ease-out; }
 .option-meta b { color: var(--accent); } /* A százalékérték színe zöld legyen */
-.hist-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; padding: 10px; cursor: pointer; }
-.hist-item summary { display: flex; justify-content: space-between; align-items: center; list-style: none; padding: 5px 0; }
-.hist-item summary::-webkit-details-marker { display: none; } /* eltávolítjuk az alap nyíl ikont */
-.hist-title { font-weight: 600; }
-.hist-date { font-size: 0.8rem; color: var(--muted); }
+
+/* NYITHATÓ/ZÁRHATÓ ELEMEK JAVÍTÁSA */
 .details-summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; padding: 5px 0;}
-.details-summary::before { content: '▶'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; }
+.details-summary::before { content: '▶'; margin-right: 10px; font-size: 0.8em; color: var(--secondary); transition: transform 0.2s; }
 details[open] > .details-summary::before { content: '▼'; transform: rotate(90deg); }
 .details-summary h2 { margin: 0; }
+.details-summary::-webkit-details-marker { display: none; } /* eltávolítjuk az alap nyíl ikont */
 
 </style>
 </head>
@@ -69,7 +116,7 @@ details[open] > .details-summary::before { content: '▼'; transform: rotate(90d
        <input id="leagueSearch" placeholder="pl. Premier, NHL..." />
 
       <div class="actions">
-        <button onclick="loadFixtures()">Meccsek frissítése az API-ról</button>
+        <button onclick="loadFixtures()" style="background: var(--secondary); box-shadow: 0 12px 28px rgba(20,184,166,.35), 0 4px 12px rgba(20,184,166,.25);">Meccsek frissítése az API-ról</button>
         <button onclick="saveFavLeagues()">Kedvencek mentése a felhőbe</button>
         <span id="fxStatus" class="muted"></span>
       </div>
@@ -111,7 +158,7 @@ details[open] > .details-summary::before { content: '▼'; transform: rotate(90d
 
     <div id="out" class="card" style="min-height: 200px;"><p class="muted">A meccselemzés eredménye itt jelenik meg.</p></div>
     
-    <details class="card" open>
+    <details class="card">
         <summary class="details-summary"><h2>Visszatesztelés</h2></summary>
         <p class="muted">Régebbi szezonok adatainak tesztelése (football-data.co.uk adatokkal).</p>
         <div class="row">
@@ -130,12 +177,12 @@ details[open] > .details-summary::before { content: '▼'; transform: rotate(90d
         <div id="backtestResult" style="margin-top: 1rem;"></div>
     </details>
 
-    <details class="card" open>
+    <details class="card">
         <summary class="details-summary"><h2>Pénzügyi Statisztikák</h2></summary>
         <div id="slipStats" style="min-height: 40px;"><p class="muted">Számítás folyamatban...</p></div>
     </details>
 
-    <details class="card" open>
+    <details class="card">
         <summary class="details-summary"><h2>Fogadási Szelvény</h2></summary>
         <div id="betSlip" style="margin-bottom: 1rem;"><p class="muted">A szelvény üres.</p></div>
         <div id="slipEvaluation" style="display: none;">
@@ -147,7 +194,7 @@ details[open] > .details-summary::before { content: '▼'; transform: rotate(90d
         </div>
     </details>
     
-    <details class="card" open>
+    <details class="card">
       <summary class="details-summary"><h2>Előző Elemzések</h2></summary>
       <input id="historySearch" placeholder="Keresés az előző elemzésekben..." oninput="filterHistory()" style="margin-bottom: 0.8rem;" />
       <div id="history" class="history-list"><p class="muted">Nincsenek korábbi elemzések.</p></div>
@@ -163,7 +210,7 @@ details[open] > .details-summary::before { content: '▼'; transform: rotate(90d
 </div>
 
 <script>
-// --- A TELJES JAVÍTOTT JAVASCRIPT KÓD (AZ ADATÁTVITELI HIBÁT KORRIGÁLÓ LOGIKÁVAL) ---
+// --- A TELJES JAVÍTOTT JAVASCRIPT KÓD ---
 let __historyCache = [], __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', __betSlip = [], __slipHistory = [], __user = { email: null, initialBankroll: 10000 };
 let isSaving = false;
 
@@ -329,7 +376,29 @@ function calculateStats() {
     const totalSlips = __slipHistory.length;
     const winningSlips = __slipHistory.filter(s => s.status === 'win').length;
     const winRate = totalSlips > 0 ? (winningSlips / totalSlips * 100).toFixed(1) : 0;
-    document.getElementById('slipStats').innerHTML = `<div class="slip-stats"><div class="stat-item"><div class="stat-title">Kezdő Bankroll</div><div class="stat-value">${initialBankroll.toFixed(2)}</div></div><div class="stat-item"><div class="stat-title">Aktuális Bankroll</div><div class="stat-value ${currentBankroll >= initialBankroll ? 'profit' : 'loss'}">${currentBankroll.toFixed(2)}</div></div><div class="stat-item"><div class="stat-title">Teljes Profit</div><div class="stat-value ${totalProfit >= 0 ? 'profit' : 'loss'}">${totalProfit.toFixed(2)}</div></div><div class="stat-item"><div class="stat-title">Találati Arány</div><div class="stat-value">${winRate}% (${winningSlips}/${totalSlips})</div></div></div>`;
+    
+    // DYNAMIC STATS RENDERING JAVÍTVA A KÉRT DIZÁJNHOZ
+    const profitColor = totalProfit >= 0 ? 'profit' : 'loss';
+    document.getElementById('slipStats').innerHTML = `
+        <div class="slip-stats">
+            <div class="stat-item">
+                <div class="stat-title">Kezdő Bankroll</div>
+                <div class="stat-value">${initialBankroll.toFixed(2)}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-title">Aktuális Bankroll</div>
+                <div class="stat-value ${currentBankroll >= initialBankroll ? 'profit' : 'loss'}">${currentBankroll.toFixed(2)}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-title">Teljes Profit</div>
+                <div class="stat-value ${profitColor}">${totalProfit.toFixed(2)}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-title">Találati Arány</div>
+                <div class="stat-value">${winRate}% (${winningSlips}/${totalSlips})</div>
+            </div>
+        </div>
+    `;
 }
 
 async function runBacktest() {
