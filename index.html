@@ -47,7 +47,6 @@ input[type="range"] { -webkit-appearance: none; width: 100%; height: 8px; backgr
 input[type="range"]:hover { opacity: 1; }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #fff; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4); margin-top: -6px; border: 2px solid var(--primary); }
 .progress-ring{width:80px;height:80px;border-radius:50%;display:grid;place-items:center;margin:1rem auto;transition:opacity .5s}.progress-label{font-size:1.5rem;font-weight:700}
-/* === VISSZAÁLLÍTOTT ELEMZÉS STÍLUSOK === */
 .analysis-option{position:relative;padding:1rem .5rem;border-bottom:1px solid var(--border);transition:background-color .2s}
 .analysis-option:hover{background-color:rgba(255,255,255,.03)}
 .option-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
@@ -56,7 +55,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance
 .option-bar-wrap{position:relative;width:100%;height:22px;background-color:rgba(0,0,0,.2);border-radius:6px;overflow:hidden}
 .option-bar{height:100%;border-radius:6px;transition:width .5s ease-out;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
 .option-badge{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:.8rem;font-weight:700;color:var(--bg);text-shadow:0 1px 1px rgba(0,0,0,.2)}
-.add-to-slip-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;border:none;background:var(--secondary);color:#fff;font-size:1.5rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .market-options-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:1rem}
 .grid-item{background:rgba(0,0,0,.2);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border)}
 .grid-item-label{font-weight:600;font-size:.9rem}
@@ -64,6 +62,13 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance
 .market-summary{line-height:1.6}
 .hero{padding:1.5rem;border-radius:16px;background:linear-gradient(135deg,rgba(20,184,166,.1),rgba(79,70,229,.1));border:1px solid var(--accent)}
 .hero .tag{display:inline-block;padding:4px 10px;background:var(--accent);color:var(--bg);font-weight:700;border-radius:12px;margin-bottom:1rem}
+.chat-container { margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.chat-history { max-height: 300px; overflow-y: auto; margin-bottom: 1rem; padding-right: 10px; }
+.chat-message { margin-bottom: 1rem; line-height: 1.6; }
+.chat-message b { color: var(--secondary); display: block; margin-bottom: 4px;}
+.chat-input-group { display: flex; gap: 10px; }
+.chat-input-group input { flex-grow: 1; margin-top: 0; }
+.chat-input-group button { width: auto; }
 </style>
 </head>
 <body>
@@ -152,9 +157,9 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance
   </main>
 </div>
 <script>
-// EZ A TELJES, JAVÍTOTT ÉS VÁGATLAN JAVASCRIPT KÓD
 let __historyCache = [], __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', __betSlip = [], __slipHistory = [], __user = { email: null, initialBankroll: 10000 };
 let isSaving = false;
+let __chatHistory = [], __currentAnalysisContext = {};
 
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);}
 function setProgress(pct,msg=null){const el=document.getElementById('progress');const goBtn=document.getElementById('goBtn');const statusEl=document.getElementById('status');const v=Math.max(0,Math.min(100,Math.round(pct||0)));if(v>0&&v<100){el.style.display='grid';goBtn.disabled=true;}else{setTimeout(()=>{el.style.display='none';},250);goBtn.disabled=false;}el.style.background=`conic-gradient(var(--ring) ${v*3.6}deg, rgba(255,255,255,.18) 0deg)`;el.querySelector('.progress-label').textContent=v+'%';if(msg)statusEl.textContent=msg;}
@@ -164,9 +169,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     ['homeFormWeight', 'awayFormWeight'].forEach(id => {
         const slider = document.getElementById(id);
         const label = document.getElementById(id + 'Label');
-        if (slider && label) {
-            slider.addEventListener('input', (e) => { label.textContent = `${e.target.value}%`; });
-        }
+        if (slider && label) { slider.addEventListener('input', (e) => { label.textContent = `${e.target.value}%`; }); }
     });
     ['home', 'away'].forEach(id => document.getElementById(id).addEventListener('input', handleTeamInput));
     document.getElementById('leagueSearch').addEventListener('input', renderLeagueList);
@@ -199,9 +202,7 @@ async function saveDataToCloud(dataObject) {
     if (!__gasUrl || isSaving) return;
     isSaving = true;
     try {
-        const params = new URLSearchParams({ action: 'saveUserData' });
-        for (const key in dataObject) { params.append(key, dataObject[key]); }
-        const response = await fetch(`${__gasUrl}?${params.toString()}`);
+        const response = await fetch(`${__gasUrl}?action=saveUserData`, { method: 'POST', body: JSON.stringify(dataObject) });
         if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
         const result = await response.json();
         if (result.error) throw new Error(`Backend hiba: ${result.error}`);
@@ -251,17 +252,26 @@ async function go(){
     let progressInterval;
     try {
         setProgress(1, "Elemzés indítása...");
+        __chatHistory = []; 
+        __currentAnalysisContext = {}; 
+
         const analysisUrl=`${__gasUrl}?action=runFullAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&sport=${__currentSport}`;
-        progressInterval=setInterval(()=>{const currentPct=parseInt(document.querySelector('#progress .progress-label').textContent)||0;setProgress(Math.min(90,currentPct+2),"Szerver válaszára várunk...");},500);
+        progressInterval=setInterval(()=>{const c=parseInt(document.querySelector('#progress .progress-label').textContent)||0;setProgress(Math.min(90,c+2),"Szerver válaszára várunk...");},500);
+        
         const response=await fetch(analysisUrl);
         clearInterval(progressInterval);
         if(!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
         setProgress(95,"Válasz feldolgozása...");
+        
         const data=await response.json();
         if(data.error) throw new Error(data.error);
         
         document.getElementById('out').innerHTML = data.html || '<p class="muted">Nincs elemzés.</p>';
         
+        __currentAnalysisContext = data.context || {};
+        __chatHistory.push({ role: "user", parts: [{ text: __currentAnalysisContext.initialPrompt }] });
+        __chatHistory.push({ role: "model", parts: [{ text: "Initial analysis was generated." }] });
+
         const simButtonContainer = document.createElement('div');
         simButtonContainer.className = 'actions';
         simButtonContainer.innerHTML = `<button class="btn-primary" style="margin-top: 1rem; background: var(--primary);" onclick="runVisualSimulator()">Szimulálj 10 meccset!</button>`;
@@ -271,6 +281,12 @@ async function go(){
         simResultDiv.className = 'sim-results';
         document.getElementById('out').appendChild(simResultDiv);
 
+        const chatContainer = document.createElement('div');
+        chatContainer.className = 'chat-container';
+        chatContainer.innerHTML = `<h3>AI-Párbeszéd Folytatása</h3><div id="chatHistory" class="chat-history"><p class="muted">Kérdezz rá az elemzés részleteire!</p></div><div class="chat-input-group"><input id="chatInput" type="text" placeholder="Pl. Mi a helyzet, ha esik az eső?"><button id="chatSendBtn" class="btn-primary" onclick="sendChatMessage()">Küldés</button></div>`;
+        document.getElementById('out').appendChild(chatContainer);
+        document.getElementById('chatInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') sendChatMessage(); });
+
         const record={timestamp:new Date().toISOString(),home,away,analysis:data.html};
         saveAnalysis(record);
         renderHistory(getHistoryFromLocalStorage());
@@ -278,6 +294,40 @@ async function go(){
     } catch(e) {
         if(progressInterval) clearInterval(progressInterval);
         setProgress(0, "Hiba: "+e.message);
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('chatSendBtn');
+    const historyDiv = document.getElementById('chatHistory');
+    const userMessage = input.value.trim();
+    if (!userMessage) return;
+
+    if (historyDiv.querySelector('.muted')) historyDiv.innerHTML = '';
+    historyDiv.innerHTML += `<div class="chat-message"><b>Te:</b> ${escapeHtml(userMessage)}</div>`;
+    __chatHistory.push({ role: "user", parts: [{ text: userMessage }] });
+    input.value = ''; input.disabled = true; sendBtn.disabled = true; sendBtn.textContent = '...';
+    historyDiv.scrollTop = historyDiv.scrollHeight;
+
+    try {
+        const response = await fetch(`${__gasUrl}?action=continueAnalysis`, {
+            method: 'POST',
+            body: JSON.stringify({ history: __chatHistory })
+        });
+
+        if (!response.ok) throw new Error('Hálózati hiba.');
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        const aiMessage = data.response;
+        historyDiv.innerHTML += `<div class="chat-message"><b>Gemini AI:</b> ${aiMessage.replace(/\n/g, '<br>')}</div>`;
+        __chatHistory.push({ role: "model", parts: [{ text: aiMessage }] });
+    } catch (e) {
+        historyDiv.innerHTML += `<div class="chat-message" style="color: #ff6b6b;"><b>Hiba:</b> ${e.message}</div>`;
+    } finally {
+        input.disabled = false; sendBtn.disabled = false; sendBtn.textContent = 'Küldés';
+        historyDiv.scrollTop = historyDiv.scrollHeight; input.focus();
     }
 }
 
@@ -290,8 +340,8 @@ function calculateStats() { /* ... Teljes, változatlan függvény ... */ }
 async function generateAutoSlip() { /* ... Teljes, változatlan függvény ... */ }
 function saveAnalysis(record){let h=getHistoryFromLocalStorage();h.unshift(record);if(h.length>50)h=h.slice(0,50);localStorage.setItem("analysisHistory",JSON.stringify(h));}
 function getHistoryFromLocalStorage(){try{return JSON.parse(localStorage.getItem("analysisHistory"))||[];}catch(_){return[];}}
-function renderHistory(history){const box=document.getElementById("history");if(!history||!history.length){__historyCache=[];box.innerHTML='<p class="muted">Nincs előzmény.</p>';return;}__historyCache=history;const fmt=iso=>new Date(iso).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});box.innerHTML=history.map((item,i)=>`<details><summary class="details-summary"><div class="hist-title">${escapeHtml(item.home)} vs ${escapeHtml(item.away)}</div><div class="hist-date">${fmt(item.timestamp)}</div></summary><div>${item.analysis||''}<button onclick="openHistoryModal(${i})">Megnyitás</button></div></details>`).join('');}
-function filterHistory(){const q=document.getElementById('historySearch').value.toLowerCase();document.querySelectorAll('#history details').forEach(item=>{const title=item.querySelector('.hist-title').textContent.toLowerCase();item.style.display=title.includes(q)?'':'none';});}
+function renderHistory(history){const box=document.getElementById("history");if(!history||!history.length){__historyCache=[];box.innerHTML='<p class="muted">Nincs előzmény.</p>';return;}__historyCache=history;const fmt=iso=>new Date(iso).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});box.innerHTML=history.map((item,i)=>`<details class="card"><summary class="details-summary"><h3>${escapeHtml(item.home)} vs ${escapeHtml(item.away)}</h3><small>${fmt(item.timestamp)}</small></summary><div class="card-body">${item.analysis||''}<button onclick="openHistoryModal(${i})">Megnyitás</button></div></details>`).join('');}
+function filterHistory(){const q=document.getElementById('historySearch').value.toLowerCase();document.querySelectorAll('#history details').forEach(item=>{const title=item.querySelector('h3').textContent.toLowerCase();item.style.display=title.includes(q)?'':'none';});}
 function openHistoryModal(idx){/* ... Teljes, változatlan függvény ... */}
 function closeModal(){/* ... Teljes, változatlan függvény ... */}
 async function saveSettings(){/* ... Teljes, változatlan függvény ... */}
