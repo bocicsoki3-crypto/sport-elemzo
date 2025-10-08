@@ -30,75 +30,22 @@ textarea{resize:vertical;min-height:80px}
 .actions button:hover:not(:disabled), .btn-primary:hover:not(:disabled) {transform:translateY(-2px)}
 .actions button:disabled, .btn-primary:disabled {background:#555;cursor:not-allowed;opacity:.7}
 .muted{color:var(--muted);font-size:.9rem}
-/* Új stílusok a teljes kódból */
-.league-list { margin-top: 0.8rem; }
-.league-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 0.95rem; border-bottom: 1px dashed var(--border); cursor: pointer; }
-.league-item:last-child { border-bottom: none; }
-.league-item input[type="checkbox"] { margin-right: 8px; transform: scale(1.1); }
-.badge { background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-.fixtures { margin-top: 0.8rem; }
-.fx-item { display: flex; justify-content: space-between; align-items: center; background: var(--glass); border-radius: 10px; padding: 10px; margin-bottom: 8px; border: 1px solid var(--border); }
-.fx-title { font-weight: 600; font-size: 1rem; }
-.fx-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
-.fx-btn { background: var(--secondary); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
-.fx-btn:hover { background: #109a8a; }
-.analysis-market { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.2rem; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
-.market-summary { margin-top: 0.6rem; color: var(--text); line-height: 1.6; }
+/* KIEGÉSZÍTETT STÍLUSOK a vizuális hibák javításához */
 .analysis-option { padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,.1); }
-.analysis-option:last-child { border-bottom: none; }
-.option-row { display: flex; justify-content: space-between; align-items: center; }
-.option-label { font-weight: 600; }
-.option-meta { font-size: 0.9rem; color: var(--muted); display: flex; align-items: center; gap: 8px;}
 .option-bar-wrap { height: 8px; background: rgba(255,255,255,.1); border-radius: 4px; margin-top: 4px; overflow: hidden; }
-.option-bar { height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.5s ease-out; }
-.option-badge { background: var(--accent); color: #fff; padding: 1px 6px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; margin-right: 5px;}
-.add-to-slip-btn { background: var(--secondary); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 18px; font-weight: 800; line-height: 1; cursor: pointer; margin-left: 10px; flex-shrink: 0;}
-.hero { padding: 1.5rem; border-radius: 16px; background: linear-gradient(135deg, var(--accent), #109a8a); color: #fff; margin-bottom: 1.2rem; box-shadow: 0 15px 40px rgba(16,185,129,.4); }
-.hero h3 { color: #fff; margin-bottom: 0.5rem; font-size: 1.4rem; }
-.hero .tag { background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; display: inline-block; margin-bottom: 0.8rem; font-weight: 600; }
-.metrics { margin-bottom: 1.2rem; display: flex; gap: 1.2rem; flex-wrap: wrap;}
-.xg-card { flex: 1 1 300px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; }
-.xg-card .badge { background: var(--primary); color: #fff; padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: 600; margin-bottom: 10px; display: inline-block; }
-.xg-row { display: flex; align-items: center; margin-bottom: 10px; }
-.xg-team { flex: 1; font-weight: 600; font-size: 1.1rem; }
-.xg-bar { flex: 3; height: 10px; background: rgba(255,255,255,.1); border-radius: 5px; margin: 0 10px; overflow: hidden; }
-.xg-fill { height: 100%; background: var(--secondary); border-radius: 5px; transition: width 0.5s ease-out; }
-.xg-val { font-weight: 800; color: var(--secondary); flex-basis: 40px; text-align: right; }
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: grid; place-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s; z-index: 1000; }
-.modal.open { opacity: 1; visibility: visible; }
-.modal-card { background: var(--bg-grad-2); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 600px; padding: 1.5rem; box-shadow: 0 20px 40px rgba(0,0,0,.5); max-height: 90vh; overflow-y: auto; }
-.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.modal-close { background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer; }
+/* VISSZATÖLTJÜK A KÉPEN LÉVŐ ZÖLD SZÍNT AZ AKCENTRE, hgy ne olvadjon be */
+.option-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.5s ease-out; }
+.option-meta b { color: var(--accent); } /* A százalékérték színe zöld legyen */
 .hist-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; padding: 10px; cursor: pointer; }
 .hist-item summary { display: flex; justify-content: space-between; align-items: center; list-style: none; padding: 5px 0; }
+.hist-item summary::-webkit-details-marker { display: none; } /* eltávolítjuk az alap nyíl ikont */
 .hist-title { font-weight: 600; }
 .hist-date { font-size: 0.8rem; color: var(--muted); }
-.hist-body { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
-.hist-actions { margin-top: 10px; text-align: right; }
-.hist-open { background: var(--primary); color: #fff; border: none; padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
-.progress-ring { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; position: relative; margin: 10px auto; background: conic-gradient(var(--ring) 0deg, rgba(255,255,255,.18) 0deg); }
-.progress-ring .progress-label { position: absolute; font-size: 0.8rem; font-weight: 700; color: var(--secondary); }
-.slip-item { background: var(--glass); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
-.slip-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-.slip-title { font-weight: 600; }
-.slip-market { font-size: 0.8rem; color: var(--muted); }
-.slip-details { font-weight: 700; color: var(--accent); }
-.slip-summary-card { background: #1a2441; padding: 1rem; border-radius: 10px; margin-top: 1rem; }
-.summary-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 0.95rem; }
-.summary-row strong { color: var(--accent); }
-.summary-row input { width: 80px; text-align: right; padding: 6px; margin-top: 0; background: #0f172a; border-color: #334155; }
-.slip-stats { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-.stat-item { text-align: center; background: #1a2441; padding: 10px; border-radius: 8px; flex: 1; min-width: 120px; }
-.stat-title { font-size: 0.8rem; color: var(--muted); }
-.stat-value { font-weight: 700; font-size: 1.2rem; }
-.stat-value.profit { color: var(--accent); }
-.stat-value.loss { color: #ff6b6b; }
-.slip-results-input-grid { display: grid; grid-template-columns: 1fr 20px 1fr; gap: 5px; align-items: center; text-align: center; margin-top: 5px; }
-.slip-results-input-grid input { text-align: center; }
-.market-options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; text-align: center; }
-.grid-item { background: #1a2441; padding: 8px; border-radius: 8px; border: 1px solid var(--border); }
-.grid-item-label { font-size: 0.8rem; color: var(--muted); }
-.grid-item-value { font-weight: 700; font-size: 1.1rem; color: var(--secondary); }
+.details-summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; padding: 5px 0;}
+.details-summary::before { content: '▶'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; }
+details[open] > .details-summary::before { content: '▼'; transform: rotate(90deg); }
+.details-summary h2 { margin: 0; }
+
 </style>
 </head>
 <body>
@@ -164,8 +111,8 @@ textarea{resize:vertical;min-height:80px}
 
     <div id="out" class="card" style="min-height: 200px;"><p class="muted">A meccselemzés eredménye itt jelenik meg.</p></div>
     
-    <div class="card">
-        <h2>Visszatesztelés</h2>
+    <details class="card" open>
+        <summary class="details-summary"><h2>Visszatesztelés</h2></summary>
         <p class="muted">Régebbi szezonok adatainak tesztelése (football-data.co.uk adatokkal).</p>
         <div class="row">
             <div class="col">
@@ -181,15 +128,15 @@ textarea{resize:vertical;min-height:80px}
             <button id="runBacktestBtn" class="btn-primary" onclick="runBacktest()">Visszatesztelés Futtatása</button>
         </div>
         <div id="backtestResult" style="margin-top: 1rem;"></div>
-    </div>
+    </details>
 
-    <div class="card">
-        <h2>Pénzügyi Statisztikák</h2>
+    <details class="card" open>
+        <summary class="details-summary"><h2>Pénzügyi Statisztikák</h2></summary>
         <div id="slipStats" style="min-height: 40px;"><p class="muted">Számítás folyamatban...</p></div>
-    </div>
+    </details>
 
-    <div class="card">
-        <h2>Fogadási Szelvény</h2>
+    <details class="card" open>
+        <summary class="details-summary"><h2>Fogadási Szelvény</h2></summary>
         <div id="betSlip" style="margin-bottom: 1rem;"><p class="muted">A szelvény üres.</p></div>
         <div id="slipEvaluation" style="display: none;">
             <h3>Eredmények Megadása</h3>
@@ -198,13 +145,13 @@ textarea{resize:vertical;min-height:80px}
                 <button class="btn-primary" onclick="evaluateSlip()">Szelvény Értékelése</button>
             </div>
         </div>
-    </div>
+    </details>
     
-    <div class="card">
-      <h2>Előző Elemzések</h2>
+    <details class="card" open>
+      <summary class="details-summary"><h2>Előző Elemzések</h2></summary>
       <input id="historySearch" placeholder="Keresés az előző elemzésekben..." oninput="filterHistory()" style="margin-bottom: 0.8rem;" />
       <div id="history" class="history-list"><p class="muted">Nincsenek korábbi elemzések.</p></div>
-    </div>
+    </details>
 </main>
 </div>
 
@@ -216,7 +163,7 @@ textarea{resize:vertical;min-height:80px}
 </div>
 
 <script>
-// --- A TELJES JAVÍTOTT JAVASCRIPT KÓD ---
+// --- A TELJES JAVÍTOTT JAVASCRIPT KÓD (AZ ADATÁTVITELI HIBÁT KORRIGÁLÓ LOGIKÁVAL) ---
 let __historyCache = [], __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', __betSlip = [], __slipHistory = [], __user = { email: null, initialBankroll: 10000 };
 let isSaving = false;
 
@@ -322,7 +269,7 @@ function showSkeletonLoader(){const skeletonCard=`<div class="analysis-market"><
 async function go(){const home=document.getElementById("home").value.trim();const away=document.getElementById("away").value.trim();const formWeight=document.getElementById("formWeight").value;if(!home||!away||!__gasUrl){document.getElementById("status").textContent="Hiba: Hiányzó adatok vagy URL.";return;}let progressInterval;try{setProgress(1,"Elemzés indítása...");showSkeletonLoader();const analysisUrl=`${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&formWeight=${formWeight}&sport=${__currentSport}`;progressInterval=setInterval(()=>{const currentPct=parseInt(document.querySelector('#progress .progress-label').textContent)||0;setProgress(Math.min(90,currentPct+2),"Szerver válaszára várunk...");},500);const response=await fetch(analysisUrl);clearInterval(progressInterval);if(!response.ok)throw new Error(`Szerver hiba: ${response.status}`);setProgress(95,"Válasz feldolgozása...");const data=await response.json();if(data.error)throw new Error(data.error);document.getElementById('out').innerHTML=data.html||'<p class="muted">A szerver nem küldött elemzést.</p>';const record={timestamp:new Date().toISOString(),home,away,analysis:data.html};saveAnalysis(record);renderHistory(getHistoryFromLocalStorage());setProgress(100,"Kész.");}catch(e){if(progressInterval)clearInterval(progressInterval);document.getElementById("status").textContent="Hiba: "+e.message;document.getElementById("out").innerHTML=`<pre style="color: #ff5555;">Hiba történt: ${escapeHtml(e.message)}</pre>`;setProgress(0);}}
 function saveAnalysis(record){let history=getHistoryFromLocalStorage();history.push(record);if(history.length>50)history=history.slice(history.length-50);localStorage.setItem("analysisHistory",JSON.stringify(history));}
 function getHistoryFromLocalStorage(){try{return JSON.parse(localStorage.getItem("analysisHistory"))||[];}catch(_){return[];}}
-function renderHistory(history){const box=document.getElementById("history");if(!history||!history.length){__historyCache=[];box.innerHTML='<p class="muted">Nincsenek korábbi elemzések.</p>';return;}const list=history.slice().sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));__historyCache=list;const fmt=iso=>{try{const d=new Date(iso);return d.toLocaleString('hu-HU',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(_){return iso||'';}};box.innerHTML=list.map((item,i)=>{return`<details class="hist-item" data-idx="${i}"><summary><div class="hist-title">${escapeHtml(item.home)} vs ${escapeHtml(item.away)}</div><div class="hist-date">${escapeHtml(fmt(item.timestamp))}</div></summary><div class="hist-body"><div class="hist-content">${item.analysis||''}</div><div class="hist-actions"><button class="hist-open" onclick="openHistoryModal(${i})">Megnyitás teljes nézetben</button></div></div></details>`;}).join('');}
+function renderHistory(history){const box=document.getElementById("history");if(!history||!history.length){__historyCache=[];box.innerHTML='<p class="muted">Nincsenek korábbi elemzések.</p>';return;}const list=history.slice().sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));__historyCache=list;const fmt=iso=>{try{const d=new Date(iso);return d.toLocaleString('hu-HU',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(_){return iso||'';}};box.innerHTML=list.map((item,i)=>{return`<details class="hist-item" data-idx="${i}"><summary class="details-summary"><div class="hist-title">${escapeHtml(item.home)} vs ${escapeHtml(item.away)}</div><div class="hist-date">${escapeHtml(fmt(item.timestamp))}</div></summary><div class="hist-body"><div class="hist-content">${item.analysis||''}</div><div class="hist-actions"><button class="hist-open" onclick="openHistoryModal(${i})">Megnyitás teljes nézetben</button></div></div></details>`;}).join('');}
 function filterHistory(){const query=document.getElementById('historySearch').value.toLowerCase();document.querySelectorAll('#history .hist-item').forEach(item=>{const title=item.querySelector('.hist-title').textContent.toLowerCase();item.style.display=title.includes(query)?'':'none';});}
 function openHistoryModal(idx){const item=__historyCache[idx];if(!item)return;document.getElementById('modalTitle').textContent=`${item.home} vs ${item.away}`;document.getElementById('modalBody').innerHTML=item.analysis||'';document.getElementById('modal').classList.add('open');}
 function closeModal(){document.getElementById('modal').classList.remove('open');}
