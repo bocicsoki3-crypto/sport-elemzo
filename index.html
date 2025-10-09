@@ -200,7 +200,7 @@ let __chatHistory = [], __currentAnalysisContext = {};
 
 // Beállítások betöltése induláskor
 document.addEventListener("DOMContentLoaded", function() {
-    __gasUrl = 'ADD_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'; // !!! FONTOS: Ide írd be a Web App URL-edet !!!
+    __gasUrl = 'https://script.google.com/macros/s/AKfycbx1F4dZrs13kii-LNhiHaVWe94ymgGdhHBRpEJtcmsKB5vC51duGQb7jbPRfBx1iUEE-A/exec'; // !!! FONTOS: Ide írd be a Web App URL-edet !!!
     ['homeFormWeight', 'awayFormWeight'].forEach(id => {
         const slider = document.getElementById(id);
         const label = document.getElementById(id + 'Label');
@@ -463,3 +463,4 @@ function filterHistory() {
 </script>
 </body>
 </html>
+
