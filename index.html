@@ -333,6 +333,10 @@ async function go(){
         outDiv.appendChild(simAndChatCard);
 
         document.getElementById('chatInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') sendChatMessage(); });
+        
+        // JAVÍTÁS: Előzmények mentése
+        saveAnalysis({ home: home, away: away }); 
+        
         setProgress(100, "Kész.");
     } catch(e) {
         if(progressInterval) clearInterval(progressInterval);
@@ -452,11 +456,74 @@ async function generateAutoSlip() {
     }
 }
 
+// JAVÍTÁS: Működő előzmény funkciók
+function saveAnalysis(record) {
+    if (!record || !record.home || !record.away) return;
+    const MAX_HISTORY_ITEMS = 30;
+    let history = getHistoryFromLocalStorage();
+    
+    // Hozzáadás az előzmények elejére
+    history.unshift({ 
+        home: record.home, 
+        away: record.away,
+        date: new Date().toLocaleString('hu-HU'),
+        id: `analysis_${new Date().getTime()}` // Egyedi azonosító
+    });
+
+    // Az előzmények méretének korlátozása
+    if (history.length > MAX_HISTORY_ITEMS) {
+        history = history.slice(0, MAX_HISTORY_ITEMS);
+    }
+    
+    // Mentés a böngésző tárolójába
+    localStorage.setItem('sportAnalysisHistory', JSON.stringify(history));
+    renderHistory(history); // Azonnal frissítjük a listát
+}
+
+function getHistoryFromLocalStorage() {
+    try {
+        const historyJson = localStorage.getItem('sportAnalysisHistory');
+        return historyJson ? JSON.parse(historyJson) : [];
+    } catch (e) {
+        console.error("Hiba az előzmények olvasásakor:", e);
+        return [];
+    }
+}
+
+function renderHistory(history) {
+    const box = document.getElementById('history');
+    if (!history || history.length === 0) {
+        box.innerHTML = '<p class="muted">Nincsenek korábbi elemzések.</p>';
+        return;
+    }
+    
+    box.innerHTML = history.map(item => `
+        <div class="fx-item">
+            <div class="fx-item-details" style="flex-grow:1;">
+                <div>
+                    <div class="fx-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div>
+                    <div class="fx-meta">${item.date}</div>
+                </div>
+            </div>
+            <div>
+                <button class="btn-primary" onclick="fillAndAnalyze('${escapeHtml(item.home)}','${escapeHtml(item.away)}')">Újraelemzés</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterHistory() {
+    const query = document.getElementById('historySearch').value.toLowerCase();
+    const history = getHistoryFromLocalStorage();
+    const filteredHistory = history.filter(item => 
+        item.home.toLowerCase().includes(query) || 
+        item.away.toLowerCase().includes(query)
+    );
+    renderHistory(filteredHistory);
+}
+
+
 // A többi, változatlan segédfüggvény (helykitöltőként)
-function saveAnalysis(record){}
-function getHistoryFromLocalStorage(){return[]}
-function renderHistory(history){}
-function filterHistory(){}
 function clearSlip(){}
 function renderSlip(){}
 function openSettingsModal(){}
