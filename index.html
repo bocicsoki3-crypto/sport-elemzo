@@ -109,6 +109,9 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:non
 .league-item .custom-checkbox { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 5px; margin-right: 12px; transition: all 0.2s; }
 .league-item input:checked + .custom-checkbox { background-color: var(--secondary); border-color: var(--secondary); }
 .league-item input:checked + .custom-checkbox::after { content: '✔'; color: black; display: block; text-align: center; line-height: 14px; font-size: 12px; }
+.fx-item-details .fixture-checkbox { -webkit-appearance: none; appearance: none; background-color: #000; margin: 0; width: 1.25em; height: 1.25em; border: 2px solid var(--border); border-radius: 4px; cursor: pointer; position: relative; transition: all 0.2s ease-in-out; }
+.fx-item-details .fixture-checkbox:checked { background-color: var(--secondary); border-color: var(--primary); }
+.fx-item-details .fixture-checkbox:checked::before { content: '✔'; position: absolute; color: black; font-size: 0.9em; font-weight: bold; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 #selectedFixturesDisplay { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; }
 .selected-fixture-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; padding: 4px 0; }
 </style>
@@ -236,9 +239,6 @@ async function loadUserDataFromCloud() {
         const data = await response.json();
         if (data.error) throw new Error(`Backend hiba: ${data.error}`);
         __user.email = data.userEmail;
-        __user.initialBankroll = data.bankroll || 10000;
-        __slipHistory = data.slipHistory || [];
-        try { __favLeagues = new Set(JSON.parse(data.favLeagues || "[]")); } catch(e) { __favLeagues = new Set(); }
         document.getElementById('userInfo').textContent = `Bejelentkezve: ${__user.email}`;
     } catch (e) { document.getElementById('userInfo').textContent = `Hiba: ${e.message}.`; }
 }
@@ -453,7 +453,6 @@ async function generateAutoSlip() {
 }
 
 // A többi, változatlan segédfüggvény (helykitöltőként)
-function saveFavLeagues(){}
 function saveAnalysis(record){}
 function getHistoryFromLocalStorage(){return[]}
 function renderHistory(history){}
@@ -464,6 +463,7 @@ function openSettingsModal(){}
 function openHistoryModal(idx){}
 function closeModal(){}
 async function saveSettings(){}
+async function saveFavLeagues(){}
 function addToSlip(match,market,selection,odds,ourProb, league){}
 function removeBet(index){}
 async function evaluateSlip(){}
@@ -471,7 +471,6 @@ function getSportFromBet(bet) {}
 function populateStatFilters() {}
 function calculateStats() {}
 async function runBacktest(){}
-
 </script>
 </body>
 </html>
