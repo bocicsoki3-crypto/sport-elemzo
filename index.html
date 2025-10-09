@@ -39,7 +39,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--secondar
 details > .details-summary::-webkit-details-marker { display: none; }
 details[open] > .details-summary::before { transform: rotate(90deg); }
 .sim-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; text-align: center; margin-top: 1rem; }
-.sim-item { background: #1a2441; padding: 8px; border-radius: 6px; font-weight: 600; border: 1px solid var(--border); }
+.sim-item { padding: 12px 8px; border-radius: 8px; font-weight: 700; font-size: 1.1rem; border: 1px solid var(--border); transition: transform 0.2s, box-shadow 0.2s; }
+.sim-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+.sim-item.win { background: rgba(20, 184, 166, 0.15); color: var(--accent); }
+.sim-item.draw { background: rgba(255, 255, 255, 0.05); color: var(--muted); }
+.sim-item.loss { background: rgba(255, 107, 107, 0.1); color: #ff6b6b; }
 .stylish-label { text-transform: uppercase; font-size: 0.8rem; color: var(--muted); letter-spacing: 0.05em;}
 .stylish-input { background: #0b1020; border: 1px solid var(--border); padding: 16px; font-size: 1.5rem; font-weight: 700; color: var(--secondary); text-align: center; }
 .stylish-input:focus { border-color: var(--accent); }
@@ -53,7 +57,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance
 .option-label{font-weight:600}
 .option-meta{font-size:.9rem;color:var(--muted)}
 .option-bar-wrap{position:relative;width:100%;height:22px;background-color:rgba(0,0,0,.2);border-radius:6px;overflow:hidden}
-.option-bar{height:100%;border-radius:6px;transition:width .5s ease-out;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.option-bar{height:100%;border-radius:6px;transition:width .5s ease-out;box-shadow:inset 0 1px 0 rgba(255,255,255,.1);background: linear-gradient(to right, var(--primary), var(--secondary));}
 .option-badge{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:.8rem;font-weight:700;color:var(--bg);text-shadow:0 1px 1px rgba(0,0,0,.2)}
 .market-options-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:1rem}
 .grid-item{background:rgba(0,0,0,.2);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border)}
@@ -69,6 +73,10 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance
 .chat-input-group { display: flex; gap: 10px; }
 .chat-input-group input { flex-grow: 1; margin-top: 0; }
 .chat-input-group button { width: auto; }
+.fx-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--border); }
+.fx-item-details { display: flex; align-items: center; gap: 10px; flex-grow: 1;}
+.fx-title { font-weight: 600;}
+.fx-meta { font-size: 0.8rem; color: var(--muted);}
 </style>
 </head>
 <body>
@@ -121,7 +129,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance
     </div>
     <div class="card">
         <h2>AI Szelvény Generátor</h2>
-        <p class="muted">Az AI a mai nap legvalószínűbb ("bankár") meccseiből összeállít neked egy szelvényt a megadott célodds közelében.</p>
+        <p class="muted">Az AI a mai nap legvalószínűbb meccseiből összeállít egy szelvényt. Jelöld ki a 'Közelgő meccsek' listában a jelölőnégyzetekkel, hogy mely meccsekből válogasson!</p>
         <div class="row"><div class="col"><label for="targetOdds" class="stylish-label">Cél odds</label><input type="number" id="targetOdds" class="stylish-input" value="2.5" /></div></div>
         <div class="actions"><button id="generateSlipBtn" class="btn-primary" onclick="generateAutoSlip()">Szelvény Generálása</button></div>
         <div id="autoSlipResult" style="margin-top: 1rem; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2);"><p class="muted">Az AI indoklása itt fog megjelenni.</p></div>
@@ -244,7 +252,7 @@ async function loadFixtures() {
 }
 
 function renderLeagueList(){const box=document.getElementById('leagueList');const q=(document.getElementById('leagueSearch').value||'').toLowerCase();const list=(__allLeagues||[]).filter(x=>!q||x.name.toLowerCase().includes(q));box.innerHTML=list.map(x=>{const c=__favLeagues.has(x.name)?'checked':'';return`<label class="league-item"><input type="checkbox" data-league="${escapeHtml(x.name)}" ${c}><span>${escapeHtml(x.name)}</span><span class="badge">${x.count}</span></label>`}).join('');box.querySelectorAll('input[type=checkbox]').forEach(cb=>{cb.addEventListener('change',e=>{const n=e.target.dataset.league;if(e.target.checked)__favLeagues.add(n);else __favLeagues.delete(n);renderFixtureList();});});}
-function renderFixtureList(){const box=document.getElementById('fixtures');const fav=__favLeagues.size>0?new Set(__favLeagues):null;const list=(__fixtures||[]).filter(fx=>!fav||fav.has(fx.league));if(list.length===0){box.innerHTML=`<div class="muted">Nincs megjeleníthető meccs.</div>`;return;}box.innerHTML=list.map(fx=>{const d=new Date(fx.utcKickoff).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});return`<div class="fx-item"><div><div class="fx-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div><div class="fx-meta">${escapeHtml(fx.league)} · ${d}</div></div><div><button class="btn-primary" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">AI elemzés</button></div></div>`}).join('');}
+function renderFixtureList(){const box=document.getElementById('fixtures');const fav=__favLeagues.size>0?new Set(__favLeagues):null;const list=(__fixtures||[]).filter(fx=>!fav||fav.has(fx.league));if(list.length===0){box.innerHTML=`<div class="muted">Nincs megjeleníthető meccs.</div>`;return;}box.innerHTML=list.map(fx=>{const d=new Date(fx.utcKickoff).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});const safeFxData=escapeHtml(JSON.stringify(fx));return`<div class="fx-item"><div class="fx-item-details"><input type="checkbox" class="fixture-checkbox" data-fixture='${safeFxData}' title="Hozzáadás az AI szelvény generátorhoz"><div style="flex-grow:1;"><div class="fx-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div><div class="fx-meta">${escapeHtml(fx.league)} · ${d}</div></div></div><div><button class="btn-primary" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">AI elemzés</button></div></div>`}).join('');}
 function fillAndAnalyze(home,away){document.getElementById('home').value=home;document.getElementById('away').value=away;document.querySelector('main').scrollIntoView({behavior:'smooth'});go();}
 
 async function go(){
@@ -347,8 +355,68 @@ async function runVisualSimulator() {
         const response = await fetch(url);
         const data = await response.json();
         if(data.error) throw new Error(data.error);
-        resultsDiv.innerHTML = data.results.map(res => `<div class="sim-item">${res.gh} - ${res.ga}</div>`).join('');
+        resultsDiv.innerHTML = data.results.map(res => {
+            let outcomeClass = 'draw';
+            if (res.gh > res.ga) outcomeClass = 'win';
+            if (res.ga > res.gh) outcomeClass = 'loss';
+            return `<div class="sim-item ${outcomeClass}">${res.gh} - ${res.ga}</div>`;
+        }).join('');
     } catch(e) { resultsDiv.innerHTML = `<p style="color: #ff5555;">Hiba: ${e.message}</p>`; }
+}
+
+async function generateAutoSlip() {
+    const btn = document.getElementById('generateSlipBtn');
+    const resultDiv = document.getElementById('autoSlipResult');
+    const targetOdds = document.getElementById('targetOdds').value;
+
+    const checkedBoxes = document.querySelectorAll('.fixture-checkbox:checked');
+    let selectedFixtures = [];
+    checkedBoxes.forEach(box => {
+        try { selectedFixtures.push(JSON.parse(box.dataset.fixture)); } 
+        catch (e) { console.error("Hiba a meccs adatainak olvasásakor:", e); }
+    });
+
+    btn.disabled = true;
+    btn.textContent = 'Generálás...';
+    resultDiv.innerHTML = '<p class="muted">AI elemzés fut, kérem várjon...</p>';
+
+    try {
+        let url = `${__gasUrl}?action=generateAutoSlip&targetOdds=${targetOdds}&sport=${__currentSport}`;
+        
+        let fetchOptions = { method: 'GET' };
+        // Ha vannak kiválasztott meccsek, POST-tal küldjük az adatokat
+        if (selectedFixtures.length > 0) {
+            fetchOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ selectedFixtures: selectedFixtures })
+            };
+        }
+
+        const response = await fetch(url, fetchOptions);
+        if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
+        
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        if (data.slip && data.slip.length > 0) {
+            let html = `<h4>AI Javaslat (${data.slip.reduce((acc, bet) => acc * bet.odds, 1).toFixed(2)}x odds)</h4>`;
+            html += `<p>${data.narrative.replace(/\n/g, '<br>')}</p>`;
+            html += '<ul class="slip-list">';
+            data.slip.forEach(bet => {
+                html += `<li><b>${escapeHtml(bet.match)}</b><br><span class="muted">${escapeHtml(bet.market)}: ${escapeHtml(bet.selection)} @ ${bet.odds}</span></li>`;
+            });
+            html += '</ul>';
+            resultDiv.innerHTML = html;
+        } else {
+            resultDiv.innerHTML = `<p><b>Nem találtam megfelelő tippet.</b><br><span class="muted">${data.details || 'Próbálj meg több meccset kiválasztani vagy módosíts a cél oddson.'}</span></p>`;
+        }
+    } catch (e) {
+        resultDiv.innerHTML = `<p style="color: #ff6b6b;">Hiba történt: ${e.message}</p>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Szelvény Generálása';
+    }
 }
 
 function clearSlip() {
@@ -393,7 +461,6 @@ async function evaluateSlip(){/* ... Teljes, változatlan függvény ... */}
 function getSportFromBet(bet) { /* ... Teljes, változatlan függvény ... */ }
 function populateStatFilters() { /* ... Teljes, változatlan függvény ... */ }
 function calculateStats() { /* ... Teljes, változatlan függvény ... */ }
-async function generateAutoSlip() { /* ... Teljes, változatlan függvény ... */ }
 async function runBacktest(){ /* ... Teljes, változatlan függvény ... */ }
 
 </script>
