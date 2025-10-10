@@ -58,6 +58,23 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .modal { display:none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); }
 .modal-content { background-color: var(--card); margin: 10% auto; padding: 25px; border: 1px solid var(--border); width: 80%; max-width: 500px; border-radius: 16px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
 .modal-close { color: var(--muted); float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        /* === DIZÁJN FINOMHANGOLÁSOK === */
+details > summary .summary-title {
+    flex-grow: 1; /* Biztosítja, hogy a cím kitöltse a rendelkezésre álló helyet */
+}
+.btn-small {
+    padding: 6px 12px !important; /* Kisebb gombméret */
+    font-size: 0.8rem !important;
+    border-radius: 10px !important;
+    width: auto !important; /* Gombok ne nyúljanak szét */
+    flex-shrink: 0;
+}
+.btn-delete {
+    background: linear-gradient(135deg, #991b1b, #7f1d1d) !important; /* Elegánsabb piros */
+}
+.btn-delete:hover {
+    background: linear-gradient(135deg, #a52828, #922b2b) !important;
+}
 
 /* === PROFI ELEMZÉSI STÍLUSOK === */
 .analysis-step-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
@@ -182,10 +199,10 @@ details > summary input {
     </div>
     <div class="col-right">
        <details class="card">
-         <summary>
-           <h2>Előző Elemzések</h2>
-           <input id="historySearch" placeholder="Keresés az előzményekben..." onclick="event.stopPropagation()">
-         </summary>
+<summary>
+  <div class="summary-title"><h2>Előző Elemzések</h2></div>
+  <input id="historySearch" placeholder="Keresés az előzményekben..." onclick="event.stopPropagation()">
+</summary>
          <div id="history" class="history-list">
              <p class="muted">Nincsenek korábbi elemzések.</p>
          </div>
@@ -360,9 +377,9 @@ function renderHistory(history) {
                 <div class="fx-title">${item.home} – ${item.away}</div>
                 <div class="fx-meta">${item.date}</div>
             </div>
-            <div style="display:flex; gap: 8px; flex-shrink: 0;">
-                <button class="btn-primary" style="padding: 5px 10px; font-size:0.8rem; background: #7f1d1d;" onclick="deleteAnalysis(${index})">Törlés</button>
-                <button class="btn-primary" style="padding: 5px 10px; font-size:0.8rem;" onclick="fillAndAnalyze('${item.home}','${item.away}', true)">Újra</button>
+            <div style="display:flex; gap: 8px;">
+                <button class="btn-primary btn-small btn-delete" onclick="deleteAnalysis(${index})">Törlés</button>
+                <button class="btn-primary btn-small" onclick="fillAndAnalyze('${item.home}','${item.away}', true)">Újra</button>
             </div>
         </div>`
     ).join('');
@@ -427,3 +444,4 @@ async function saveFavLeagues() {
 </script>
 </body>
 </html>
+
