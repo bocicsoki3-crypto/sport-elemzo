@@ -1,547 +1,66 @@
-<!DOCTYPE html>
-<html lang="hu">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SportElemző Gemini AI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root {
-    --bg: #000000;
-    --bg-grad-1: #111111;
-    --bg-grad-2: #000000;
-    --card: #1a1a1a;
-    --border: #38301d;
-    --muted: #aaa;
-    --primary: #D4AF37;
-    --secondary: #B8860B;
-    --accent: #FFD700;
-    --ring: #B8860B;
-    --text: #f5f5dc;
-    --font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-}
-*{box-sizing:border-box}
-body {
-    margin: 0;
-    font-family: var(--font-family);
-    color: var(--text);
-    background-color: #000;
-    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2338301d' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
-    min-height: 100vh;
-}
-.app-header{background: linear-gradient(90deg, #1a1a1a, #000000); color:var(--primary); padding:1.1rem; text-align:center; border-bottom:1px solid var(--border);}
-.app-header h1{font-weight:800; margin:0;}
-.user-info { font-size: 0.9rem; margin-top: 5px; opacity: 0.8; }
-.container { max-width: 1800px; margin: 1.8rem auto; padding: 0 2rem; }
-.layout{display:grid;gap:18px;grid-template-columns:340px 1fr 340px;align-items:start;}
-@media (max-width: 1280px) {.layout {grid-template-columns: 340px 1fr;} .col-right {grid-column: 1 / -1;}}
-@media (max-width: 980px) {.layout {grid-template-columns: 1fr;}}
-.card{background: var(--card); border:1px solid var(--border); border-radius:16px; padding:1.1rem; margin-bottom:1rem; box-shadow:0 20px 40px rgba(0,0,0,.35);}
-h2{margin:0 0 .9rem 0;font-weight:800;color:var(--secondary)}
-h3{font-weight:700;margin-top:0;color:var(--text)}
-label{display:block;font-weight:600;margin-top:.6rem}
-input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#0c0c0c;color:var(--text);margin-top:.25rem;font-size:14px;font-family:inherit}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--secondary);box-shadow:0 0 0 3px rgba(184, 134, 11, .25)}
-.row{display:flex;gap:12px;flex-wrap:wrap}.col{flex:1 1 220px}
-.actions{margin-top:1rem;display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;flex-direction:column}
-.actions button, .btn-primary {padding:12px 18px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#000;font-weight:800;cursor:pointer;white-space:nowrap;width:100%;transition:transform .2s ease;font-family:var(--font-family); text-align: center;}
-.actions button:hover:not(:disabled), .btn-primary:hover:not(:disabled) {transform:translateY(-2px); box-shadow: 0 8px 20px rgba(212, 175, 55, 0.2);}
-.actions button:disabled, .btn-primary:disabled {background:#555;cursor:not-allowed;opacity:.7}
-.muted{color:var(--muted);font-size:.9rem}
-.details-summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; padding: 5px 0;}
-details > .details-summary::-webkit-details-marker { display: none; }
-details[open] > .details-summary::before { transform: rotate(90deg); }
-.sim-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; text-align: center; margin-top: 1rem; }
-.sim-item { padding: 12px 8px; border-radius: 8px; font-weight: 700; font-size: 1.1rem; border: 1px solid var(--border); transition: transform 0.2s, box-shadow 0.2s; }
-.sim-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-.sim-item.win { background: rgba(212, 175, 55, 0.15); color: var(--accent); }
-.sim-item.draw { background: rgba(255, 255, 255, 0.05); color: var(--muted); }
-.sim-item.loss { background: rgba(255, 107, 107, 0.1); color: #ff6b6b; }
-.stylish-label { text-transform: uppercase; font-size: 0.8rem; color: var(--muted); letter-spacing: 0.05em;}
-.stylish-input { background: #000; border: 1px solid var(--border); padding: 16px; font-size: 1.5rem; font-weight: 700; color: var(--secondary); text-align: center; }
-.stylish-input:focus { border-color: var(--accent); }
-input[type="range"]{-webkit-appearance:none;width:100%;height:8px;background:linear-gradient(to right,var(--primary),var(--secondary));border-radius:10px;outline:none;opacity:.9;transition:opacity .2s;box-shadow:inset 0 1px 3px rgba(0,0,0,.3)}
-input[type="range"]:hover{opacity:1}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;background:#fff;border-radius:50%;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.4);margin-top:-6px;border:2px solid var(--primary)}
-.progress-ring{width:80px;height:80px;border-radius:50%;display:grid;place-items:center;margin:1rem auto;transition:opacity .5s}.progress-label{font-size:1.5rem;font-weight:700}
-.analysis-option{position:relative;padding:1rem .5rem;border-bottom:1px solid var(--border);transition:background-color .2s}
-.analysis-option:last-child{border-bottom:none;} .analysis-option:hover{background-color:rgba(255,255,255,.03)}
-.option-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
-.option-label{font-weight:600}
-.option-meta{font-size:.9rem;color:var(--muted)}
-.option-bar-wrap{position:relative;width:100%;height:22px;background-color:rgba(0,0,0,.2);border-radius:6px;overflow:hidden}
-.option-bar{height:100%;border-radius:6px;transition:width .5s ease-out;box-shadow:inset 0 1px 0 rgba(255,255,255,.1);background: linear-gradient(to right, var(--primary), var(--secondary));}
-.option-badge{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:.8rem;font-weight:700;color:var(--bg);text-shadow:0 1px 1px rgba(0,0,0,.2)}
-.market-summary{line-height:1.6; padding-top: 0.5rem;}
-.hero{padding:1.5rem;border-radius:16px;background:linear-gradient(135deg,rgba(212, 175, 55, .1),rgba(184, 134, 11, .1));border:1px solid var(--accent)}
-.hero .tag{display:inline-block;padding:4px 10px;background:var(--accent);color:var(--bg);font-weight:700;border-radius:12px;margin-bottom:1rem}
-.chat-container { margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }
-.chat-history { max-height: 300px; overflow-y: auto; margin-bottom: 1rem; padding-right: 10px; }
-.chat-message { margin-bottom: 1rem; line-height: 1.6; }
-.chat-message b { color: var(--secondary); display: block; margin-bottom: 4px;}
-.chat-input-group { display: flex; gap: 10px; }
-.chat-input-group input { flex-grow: 1; margin-top: 0; }
-.chat-input-group button { width: auto; }
-.fx-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--border); }
-.fx-item-details { display: flex; align-items: center; gap: 10px; flex-grow: 1;}
-.fx-title { font-weight: 600;}
-.fx-meta { font-size: 0.8rem; color: var(--muted);}
-.metrics { margin-bottom: 1.5rem; }
-.xg-card { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1rem; border: 1px solid var(--border); }
-.xg-card .badge { display: inline-block; padding: 4px 10px; background: var(--secondary); color: var(--bg); font-weight: 700; border-radius: 12px; margin-bottom: 1rem; font-size: 0.8rem; }
-.xg-row { display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem; }
-.xg-team { flex-basis: 120px; font-weight: 600; }
-.xg-bar { flex-grow: 1; height: 18px; background-color: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; }
-.xg-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 6px; transition: width 0.5s ease-out; }
-.xg-val { font-weight: 700; font-size: 1.1rem; }
-.market-options-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:1rem}
-.grid-item{background:rgba(0,0,0,.2);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border)}
-.grid-item-label{font-weight:600;font-size:.9rem}
-.grid-item-value{font-weight:700;font-size:1.2rem;color:var(--accent);margin-top:4px}
-.league-list { margin-top: 1rem; max-height: 250px; overflow-y: auto; padding-right: 5px; }
-.league-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
-.league-item:hover { background-color: rgba(255,255,255,0.05); }
-.league-item input { display: none; }
-.league-item span { flex-grow: 1; }
-.league-item .badge { flex-grow: 0; background-color: var(--border); color: var(--muted); font-size: 0.8rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
-.league-item .custom-checkbox { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 5px; margin-right: 12px; transition: all 0.2s; }
-.league-item input:checked + .custom-checkbox { background-color: var(--secondary); border-color: var(--secondary); }
-.league-item input:checked + .custom-checkbox::after { content: '✔'; color: black; display: block; text-align: center; line-height: 14px; font-size: 12px; }
-.fx-item-details .fixture-checkbox { -webkit-appearance: none; appearance: none; background-color: #000; margin: 0; width: 1.25em; height: 1.25em; border: 2px solid var(--border); border-radius: 4px; cursor: pointer; position: relative; transition: all 0.2s ease-in-out; }
-.fx-item-details .fixture-checkbox:checked { background-color: var(--secondary); border-color: var(--primary); }
-.fx-item-details .fixture-checkbox:checked::before { content: '✔'; position: absolute; color: black; font-size: 0.9em; font-weight: bold; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-#selectedFixturesDisplay { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; }
-.selected-fixture-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; padding: 4px 0; }
-</style>
-</head>
-<body>
-<header class="app-header">
-    <h1>SportElemző Gemini AI</h1>
-    <div id="userInfo" class="user-info">Bejelentkezve:</div>
-</header>
-
-<div class="container layout">
-    <div class="col-left">
-        <div class="card">
-            <h2>Beállítások</h2>
-            <button class="btn-primary" onclick="openSettingsModal()">Beállítások Megnyitása</button>
-            <label for="sportSelector">Sportág</label>
-            <select id="sportSelector" onchange="handleSportChange()">
-                <option value="soccer" selected>Labdarúgás</option>
-                <option value="hockey">Jégkorong</option>
-                <option value="basketball">Kosárlabda</option>
-            </select>
-            <label for="leagueSearch" style="margin-top: 1rem;">Keresés ligában</label>
-            <input id="leagueSearch" oninput="renderLeagueList()" placeholder="pl. Premier, NHL..." />
-            <div class="actions">
-                <button class="btn-primary" onclick="loadFixtures()">Meccsek frissítése az API-ról</button>
-                <button class="btn-primary" onclick="saveFavLeagues()">Kedvencek mentése a felhőbe</button>
-                <span id="fxStatus" class="muted"></span>
-            </div>
-            <div class="league-list" id="leagueList"></div>
-        </div>
-        <div class="card">
-            <h2>Közelgő meccsek</h2>
-            <div id="fixtures" class="fixtures"><p class="muted">Válassz sportágat és frissíts!</p></div>
-        </div>
-    </div>
-
-    <div class="col-center">
-        <div class="card">
-            <h2>Meccselemzés</h2>
-            <datalist id="teamlist"></datalist>
-            <div class="row">
-                <div class="col"><label for="home">Hazai csapat</label><input id="home" list="teamlist" placeholder="Pl. Liverpool" /></div>
-                <div class="col"><label for="away">Vendég csapat</label><input id="away" list="teamlist" placeholder="Pl. Manchester City" /></div>
-            </div>
-            <div class="row" style="margin-top: .7rem;">
-                <div class="col"><label for="homeFormWeight">Hazai Forma Súlya: <span id="homeFormWeightLabel">50%</span></label><input type="range" min="0" max="100" value="50" id="homeFormWeight"></div>
-                <div class="col"><label for="awayFormWeight">Vendég Forma Súlya: <span id="awayFormWeightLabel">50%</span></label><input type="range" min="0" max="100" value="50" id="awayFormWeight"></div>
-            </div>
-            <div class="actions">
-                <button id="goBtn" class="btn-primary" onclick="go()">Elemzés Futtatása a Gemini AI-val</button>
-            </div>
-            <div id="progress" class="progress-ring" style="display:none;"><span class="progress-label"></span></div>
-            <p id="status" class="muted" style="text-align:center;">Kész.</p>
-        </div>
-        <div class="card">
-            <h2>AI Szelvény Generátor</h2>
-            <p class="muted">Jelöld ki a 'Közelgő meccsek' listában, hogy mely meccsekből válogasson az AI, majd add meg a cél oddsot!</p>
-            <div class="row"><div class="col"><label for="targetOdds" class="stylish-label">Cél odds</label><input type="number" id="targetOdds" class="stylish-input" value="2.5" /></div></div>
-            <div id="selectedFixturesDisplay"><p class="muted">Nincsenek meccsek kiválasztva.</p></div>
-            <div class="actions"><button id="generateSlipBtn" class="btn-primary" onclick="generateAutoSlip()">Szelvény Generálása</button></div>
-            <div id="autoSlipResult" style="margin-top: 1rem; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2);"><p class="muted">Az AI indoklása itt fog megjelenni.</p></div>
-        </div>
-
-        <div id="out" style="min-height: 200px;"></div>
-    </div>
-
-    <div class="col-right">
-        <details class="card" open>
-            <summary class="details-summary"><h2>Pénzügyi Statisztikák</h2></summary>
-            <p class="muted">Itt szűrheted a múltbeli szelvényeid teljesítményét.</p>
-            <div class="row" style="margin-bottom: 1rem;">
-                <div class="col"><label for="statFilterSport">Sportág</label><select id="statFilterSport" onchange="calculateStats()"><option value="all">Összes</option></select></div>
-                <div class="col"><label for="statFilterLeague">Bajnokság</label><select id="statFilterLeague" onchange="calculateStats()"><option value="all">Összes</option></select></div>
-                <div class="col"><label for="statFilterMarket">Piac</label><select id="statFilterMarket" onchange="calculateStats()"><option value="all">Összes</option></select></div>
-            </div>
-            <div id="slipStats" style="min-height: 40px; margin-top: 1rem;"><p class="muted">Nincsenek szelvényelőzmények.</p></div>
-        </details>
-        <details class="card" open>
-            <summary class="details-summary"><h2>Fogadási Szelvény</h2></summary>
-            <div id="betSlip" style="margin-bottom: 1rem;"><p class="muted">A szelvény üres.</p></div>
-            <div id="slipActions" style="display: none; margin-bottom: 1rem;">
-                <button class="btn-primary" style="background: #c2410c;" onclick="clearSlip()">Szelvény Ürítése</button>
-            </div>
-            <div id="slipEvaluation" style="display: none;">
-                <h3>Eredmények Megadása</h3>
-                <div id="slipResultInputs" class="result-inputs"></div>
-                <div class="actions"><button class="btn-primary" onclick="evaluateSlip()">Szelvény Értékelése</button></div>
-            </div>
-        </details>
-        <details class="card">
-          <summary class="details-summary"><h2>Előző Elemzések</h2></summary>
-          <input id="historySearch" placeholder="Keresés..." oninput="filterHistory()" style="margin-bottom: 0.8rem;" />
-          <div id="history" class="history-list"><p class="muted">Nincsenek korábbi elemzések.</p></div>
-        </details>
-    </div>
-</div>
-
-<script>
-let __historyCache = [], __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', __betSlip = [], __slipHistory = [], __user = { email: null, initialBankroll: 10000 };
-let isSaving = false;
-let __chatHistory = [], __currentAnalysisContext = {};
-
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);}
-function setProgress(pct,msg=null){const el=document.getElementById('progress');const goBtn=document.getElementById('goBtn');const statusEl=document.getElementById('status');const v=Math.max(0,Math.min(100,Math.round(pct||0)));if(v>0&&v<100){el.style.display='grid';goBtn.disabled=true;}else{setTimeout(()=>{el.style.display='none';},250);goBtn.disabled=false;}el.style.background=`conic-gradient(var(--ring) ${v*3.6}deg, rgba(255,255,255,.18) 0deg)`;el.querySelector('.progress-label').textContent=v+'%';if(msg)statusEl.textContent=msg;}
-
-document.addEventListener("DOMContentLoaded", async function() {
-    __gasUrl = localStorage.getItem('gasUrl') || '';
-    ['homeFormWeight', 'awayFormWeight'].forEach(id => {
-        const slider = document.getElementById(id);
-        const label = document.getElementById(id + 'Label');
-        if (slider && label) { slider.addEventListener('input', (e) => { label.textContent = `${e.target.value}%`; }); }
+// JAVÍTOTT FÜGGVÉNY: Illeszd be ezt a kód.gs fájlba a régi buildClassicAnalysisHtml helyére!
+function buildClassicAnalysisHtml(sim, markets, analysisTexts, matchData, odds, sport) {
+    // Kezdjük a metrikák renderelésével, ahogy eddig is
+    let html = renderMetrics({
+        teams: { home: matchData.home, away: matchData.away },
+        xg: { home: matchData.mu_h, away: matchData.mu_a },
+        homeRating: matchData.homeRating,
+        awayRating: matchData.awayRating,
+        sport: sport
     });
-    ['home', 'away'].forEach(id => document.getElementById(id).addEventListener('input', handleTeamInput));
-    renderHistory(getHistoryFromLocalStorage());
-    if (__gasUrl) { await loadUserDataFromCloud(); } 
-    else { document.getElementById('userInfo').textContent = 'Kérlek, add meg a backend URL-t a Beállításokban.'; }
-});
 
-async function loadUserDataFromCloud() {
-    if (!__gasUrl) return;
-    try {
-        document.getElementById('userInfo').textContent = 'Felhasználói adatok betöltése...';
-        const response = await fetch(`${__gasUrl}?action=loadUserData`);
-        if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
-        const data = await response.json();
-        if (data.error) throw new Error(`Backend hiba: ${data.error}`);
-        __user.email = data.userEmail;
-        document.getElementById('userInfo').textContent = `Bejelentkezve: ${__user.email}`;
-    } catch (e) { document.getElementById('userInfo').textContent = `Hiba: ${e.message}.`; }
-}
-
-function handleSportChange() { __currentSport = document.getElementById('sportSelector').value; document.getElementById('leagueList').innerHTML = '<p class="muted">Frissíts a meccsekért!</p>'; document.getElementById('fixtures').innerHTML = '<p class="muted">Frissíts a meccsekért!</p>'; document.getElementById('teamlist').innerHTML = ''; }
-function updateDatalist(teamArray) { document.getElementById('teamlist').innerHTML = teamArray.map(t => `<option value="${escapeHtml(t)}"></option>`).join(''); }
-function handleTeamInput(event) { const query = event.target.value.toLowerCase(); const filteredTeams = query ? __masterTeamList.filter(team => team.toLowerCase().includes(query)) : __masterTeamList; updateDatalist(filteredTeams); }
-function populateTeams(fixtures){ const teams = new Set(); (fixtures || []).forEach(f => { teams.add(f.home); teams.add(f.away); }); __masterTeamList = Array.from(teams).sort((a,b)=>a.localeCompare(b,'hu')); updateDatalist(__masterTeamList); }
-
-async function loadFixtures() {
-    const statusEl = document.getElementById('fxStatus');
-    statusEl.textContent = 'Adatok lekérése...';
-    if (!__gasUrl) { statusEl.textContent = 'Hiba: Hiányzó GAS URL.'; return; }
-    try {
-        const response = await fetch(`${__gasUrl}?sport=${__currentSport}`);
-        if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        __allLeagues = data.leagues || []; __fixtures = data.fixtures || [];
-        renderLeagueList(); renderFixtureList(); populateTeams(__fixtures);
-        statusEl.textContent = `Sikeres frissítés! ${__fixtures.length} meccs betöltve.`;
-    } catch (e) { statusEl.textContent = `Hiba a frissítés során: ${e.message}`; }
-}
-
-function renderLeagueList(){const box=document.getElementById('leagueList');const q=(document.getElementById('leagueSearch').value||'').toLowerCase();const list=(__allLeagues||[]).filter(x=>!q||x.name.toLowerCase().includes(q));box.innerHTML=list.map(x=>{const c=__favLeagues.has(x.name)?'checked':'';return`<label class="league-item"><input type="checkbox" onchange="toggleFavLeague('${escapeHtml(x.name)}')" ${c}><div class="custom-checkbox"></div><span>${escapeHtml(x.name)}</span><span class="badge">${x.count}</span></label>`}).join('');}
-function toggleFavLeague(leagueName) { if (__favLeagues.has(leagueName)) { __favLeagues.delete(leagueName); } else { __favLeagues.add(leagueName); } renderFixtureList(); }
-function renderFixtureList(){const box=document.getElementById('fixtures');const fav=__favLeagues.size>0?new Set(__favLeagues):null;const list=(__fixtures||[]).filter(fx=>!fav||fav.has(fx.league));if(list.length===0){box.innerHTML=`<div class="muted">Nincs megjeleníthető meccs.</div>`;return;}box.innerHTML=list.map(fx=>{const d=new Date(fx.utcKickoff).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});const safeFxData=escapeHtml(JSON.stringify(fx));return`<div class="fx-item"><div class="fx-item-details"><input type="checkbox" class="fixture-checkbox" onchange="updateSelectedFixturesDisplay()" data-fixture='${safeFxData}' title="Hozzáadás az AI szelvény generátorhoz"><div style="flex-grow:1;"><div class="fx-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div><div class="fx-meta">${escapeHtml(fx.league)} · ${d}</div></div></div><div><button class="btn-primary" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">AI elemzés</button></div></div>`}).join('');}
-function fillAndAnalyze(home,away){document.getElementById('home').value=home;document.getElementById('away').value=away;document.querySelector('.col-center').scrollIntoView({behavior:'smooth'});go();}
-
-function updateSelectedFixturesDisplay() {
-    const displayDiv = document.getElementById('selectedFixturesDisplay');
-    const checkedBoxes = document.querySelectorAll('.fixture-checkbox:checked');
-    if (checkedBoxes.length === 0) {
-        displayDiv.innerHTML = '<p class="muted">Nincsenek meccsek kiválasztva.</p>';
-        return;
-    }
-    let html = `<h4>Kiválasztott Meccsek (${checkedBoxes.length})</h4>`;
-    checkedBoxes.forEach(box => {
-        const fixture = JSON.parse(box.dataset.fixture);
-        html += `<div class="selected-fixture-item"><span>${escapeHtml(fixture.home)} vs ${escapeHtml(fixture.away)}</span><span class="muted">${escapeHtml(fixture.league)}</span></div>`;
-    });
-    displayDiv.innerHTML = html;
-}
-
-async function go(){
-    const home = document.getElementById("home").value.trim();
-    const away = document.getElementById("away").value.trim();
-    const homeFormWeight = document.getElementById("homeFormWeight").value;
-    const awayFormWeight = document.getElementById("awayFormWeight").value;
-    if(!home || !away || !__gasUrl){ setProgress(0, "Hiba: Hiányzó adatok."); return; }
-
-    let progressInterval;
-    const outDiv = document.getElementById('out');
-    outDiv.innerHTML = '';
-    try {
-        setProgress(1, "Elemzés indítása...");
-        __chatHistory = []; 
-        __currentAnalysisContext = {}; 
-
-        const analysisUrl=`${__gasUrl}?action=runFullAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&sport=${__currentSport}`;
-        progressInterval=setInterval(()=>{const c=parseInt(document.querySelector('#progress .progress-label').textContent)||0;setProgress(Math.min(90,c+2),"Szerver válaszára várunk...");},500);
-
-        const response=await fetch(analysisUrl);
-        clearInterval(progressInterval);
-        if(!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
-        setProgress(95,"Válasz feldolgozása...");
-
-        const data=await response.json();
-        if(data.error) throw new Error(data.error);
-
-        outDiv.innerHTML = `<div class="card">${data.html || '<p class="muted">Nincs elemzés.</p>'}</div>`;
-
-        __currentAnalysisContext = data.context || {};
-        __chatHistory.push({ role: "user", parts: [{ text: __currentAnalysisContext.initialPrompt }] });
-        __chatHistory.push({ role: "model", parts: [{ text: "Az alap elemzés legenerálva." }] });
-
-        const simAndChatCard = document.createElement('div');
-        simAndChatCard.className = 'card';
-        simAndChatCard.innerHTML = `
-            <div class="actions">
-                <button class="btn-primary" onclick="runVisualSimulator()">Szimulálj 10 meccset!</button>
-            </div>
-            <div id="visualSimResults" class="sim-results"></div>
-            <div class="chat-container">
-                <h3>AI-Párbeszéd Folytatása</h3>
-                <div id="chatHistory" class="chat-history"><p class="muted">Kérdezz rá az elemzés részleteire!</p></div>
-                <div class="chat-input-group">
-                    <input id="chatInput" type="text" placeholder="Pl. Mi a helyzet, ha esik az eső?">
-                    <button id="chatSendBtn" class="btn-primary" onclick="sendChatMessage()">Küldés</button>
-                </div>
-            </div>`;
-        outDiv.appendChild(simAndChatCard);
-
-        document.getElementById('chatInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') sendChatMessage(); });
+    // A piacok bejárása az új, frontend által várt struktúrával
+    markets.forEach((market) => {
+        // A beérkező markdown szöveg átalakítása HTML-re
+        const text = markdownToHtml(analysisTexts[market.id] || "<span class='muted'>Nem érkezett szöveges elemzés.</span>");
         
-        // JAVÍTÁS: Előzmények mentése
-        saveAnalysis({ home: home, away: away }); 
-        
-        setProgress(100, "Kész.");
-    } catch(e) {
-        if(progressInterval) clearInterval(progressInterval);
-        setProgress(0, "Hiba: "+e.message);
-    }
-}
+        // Speciális "value-bet" kiemelés, ha az AI javaslatról van szó
+        const cardClass = market.isHero ? 'analysis-step-card value-bet' : 'analysis-step-card';
+        // Ikonok a piacokhoz a látványosságért
+        const icons = { '1x2': '🏆', 'totals': '⚽', 'btts': '🥅', 'ht_ft': '⏱️', 'best-tip': '⭐', 'synthesis': '🧠' };
+        const icon = icons[market.id] || '📊';
 
-async function sendChatMessage() {
-    const input = document.getElementById('chatInput');
-    const sendBtn = document.getElementById('chatSendBtn');
-    const historyDiv = document.getElementById('chatHistory');
-    const userMessage = input.value.trim();
-    if (!userMessage) return;
+        html += `<div class="${cardClass}">`;
+        html += `<div class="step-header"><span class="step-icon">${icon}</span><h2 class="step-title">${market.title}</h2></div>`;
+        html += `<div class="step-content">${text}`; // A generált szöveg itt helyezkedik el
 
-    if (historyDiv.querySelector('.muted')) historyDiv.innerHTML = '';
-    historyDiv.innerHTML += `<div class="chat-message"><b>Te:</b> ${escapeHtml(userMessage)}</div>`;
-    __chatHistory.push({ role: "user", parts: [{ text: userMessage }] });
-    input.value = ''; input.disabled = true; sendBtn.disabled = true; sendBtn.textContent = '...';
-    historyDiv.scrollTop = historyDiv.scrollHeight;
-
-    try {
-        const response = await fetch(__gasUrl, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'continueAnalysis', history: __chatHistory })
-        });
-        if (!response.ok) throw new Error('Hálózati hiba.');
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-
-        const aiMessage = data.response;
-        historyDiv.innerHTML += `<div class="chat-message"><b>Gemini AI:</b> ${aiMessage.replace(/\n/g, '<br>')}</div>`;
-        __chatHistory.push({ role: "model", parts: [{ text: aiMessage }] });
-    } catch (e) {
-        historyDiv.innerHTML += `<div class="chat-message" style="color: #ff6b6b;"><b>Hiba:</b> ${e.message}</div>`;
-    } finally {
-        input.disabled = false; sendBtn.disabled = false; sendBtn.textContent = 'Küldés';
-        historyDiv.scrollTop = historyDiv.scrollHeight; input.focus();
-    }
-}
-
-async function runVisualSimulator() {
-    const home = document.getElementById("home").value.trim();
-    const away = document.getElementById("away").value.trim();
-    const resultsDiv = document.getElementById('visualSimResults');
-    if (!home || !away) return;
-    resultsDiv.innerHTML = `<p class="muted">Szimuláció fut...</p>`;
-    try {
-        const url = `${__gasUrl}?action=runQuickSim&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&homeFormWeight=${document.getElementById("homeFormWeight").value}&awayFormWeight=${document.getElementById("awayFormWeight").value}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        if(data.error) throw new Error(data.error);
-
-        let html = data.results.map(res => {
-            let outcomeClass = 'draw';
-            if (res.gh > res.ga) outcomeClass = 'win';
-            if (res.ga > res.gh) outcomeClass = 'loss';
-            return `<div class="sim-item ${outcomeClass}">${res.gh} - ${res.ga}</div>`;
-        }).join('');
-
-        if (data.summary) {
-            html += `<div class="market-summary" style="grid-column: 1 / -1; margin-top: 1rem; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;"><b>AI Összefoglaló:</b> ${data.summary.replace(/\n/g, '<br>')}</div>`;
-        }
-        resultsDiv.innerHTML = html;
-
-    } catch(e) { resultsDiv.innerHTML = `<p style="color: #ff5555;">Hiba: ${e.message}</p>`; }
-}
-
-async function generateAutoSlip() {
-    const btn = document.getElementById('generateSlipBtn');
-    const resultDiv = document.getElementById('autoSlipResult');
-    const targetOdds = document.getElementById('targetOdds').value;
-
-    const checkedBoxes = document.querySelectorAll('.fixture-checkbox:checked');
-    let selectedFixtures = [];
-    checkedBoxes.forEach(box => {
-        try { selectedFixtures.push(JSON.parse(box.dataset.fixture)); } 
-        catch (e) { console.error("Hiba a meccs adatainak olvasásakor:", e); }
-    });
-
-    btn.disabled = true;
-    btn.textContent = 'Generálás...';
-    resultDiv.innerHTML = '<p class="muted">AI elemzés fut, kérem várjon...</p>';
-
-    try {
-        const payload = {
-            action: 'generateAutoSlip',
-            targetOdds: targetOdds,
-            sport: __currentSport,
-            selectedFixtures: selectedFixtures.length > 0 ? selectedFixtures : null
-        };
-
-        const response = await fetch(__gasUrl, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        if (!response.ok) throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-
-        if (data.slip && data.slip.length > 0) {
-            let html = `<h4>AI Javaslat (${data.slip.reduce((acc, bet) => acc * bet.odds, 1).toFixed(2)}x odds)</h4>`;
-            html += `<p>${data.narrative.replace(/\n/g, '<br>')}</p><ul style="list-style:none; padding:0;">`;
-            data.slip.forEach(bet => {
-                html += `<li style="margin-bottom: 0.5rem;"><b>${escapeHtml(bet.match)}</b><br><span class="muted">${escapeHtml(bet.market)}: ${escapeHtml(bet.selection)} @ ${bet.odds}</span></li>`;
+        // Valószínűségek és odds-ok megjelenítése az új stílus szerint
+        if (market.id === 'ht_ft' && market.data) {
+             html += '<div class="market-options-grid" style="margin-top: 1rem;">';
+             market.data.forEach(opt => {
+                 html += `<div class="grid-item"><div class="grid-item-label">${escapeHtml(opt.label)}</div><div class="grid-item-value">${opt.value.toFixed(1)}%</div></div>`;
+             });
+             html += '</div>';
+        } else if (market.data && !market.isHero) { // A legjobb tippnél nem kell sávokat mutatni
+            html += '<div style="margin-top: 1rem;">';
+            market.data.forEach(opt => {
+                const probValue = opt.value;
+                let oddsInfo = '';
+                if (odds) {
+                    let odd = null;
+                    if (market.id === '1x2' && odds.h2h) {
+                        if (opt.label === 'Hazai') odd = odds.h2h.home;
+                        else if (opt.label === 'Döntetlen') odd = odds.h2h.draw;
+                        else if (opt.label === 'Vendég') odd = odds.h2h.away;
+                    } else if (market.id === 'totals' && odds.totals) {
+                        if (opt.label.includes('Felett')) odd = odds.totals.over;
+                        else if (opt.label.includes('Alatt')) odd = odds.totals.under;
+                    } else if (market.id === 'btts' && odds.btts) {
+                        if (opt.label === 'Igen') odd = odds.btts.yes;
+                        else if (opt.label === 'Nem') odd = odds.btts.no;
+                    }
+                    if (odd) {
+                        const ev = ((probValue / 100) * odd) - 1;
+                        oddsInfo = ` / Odds: <b>${odd}</b> / EV: <b style="color:${ev > 0.01 ? '#D4AF37' : '#aaa'};">${ev > 0 ? '+' : ''}${(ev * 100).toFixed(1)}%</b>`;
+                    }
+                }
+                html += `<div class="analysis-option"><div class="option-row"><span class="option-label">${escapeHtml(opt.label)}</span><span class="option-meta">Valószínűség: <b style="color:var(--accent);">${probValue.toFixed(1)}%</b>${oddsInfo}</span></div><div class="option-bar-wrap"><div class="option-bar" style="width:${probValue.toFixed(1)}%;"></div></div></div>`;
             });
-            html += '</ul>';
-            resultDiv.innerHTML = html;
-        } else {
-            resultDiv.innerHTML = `<p><b>Nem találtam megfelelő tippet.</b><br><span class="muted">${data.details || 'Próbálj meg több meccset kiválasztani vagy módosíts a cél oddson.'}</span></p>`;
+            html += '</div>';
         }
-    } catch (e) {
-        resultDiv.innerHTML = `<p style="color: #ff6b6b;">Hiba történt: ${e.message}</p>`;
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Szelvény Generálása';
-    }
-}
-
-// JAVÍTÁS: Működő előzmény funkciók
-function saveAnalysis(record) {
-    if (!record || !record.home || !record.away) return;
-    const MAX_HISTORY_ITEMS = 30;
-    let history = getHistoryFromLocalStorage();
-    
-    // Hozzáadás az előzmények elejére
-    history.unshift({ 
-        home: record.home, 
-        away: record.away,
-        date: new Date().toLocaleString('hu-HU'),
-        id: `analysis_${new Date().getTime()}` // Egyedi azonosító
+        
+        html += `</div></div>`; // .step-content és .analysis-step-card lezárása
     });
 
-    // Az előzmények méretének korlátozása
-    if (history.length > MAX_HISTORY_ITEMS) {
-        history = history.slice(0, MAX_HISTORY_ITEMS);
-    }
-    
-    // Mentés a böngésző tárolójába
-    localStorage.setItem('sportAnalysisHistory', JSON.stringify(history));
-    renderHistory(history); // Azonnal frissítjük a listát
+    return html;
 }
-
-function getHistoryFromLocalStorage() {
-    try {
-        const historyJson = localStorage.getItem('sportAnalysisHistory');
-        return historyJson ? JSON.parse(historyJson) : [];
-    } catch (e) {
-        console.error("Hiba az előzmények olvasásakor:", e);
-        return [];
-    }
-}
-
-function renderHistory(history) {
-    const box = document.getElementById('history');
-    if (!history || history.length === 0) {
-        box.innerHTML = '<p class="muted">Nincsenek korábbi elemzések.</p>';
-        return;
-    }
-    
-    box.innerHTML = history.map(item => `
-        <div class="fx-item">
-            <div class="fx-item-details" style="flex-grow:1;">
-                <div>
-                    <div class="fx-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div>
-                    <div class="fx-meta">${item.date}</div>
-                </div>
-            </div>
-            <div>
-                <button class="btn-primary" onclick="fillAndAnalyze('${escapeHtml(item.home)}','${escapeHtml(item.away)}')">Újraelemzés</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-function filterHistory() {
-    const query = document.getElementById('historySearch').value.toLowerCase();
-    const history = getHistoryFromLocalStorage();
-    const filteredHistory = history.filter(item => 
-        item.home.toLowerCase().includes(query) || 
-        item.away.toLowerCase().includes(query)
-    );
-    renderHistory(filteredHistory);
-}
-
-
-// A többi, változatlan segédfüggvény (helykitöltőként)
-function saveAnalysis(record){}
-function getHistoryFromLocalStorage(){return[]}
-function renderHistory(history){}
-function filterHistory(){}
-function clearSlip(){}
-function renderSlip(){}
-function openSettingsModal(){}
-function openHistoryModal(idx){}
-function closeModal(){}
-async function saveSettings(){}
-async function saveFavLeagues(){}
-function addToSlip(match,market,selection,odds,ourProb, league){}
-function removeBet(index){}
-async function evaluateSlip(){}
-function getSportFromBet(bet) {}
-function populateStatFilters() {}
-function calculateStats() {}
-async function runBacktest(){}
-</script>
-</body>
-</html>
