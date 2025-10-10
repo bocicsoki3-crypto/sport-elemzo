@@ -347,7 +347,7 @@ async function go(){
         const response=await fetch(analysisUrl);
         clearInterval(progressInterval);
         if(!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
-        setProgress(95,"Válasz feldolgozása...");
+        setProgress(95,"Válasz feldogozása...");
 
         const data=await response.json();
         if(data.error) throw new Error(data.error);
@@ -511,7 +511,6 @@ function saveAnalysis(record) {
         away: record.away,
         date: new Date().toLocaleString('hu-HU'),
         id: `analysis_${new Date().getTime()}` // Egyedi azonosító
-        id: `analysis_${new Date().getTime()}`
     });
 
     // Az előzmények méretének korlátozása
@@ -522,7 +521,6 @@ function saveAnalysis(record) {
     // Mentés a böngésző tárolójába
     localStorage.setItem('sportAnalysisHistory', JSON.stringify(history));
     renderHistory(history); // Azonnal frissítjük a listát
-    renderHistory(history);
 }
 
 function getHistoryFromLocalStorage() {
