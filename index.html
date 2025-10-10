@@ -99,7 +99,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
             <h2>Beállítások</h2>
             <button class="btn-primary" onclick="openSettingsModal()">Beállítások</button>
             <label for="sportSelector">Sportág</label>
-            <select id="sportSelector" onchange="handleSportChange()">
+            <select id="sportSelector">
                 <option value="soccer" selected>Labdarúgás</option>
                 <option value="hockey">Jégkorong</option>
                 <option value="basketball">Kosárlabda</option>
@@ -110,7 +110,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                 <span id="fxStatus" class="muted"></span>
             </div>
             <label for="leagueSearch">Keresés a ligákban</label>
-            <input id="leagueSearch" oninput="renderLeagueList()" placeholder="pl. Premier, NHL..." />
+            <input id="leagueSearch" placeholder="pl. Premier, NHL..." />
             <div class="league-list" id="leagueList"></div>
         </div>
         <div class="card">
@@ -137,7 +137,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
     <div class="col-right">
        <div class="card">
           <h2>Előző Elemzések</h2>
-          <input id="historySearch" placeholder="Keresés..." oninput="filterHistory()" />
+          <input id="historySearch" placeholder="Keresés..." />
           <div id="history" style="margin-top: 1rem;"><p class="muted">Nincsenek korábbi elemzések.</p></div>
         </div>
     </div>
@@ -154,13 +154,14 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
   </div>
 </div>
 <script>
-let __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', isSaving = false;
+let __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', isSaving = false;
 
 document.addEventListener("DOMContentLoaded", function() {
     __gasUrl = localStorage.getItem('gasUrl');
     if (!__gasUrl) { openSettingsModal(); }
     document.getElementById('sportSelector').addEventListener('change', handleSportChange);
     document.getElementById('leagueSearch').addEventListener('input', renderLeagueList);
+    document.getElementById('historySearch').addEventListener('input', filterHistory);
     renderHistory(getHistoryFromLocalStorage());
 });
 
@@ -168,6 +169,7 @@ function handleSportChange() {
     __currentSport = document.getElementById('sportSelector').value;
     document.getElementById('leagueList').innerHTML = '<p class="muted">Frissíts a meccsekért!</p>';
     document.getElementById('fixtures').innerHTML = '<p class="muted">Frissíts a meccsekért!</p>';
+    document.getElementById('teamlist').innerHTML = '';
 }
 
 async function loadFixtures() {
@@ -179,16 +181,25 @@ async function loadFixtures() {
         if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
+
+        __allLeagues = data.leagues || [];
         __fixtures = data.fixtures || [];
-        const leagues = data.leagues || [];
         const teamSet = new Set();
         __fixtures.forEach(f => { teamSet.add(f.home); teamSet.add(f.away); });
         __masterTeamList = Array.from(teamSet).sort();
         document.getElementById('teamlist').innerHTML = __masterTeamList.map(t => `<option value="${t}"></option>`).join('');
-        document.getElementById('leagueList').innerHTML = leagues.map(l => `<label class="league-item"><input type="checkbox" onchange="toggleFavLeague('${l.name}')" ${__favLeagues.has(l.name) ? 'checked' : ''}><div class="custom-checkbox"></div><span>${l.name} (${l.count})</span></label>`).join('');
+        
+        renderLeagueList();
         renderFixtureList();
         statusEl.textContent = `Siker! ${__fixtures.length} meccs betöltve.`;
     } catch (e) { statusEl.textContent = `Hiba: ${e.message}`; }
+}
+
+function renderLeagueList() {
+    const box = document.getElementById('leagueList');
+    const query = document.getElementById('leagueSearch').value.toLowerCase();
+    const list = __allLeagues.filter(l => l.name.toLowerCase().includes(query));
+    box.innerHTML = list.map(l => `<label class="league-item"><input type="checkbox" onchange="toggleFavLeague('${l.name}')" ${__favLeagues.has(l.name) ? 'checked' : ''}><div class="custom-checkbox"></div><span>${l.name} (${l.count})</span></label>`).join('');
 }
 
 function renderFixtureList() {
@@ -204,6 +215,7 @@ function renderFixtureList() {
 function fillAndAnalyze(home, away) {
     document.getElementById('home').value = home;
     document.getElementById('away').value = away;
+    document.querySelector('.col-center').scrollIntoView({behavior: 'smooth'});
     go();
 }
 
@@ -216,25 +228,34 @@ function toggleFavLeague(leagueName) {
 async function go() {
     const home = document.getElementById("home").value.trim();
     const away = document.getElementById("away").value.trim();
-    if(!home || !away || !__gasUrl) { alert("Minden mező kitöltése kötelező!"); return; }
+    if(!home || !away || !__gasUrl) { alert("Minden mező kitöltése és a Backend URL beállítása kötelező!"); return; }
+    
     const outDiv = document.getElementById('out');
     const goBtn = document.getElementById('goBtn');
     outDiv.innerHTML = '';
     goBtn.disabled = true;
+    let progressInterval = setInterval(() => { const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; setProgress(Math.min(90, c + 2), "AI válaszára várunk..."); }, 800);
     setProgress(1, "Elemzés indítása...");
+
     try {
         const url = `${__gasUrl}?action=runFullAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}`;
         const response = await fetch(url);
+        clearInterval(progressInterval);
         if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
+        
+        setProgress(95, "Válasz feldolgozása...");
         const data = await response.json();
         if (data.error) throw new Error(data.error);
+        
         outDiv.innerHTML = data.html;
         saveAnalysis({ home, away });
+        setProgress(100, "Kész.");
     } catch(e) {
-        outDiv.innerHTML = `<div class="card" style="color:red;">Hiba: ${e.message}</div>`;
+        clearInterval(progressInterval);
+        outDiv.innerHTML = `<div class="card" style="color:red; border-color:red;"><h2>Hiba történt</h2><p>${e.message}</p></div>`;
+        setProgress(0, "Hiba.");
     } finally {
         goBtn.disabled = false;
-        setProgress(100, "Kész.");
     }
 }
 
@@ -287,7 +308,7 @@ function saveSettings() {
     if (newUrl) {
         localStorage.setItem('gasUrl', newUrl);
         __gasUrl = newUrl;
-        alert('Beállítások mentve!');
+        alert('Beállítások mentve! Az oldal frissítése javasolt.');
         closeModal();
     } else {
         alert('Kérlek, adj meg egy érvényes URL-t.');
@@ -303,6 +324,7 @@ async function saveFavLeagues() {
     try {
         const response = await fetch(__gasUrl, {
             method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Fontos a GAS számára
             body: JSON.stringify({ action: 'saveFavLeagues', favLeagues: Array.from(__favLeagues) })
         });
         const data = await response.json();
