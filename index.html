@@ -93,10 +93,10 @@ details.card {
     transition: all 0.3s ease-in-out;
 }
 details.card[open] {
-    background: #212121; /* Kicsit világosabb háttér nyitott állapotban */
+    background: #212121;
 }
 details > summary {
-    list-style: none; /* Eltávolítja az alapértelmezett nyilat */
+    list-style: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -104,10 +104,10 @@ details > summary {
     padding: 0.5rem 0;
 }
 details > summary::-webkit-details-marker {
-    display: none; /* Eltávolítja az alapértelmezett nyilat Chrome-ban */
+    display: none;
 }
 details > summary::before {
-    content: '▶'; /* Egyedi nyíl ikon */
+    content: '▶';
     font-size: 0.8em;
     color: var(--secondary);
     margin-right: 0.8rem;
@@ -121,7 +121,7 @@ details > summary h2 {
     margin: 0;
 }
 details > summary input {
-    width: 180px; /* Kisebb keresőmező */
+    width: 180px;
     font-size: 0.9em;
     padding: 8px 10px;
     background-color: #000;
@@ -130,6 +130,8 @@ details > summary input {
     margin-top: 1rem;
     border-top: 1px solid var(--border);
     padding-top: 0.5rem;
+    max-height: 400px;
+    overflow-y: auto;
 }
 </style>
 </head>
@@ -260,11 +262,11 @@ function renderFixtureList() {
     }).join('');
 }
 
-function fillAndAnalyze(home, away) {
+function fillAndAnalyze(home, away, bypassCache = false) {
     document.getElementById('home').value = home;
     document.getElementById('away').value = away;
     document.querySelector('.col-center').scrollIntoView({behavior: 'smooth'});
-    go();
+    go(bypassCache);
 }
 
 function toggleFavLeague(leagueName) {
@@ -273,7 +275,7 @@ function toggleFavLeague(leagueName) {
     renderFixtureList();
 }
 
-async function go() {
+async function go(bypassCache = false) {
     const home = document.getElementById("home").value.trim();
     const away = document.getElementById("away").value.trim();
     if(!home || !away || !__gasUrl) { alert("Minden mező kitöltése és a Backend URL beállítása kötelező!"); return; }
@@ -286,7 +288,11 @@ async function go() {
     setProgress(1, "Elemzés indítása...");
 
     try {
-        const url = `${__gasUrl}?action=runFullAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}`;
+        let url = `${__gasUrl}?action=runFullAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}`;
+        if (bypassCache) {
+            url += `&_cb=${new Date().getTime()}`;
+        }
+        
         const response = await fetch(url);
         clearInterval(progressInterval);
         if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
@@ -296,7 +302,10 @@ async function go() {
         if (data.error) throw new Error(data.error);
         
         outDiv.innerHTML = data.html;
-        saveAnalysis({ home, away });
+        
+        if (!bypassCache) { // Csak akkor mentsük, ha nem "Újra" gomb volt
+            saveAnalysis({ home, away });
+        }
         setProgress(100, "Kész.");
     } catch(e) {
         clearInterval(progressInterval);
@@ -320,8 +329,12 @@ function setProgress(pct, msg) {
 
 function saveAnalysis(record) {
     let history = getHistoryFromLocalStorage();
+    // Ne mentsük, ha már a legutóbbi elem ugyanez
+    if (history.length > 0 && history[0].home === record.home && history[0].away === record.away) {
+        return;
+    }
     history.unshift({ home: record.home, away: record.away, date: new Date().toLocaleString('hu-HU') });
-    if (history.length > 20) history = history.slice(0, 20);
+    if (history.length > 30) history = history.slice(0, 30);
     localStorage.setItem('sportAnalysisHistory', JSON.stringify(history));
     renderHistory(history);
 }
@@ -341,9 +354,26 @@ function renderHistory(history) {
         box.innerHTML = '<p class="muted">Nincsenek korábbi elemzések.</p>';
         return;
     }
-    box.innerHTML = history.map(item =>
-        `<div class="fx-item"><div><div class="fx-title">${item.home} – ${item.away}</div><div class="fx-meta">${item.date}</div></div><button class="btn-primary" style="padding: 5px 10px; font-size:0.8rem;" onclick="fillAndAnalyze('${item.home}','${item.away}')">Újra</button></div>`
+    box.innerHTML = history.map((item, index) =>
+        `<div class="fx-item">
+            <div>
+                <div class="fx-title">${item.home} – ${item.away}</div>
+                <div class="fx-meta">${item.date}</div>
+            </div>
+            <div style="display:flex; gap: 8px; flex-shrink: 0;">
+                <button class="btn-primary" style="padding: 5px 10px; font-size:0.8rem; background: #7f1d1d;" onclick="deleteAnalysis(${index})">Törlés</button>
+                <button class="btn-primary" style="padding: 5px 10px; font-size:0.8rem;" onclick="fillAndAnalyze('${item.home}','${item.away}', true)">Újra</button>
+            </div>
+        </div>`
     ).join('');
+}
+
+function deleteAnalysis(index) {
+    if (!confirm("Biztosan törölni szeretnéd ezt az elemet az előzményekből?")) return;
+    let history = getHistoryFromLocalStorage();
+    history.splice(index, 1);
+    localStorage.setItem('sportAnalysisHistory', JSON.stringify(history));
+    renderHistory(history);
 }
 
 function filterHistory() {
@@ -382,7 +412,6 @@ async function saveFavLeagues() {
     try {
         const response = await fetch(__gasUrl, {
             method: 'POST',
-            // A GAS-nak a text/plain header kell a sima JSON.parse-hoz a doPost-ban
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'saveFavLeagues', favLeagues: Array.from(__favLeagues) })
         });
