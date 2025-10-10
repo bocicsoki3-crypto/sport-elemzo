@@ -135,12 +135,15 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
         <div id="out"></div>
     </div>
     <div class="col-right">
-       <div class="card">
-          <h2>Előző Elemzések</h2>
-          <input id="historySearch" placeholder="Keresés..." />
-          <div id="history" style="margin-top: 1rem;"><p class="muted">Nincsenek korábbi elemzések.</p></div>
-        </div>
-    </div>
+   <details class="card">
+  <summary>
+    <h2>Előző Elemzések</h2>
+    <input id="historySearch" placeholder="Keresés az előzményekben..." onclick="event.stopPropagation()">
+  </summary>
+  <div id="history" class="history-list">
+      <p class="muted">Nincsenek korábbi elemzések.</p>
+  </div>
+</details>
 </div>
 <div id="settingsModal" class="modal">
   <div class="modal-content">
@@ -339,3 +342,4 @@ async function saveFavLeagues() {
 </script>
 </body>
 </html>
+
