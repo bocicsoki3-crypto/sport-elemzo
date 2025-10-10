@@ -114,49 +114,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:non
 .fx-item-details .fixture-checkbox:checked::before { content: '✔'; position: absolute; color: black; font-size: 0.9em; font-weight: bold; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 #selectedFixturesDisplay { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; }
 .selected-fixture-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; padding: 4px 0; }
-
-/* =================================== */
-/* === ÚJ, PROFI ELEMZÉSI STÍLUSOK (v7.0) === */
-/* =================================== */
-.analysis-step-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-.analysis-step-card.value-bet {
-    border-color: var(--primary);
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.05), rgba(184, 134, 11, 0.05));
-}
-.step-header {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 0.8rem;
-}
-.step-icon {
-    font-size: 1.8rem;
-}
-.step-title {
-    margin: 0;
-    font-weight: 800;
-    color: var(--secondary);
-    font-size: 1.2rem;
-}
-.analysis-step-card.value-bet .step-title {
-    color: var(--primary);
-}
-.step-content {
-    line-height: 1.7;
-    font-size: 0.95rem;
-}
-.step-content strong {
-  color: var(--accent);
-}
 </style>
 </head>
 <body>
@@ -376,10 +333,10 @@ async function go(){
         outDiv.appendChild(simAndChatCard);
 
         document.getElementById('chatInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') sendChatMessage(); });
-
+        
         // JAVÍTÁS: Előzmények mentése
         saveAnalysis({ home: home, away: away }); 
-
+        
         setProgress(100, "Kész.");
     } catch(e) {
         if(progressInterval) clearInterval(progressInterval);
@@ -504,25 +461,23 @@ function saveAnalysis(record) {
     if (!record || !record.home || !record.away) return;
     const MAX_HISTORY_ITEMS = 30;
     let history = getHistoryFromLocalStorage();
-
+    
     // Hozzáadás az előzmények elejére
     history.unshift({ 
         home: record.home, 
         away: record.away,
         date: new Date().toLocaleString('hu-HU'),
         id: `analysis_${new Date().getTime()}` // Egyedi azonosító
-        id: `analysis_${new Date().getTime()}`
     });
 
     // Az előzmények méretének korlátozása
     if (history.length > MAX_HISTORY_ITEMS) {
         history = history.slice(0, MAX_HISTORY_ITEMS);
     }
-
+    
     // Mentés a böngésző tárolójába
     localStorage.setItem('sportAnalysisHistory', JSON.stringify(history));
     renderHistory(history); // Azonnal frissítjük a listát
-    renderHistory(history);
 }
 
 function getHistoryFromLocalStorage() {
@@ -541,7 +496,7 @@ function renderHistory(history) {
         box.innerHTML = '<p class="muted">Nincsenek korábbi elemzések.</p>';
         return;
     }
-
+    
     box.innerHTML = history.map(item => `
         <div class="fx-item">
             <div class="fx-item-details" style="flex-grow:1;">
@@ -569,6 +524,10 @@ function filterHistory() {
 
 
 // A többi, változatlan segédfüggvény (helykitöltőként)
+function saveAnalysis(record){}
+function getHistoryFromLocalStorage(){return[]}
+function renderHistory(history){}
+function filterHistory(){}
 function clearSlip(){}
 function renderSlip(){}
 function openSettingsModal(){}
