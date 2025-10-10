@@ -59,8 +59,6 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .modal { display:none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); }
 .modal-content { background-color: var(--card); margin: 10% auto; padding: 25px; border: 1px solid var(--border); width: 80%; max-width: 500px; border-radius: 16px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
 .modal-close { color: var(--muted); float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-
-/* === PROFI ELEMZÉSI STÍLUSOK === */
 .analysis-step-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
 .analysis-step-card.value-bet { border-color: var(--primary); background: linear-gradient(135deg, rgba(212, 175, 55, 0.05), rgba(184, 134, 11, 0.05)); }
 .step-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; }
@@ -84,64 +82,18 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .chat-input-group { display: flex; gap: 10px; }
 .chat-input-group input { flex-grow: 1; margin: 0; }
 .chat-input-group button { width: auto; }
-
-/* === ELŐZMÉNYEK ACCORDION STÍLUSOK (JAVÍTVA) === */
-details.card {
-    transition: all 0.3s ease-in-out;
-}
-details.card[open] {
-    background: #212121;
-}
-details > summary {
-    list-style: none;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 0.5rem 0;
-}
-details > summary::-webkit-details-marker {
-    display: none;
-}
-details > summary::before {
-    content: '▶';
-    font-size: 0.8em;
-    color: var(--secondary);
-    margin-right: 0.8rem;
-    transform: rotate(0deg);
-    transition: transform 0.2s ease-in-out;
-}
-details[open] > summary::before {
-    transform: rotate(90deg);
-}
-details > summary h2 {
-    margin: 0;
-    flex-grow: 1;
-}
-details > input#historySearch {
-    width: 100%;
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
-}
-.history-list {
-    border-top: 1px solid var(--border);
-    padding-top: 0.5rem;
-    max-height: 400px;
-    overflow-y: auto;
-}
-/* === DIZÁJN FINOMHANGOLÁSOK === */
-.btn-small {
-    padding: 6px 12px !important;
-    font-size: 0.8rem !important;
-    border-radius: 10px !important;
-    width: auto !important;
-    flex-shrink: 0;
-}
-.btn-delete {
-    background: linear-gradient(135deg, #991b1b, #7f1d1d) !important;
-}
-.btn-delete:hover {
-    background: linear-gradient(135deg, #a52828, #922b2b) !important;
-}
+details.card { transition: all 0.3s ease-in-out; }
+details.card[open] { background: #212121; }
+details > summary { list-style: none; display: flex; align-items: center; cursor: pointer; padding: 0.5rem 0; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: '▶'; font-size: 0.8em; color: var(--secondary); margin-right: 0.8rem; transform: rotate(0deg); transition: transform 0.2s ease-in-out; }
+details[open] > summary::before { transform: rotate(90deg); }
+details > summary h2 { margin: 0; flex-grow: 1; }
+details > input#historySearch { width: 100%; margin-top: 0.5rem; margin-bottom: 1rem; }
+.history-list { border-top: 1px solid var(--border); padding-top: 0.5rem; max-height: 400px; overflow-y: auto; }
+.btn-small { padding: 6px 12px !important; font-size: 0.8rem !important; border-radius: 10px !important; width: auto !important; flex-shrink: 0; }
+.btn-delete { background: linear-gradient(135deg, #991b1b, #7f1d1d) !important; }
+.btn-delete:hover { background: linear-gradient(135deg, #a52828, #922b2b) !important; }
 </style>
 </head>
 <body>
@@ -299,9 +251,7 @@ async function go(bypassCache = false) {
 
     try {
         let url = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}`;
-        if (bypassCache) {
-            url += `&_cb=${new Date().getTime()}`;
-        }
+        if (bypassCache) { url += `&_cb=${new Date().getTime()}`; }
         
         const response = await fetch(url);
         clearInterval(progressInterval);
@@ -313,7 +263,6 @@ async function go(bypassCache = false) {
         
         outDiv.innerHTML = data.html;
         
-        // Chat funkció inicializálása
         if (data.context && data.context.initialPrompt) {
             __chatHistory = [
                 { role: "user", parts: [{ text: data.context.initialPrompt }] },
@@ -334,9 +283,7 @@ async function go(bypassCache = false) {
             document.getElementById('chatInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendChatMessage(); });
         }
         
-        if (!bypassCache) {
-            saveAnalysis({ home, away });
-        }
+        if (!bypassCache) { saveAnalysis({ home, away }); }
         setProgress(100, "Kész.");
     } catch(e) {
         clearInterval(progressInterval);
