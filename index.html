@@ -45,7 +45,8 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .btn-primary:hover:not(:disabled) {transform:translateY(-2px); box-shadow: 0 8px 20px rgba(212, 175, 55, 0.2);}
 .btn-primary:disabled {background:#555;cursor:not-allowed;opacity:.7}
 .muted{color:var(--muted);font-size:.9rem}
-.progress-ring{width:80px;height:80px;border-radius:50%;display:grid;place-items:center;margin:1rem auto;transition:opacity .5s}.progress-label{font-size:1.5rem;font-weight:700}
+.progress-ring{width:80px;height:80px;border-radius:50%;display:grid;place-items:center;margin:1rem auto;transition:opacity .5s;background:conic-gradient(var(--primary) 0deg, #333 0deg);}
+.progress-label{font-size:1.5rem;font-weight:700}
 .fx-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--border); }
 .fx-title { font-weight: 600;}
 .fx-meta { font-size: 0.8rem; color: var(--muted);}
@@ -94,11 +95,8 @@ details > input#historySearch { width: 100%; margin-top: 0.5rem; margin-bottom: 
 .btn-small { padding: 6px 12px !important; font-size: 0.8rem !important; border-radius: 10px !important; width: auto !important; flex-shrink: 0; }
 .btn-delete { background: linear-gradient(135deg, #991b1b, #7f1d1d) !important; }
 .btn-delete:hover { background: linear-gradient(135deg, #a52828, #922b2b) !important; }
-.error-card { background: rgba(255, 0, 0, 0.1); border: 1px solid #ff4444; color: #ff6666; }
-.warning-card { background: rgba(255, 165, 0, 0.1); border: 1px solid #ffa500; color: #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 1rem; }
-.success-card { background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; color: #00ff88; padding: 10px; border-radius: 8px; margin-bottom: 1rem; }
-.loading { opacity: 0.6; pointer-events: none; }
-.retry-btn { background: linear-gradient(135deg, #ff6b35, #f7931e) !important; margin-top: 10px; }
+.error-message { background: rgba(255, 107, 107, 0.1); border: 1px solid #ff6b6b; color: #ff6b6b; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+.success-message { background: rgba(76, 175, 80, 0.1); border: 1px solid #4caf50; color: #4caf50; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
 </style>
 </head>
 <body>
@@ -123,9 +121,7 @@ details > input#historySearch { width: 100%; margin-top: 0.5rem; margin-bottom: 
             </div>
             <label for="leagueSearch">Keresés a ligákban</label>
             <input id="leagueSearch" placeholder="pl. Premier, NHL..." />
-            <div class="league-list" id="leagueList">
-                <p class="muted">Frissíts a meccsekért!</p>
-            </div>
+            <div class="league-list" id="leagueList"></div>
         </div>
         <div class="card">
             <h2>Közelgő meccsek</h2>
@@ -143,7 +139,7 @@ details > input#historySearch { width: 100%; margin-top: 0.5rem; margin-bottom: 
             <div class="actions">
                 <button id="goBtn" class="btn-primary" onclick="go()">Elemzés Futtatása</button>
             </div>
-            <div id="progress" class="progress-ring" style="display:none;"><span class="progress-label"></span></div>
+            <div id="progress" class="progress-ring" style="display:none;"><span class="progress-label">0%</span></div>
             <p id="status" class="muted" style="text-align:center;">Kész.</p>
         </div>
         <div id="out"></div>
@@ -174,48 +170,15 @@ details > input#historySearch { width: 100%; margin-top: 0.5rem; margin-bottom: 
 <script>
 let __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', isSaving = false;
 let __chatHistory = [];
-let __retryCount = 0;
-const MAX_RETRIES = 3;
-const REQUEST_TIMEOUT = 30000; // 30 seconds
 
 document.addEventListener("DOMContentLoaded", function() {
     __gasUrl = localStorage.getItem('gasUrl');
-    if (!__gasUrl) { 
-        showWarning("Backend URL nincs beállítva. Kattints a Beállítások gombra a konfiguráláshoz.");
-        openSettingsModal(); 
-    }
+    if (!__gasUrl) { openSettingsModal(); }
     document.getElementById('sportSelector').addEventListener('change', handleSportChange);
     document.getElementById('leagueSearch').addEventListener('input', renderLeagueList);
     document.getElementById('historySearch').addEventListener('input', filterHistory);
     renderHistory(getHistoryFromLocalStorage());
 });
-
-function showWarning(message) {
-    const warningDiv = document.createElement('div');
-    warningDiv.className = 'warning-card';
-    warningDiv.innerHTML = `<strong>Figyelem:</strong> ${message}`;
-    document.querySelector('.col-center').insertBefore(warningDiv, document.querySelector('.col-center').firstChild);
-    setTimeout(() => warningDiv.remove(), 10000);
-}
-
-function showError(message, showRetry = false) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error-card';
-    errorDiv.innerHTML = `<strong>Hiba:</strong> ${message}`;
-    if (showRetry) {
-        errorDiv.innerHTML += `<br><button class="btn-primary retry-btn" onclick="retryLastOperation()">Újrapróbálás</button>`;
-    }
-    document.querySelector('.col-center').insertBefore(errorDiv, document.querySelector('.col-center').firstChild);
-    setTimeout(() => errorDiv.remove(), 15000);
-}
-
-function showSuccess(message) {
-    const successDiv = document.createElement('div');
-    successDiv.className = 'success-card';
-    successDiv.innerHTML = `<strong>Siker:</strong> ${message}`;
-    document.querySelector('.col-center').insertBefore(successDiv, document.querySelector('.col-center').firstChild);
-    setTimeout(() => successDiv.remove(), 5000);
-}
 
 function handleSportChange() {
     __currentSport = document.getElementById('sportSelector').value;
@@ -226,42 +189,25 @@ function handleSportChange() {
 
 async function loadFixtures() {
     const statusEl = document.getElementById('fxStatus');
-    const refreshBtn = document.querySelector('button[onclick="loadFixtures()"]');
-    
     statusEl.textContent = 'Adatok lekérése...';
-    refreshBtn.disabled = true;
-    refreshBtn.classList.add('loading');
-    
     if (!__gasUrl) { 
-        statusEl.textContent = 'Hiba: URL nincs beállítva.';
-        showError("Backend URL nincs beállítva. Állítsd be a beállításokban.");
-        refreshBtn.disabled = false;
-        refreshBtn.classList.remove('loading');
+        showError('Backend URL nincs beállítva. Kérlek állítsd be a beállításokban.');
+        statusEl.textContent = 'Hiba: URL nincs beállítva.'; 
         return; 
     }
     
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 sec timeout
         
         const response = await fetch(`${__gasUrl}?sport=${__currentSport}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-            },
             signal: controller.signal
         });
-        
         clearTimeout(timeoutId);
         
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
+        if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
         const data = await response.json();
-        if (data.error) {
-            throw new Error(data.error);
-        }
+        if (data.error) throw new Error(data.error);
 
         __allLeagues = data.leagues || [];
         __fixtures = data.fixtures || [];
@@ -273,20 +219,15 @@ async function loadFixtures() {
         renderLeagueList();
         renderFixtureList();
         statusEl.textContent = `Siker! ${__fixtures.length} meccs betöltve.`;
-        showSuccess(`${__fixtures.length} meccs és ${__allLeagues.length} liga betöltve.`);
-        __retryCount = 0; // Reset retry count on success
+        showSuccess(`${__fixtures.length} meccs sikeresen betöltve!`);
     } catch (e) { 
-        console.error('LoadFixtures error:', e);
-        let errorMessage = e.message;
         if (e.name === 'AbortError') {
-            errorMessage = 'Kérés időtúllépés (30s). Ellenőrizd a hálózati kapcsolatot.';
+            showError('A kérés túllépte az időkorlátot. Próbáld újra.');
+            statusEl.textContent = 'Hiba: Időtúllépés.';
+        } else {
+            showError(`Adatok betöltése sikertelen: ${e.message}`);
+            statusEl.textContent = `Hiba: ${e.message}`;
         }
-        statusEl.textContent = `Hiba: ${errorMessage}`;
-        showError(`Meccsek betöltése sikertelen: ${errorMessage}`, __retryCount < MAX_RETRIES);
-        __retryCount++;
-    } finally {
-        refreshBtn.disabled = false;
-        refreshBtn.classList.remove('loading');
     }
 }
 
@@ -294,20 +235,13 @@ function renderLeagueList() {
     const box = document.getElementById('leagueList');
     const query = document.getElementById('leagueSearch').value.toLowerCase();
     const list = __allLeagues.filter(l => l.name.toLowerCase().includes(query));
-    if (list.length === 0) {
-        box.innerHTML = '<p class="muted">Nincsenek ligák vagy frissítés szükséges.</p>';
-        return;
-    }
     box.innerHTML = list.map(l => `<label class="league-item"><input type="checkbox" onchange="toggleFavLeague('${l.name}')" ${__favLeagues.has(l.name) ? 'checked' : ''}><div class="custom-checkbox"></div><span>${l.name} (${l.count})</span></label>`).join('');
 }
 
 function renderFixtureList() {
     const box = document.getElementById('fixtures');
-    const list = __favLeagues.size > 0 ? __fixtures.filter(f => __favLeagues.has(f.league)) : __fixtures;
-    if(list.length === 0) { 
-        box.innerHTML=`<p class="muted">Nincs megjeleníthető meccs vagy frissítés szükséges.</p>`; 
-        return; 
-    }
+    const list = __favLeagues.size > 0 ? __fixtures.filter(f => !__favLeagues.has(f.league)) : __fixtures;
+    if(list.length === 0) { box.innerHTML=`<p class="muted">Nincs megjeleníthető meccs.</p>`; return; }
     box.innerHTML = list.map(f => {
         const d = new Date(f.utcKickoff).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});
         return `<div class="fx-item"><div><div class="fx-title">${f.home} – ${f.away}</div><div class="fx-meta">${f.league} · ${d}</div></div><button class="btn-primary btn-small" onclick="fillAndAnalyze('${f.home}','${f.away}')">Elemzés</button></div>`;
@@ -327,85 +261,47 @@ function toggleFavLeague(leagueName) {
     renderFixtureList();
 }
 
-let __lastOperation = null;
-
-function retryLastOperation() {
-    if (__lastOperation && __retryCount < MAX_RETRIES) {
-        __lastOperation();
-    }
-}
-
 async function go(bypassCache = false) {
     const home = document.getElementById("home").value.trim();
     const away = document.getElementById("away").value.trim();
-    
-    if(!home || !away) { 
-        showError("Minden mező kitöltése kötelező!");
+    if(!home || !away || !__gasUrl) { 
+        showError("Minden mező kitöltése és a Backend URL beállítása kötelező!");
         return; 
     }
     
-    if (!__gasUrl) {
-        showError("Backend URL nincs beállítva! Állítsd be a beállításokban.");
-        openSettingsModal();
-        return;
-    }
-    
-    __lastOperation = () => go(bypassCache);
-    
     const outDiv = document.getElementById('out');
     const goBtn = document.getElementById('goBtn');
-    const statusEl = document.getElementById('status');
-    
-    // Clear previous results and errors
     outDiv.innerHTML = '';
-    document.querySelectorAll('.error-card, .warning-card, .success-card').forEach(el => el.remove());
-    
     goBtn.disabled = true;
-    goBtn.classList.add('loading');
     
     let progressInterval = setInterval(() => { 
-        const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; 
-        setProgress(Math.min(90, c + 1), "AI válaszára várunk..."); 
-    }, 1000);
+        const currentProgress = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; 
+        setProgress(Math.min(90, currentProgress + 2), "AI válaszára várunk..."); 
+    }, 800);
     
-    setProgress(5, "Elemzés indítása...");
+    setProgress(1, "Elemzés indítása...");
 
     try {
         let url = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}`;
         if (bypassCache) { url += `&_cb=${new Date().getTime()}`; }
         
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-        
-        setProgress(20, "Backend kapcsolat...");
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 sec timeout for analysis
         
         const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-            },
             signal: controller.signal
         });
-        
-        clearTimeout(timeoutId);
         clearInterval(progressInterval);
+        clearTimeout(timeoutId);
         
-        if (!response.ok) {
-            throw new Error(`Szerver hiba: ${response.status} - ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
         
-        setProgress(70, "Válasz feldolgozása...");
+        setProgress(95, "Válasz feldolgozása...");
         const data = await response.json();
+        if (data.error) throw new Error(data.error);
         
-        if (data.error) {
-            throw new Error(data.error);
-        }
+        if (!data.html) throw new Error("Üres válasz érkezett a szervertől");
         
-        if (!data.html) {
-            throw new Error("Hiányzó elemzés a válaszból");
-        }
-        
-        setProgress(90, "Elemzés megjelenítése...");
         outDiv.innerHTML = data.html;
         
         if (data.context && data.context.initialPrompt) {
@@ -413,67 +309,43 @@ async function go(bypassCache = false) {
                 { role: "user", parts: [{ text: data.context.initialPrompt }] },
                 { role: "model", parts: [{ text: "Az alap elemzés legenerálva. Készen állok a további kérdésekre." }] }
             ];
-            addChatInterface(outDiv);
+            const chatCard = document.createElement('div');
+            chatCard.className = 'card';
+            chatCard.innerHTML = `
+                <div class="chat-container">
+                    <h3>AI-Párbeszéd Folytatása</h3>
+                    <div id="chatHistory" class="chat-history"><p class="muted">Kérdezz rá az elemzés részleteire!</p></div>
+                    <div class="chat-input-group">
+                        <input id="chatInput" type="text" placeholder="Pl. Mi a helyzet, ha esik az eső?" maxlength="500">
+                        <button id="chatSendBtn" class="btn-primary btn-small" onclick="sendChatMessage()">Küldés</button>
+                    </div>
+                </div>`;
+            outDiv.appendChild(chatCard);
+            document.getElementById('chatInput').addEventListener('keypress', e => { 
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendChatMessage(); 
+                }
+            });
         }
         
         if (!bypassCache) { saveAnalysis({ home, away }); }
         setProgress(100, "Kész.");
-        showSuccess(`Elemzés sikeresen elkészült: ${home} vs ${away}`);
-        __retryCount = 0; // Reset retry count on success
+        showSuccess("Elemzés sikeresen elkészült!");
+        
     } catch(e) {
-        console.error('Analysis error:', e);
         clearInterval(progressInterval);
-        
-        let errorMessage = e.message;
-        let detailedMessage = "";
-        
         if (e.name === 'AbortError') {
-            errorMessage = "Kérés időtúllépés (30s)";
-            detailedMessage = "A szerver nem válaszolt időben. Ellenőrizd a hálózati kapcsolatot és a backend URL-t.";
-        } else if (e.message.includes('GEMINI_API_KEY')) {
-            detailedMessage = "A Gemini API kulcs nincs beállítva a Google Apps Script-ben.";
-        } else if (e.message.includes('HTTP 4')) {
-            detailedMessage = "Kliens oldali hiba. Ellenőrizd a backend URL-t és a paramétereket.";
-        } else if (e.message.includes('HTTP 5')) {
-            detailedMessage = "Szerver oldali hiba. Próbáld újra később vagy ellenőrizd a backend logokat.";
+            outDiv.innerHTML = `<div class="error-message"><h2>Időtúllépés</h2><p>Az elemzés túl sokáig tartott. Próbáld újra.</p></div>`;
+            showError("Az elemzés túllépte az időkorlátot.");
+        } else {
+            outDiv.innerHTML = `<div class="error-message"><h2>Hiba történt</h2><p>${e.message}</p><button class="btn-primary" onclick="go(true)" style="margin-top: 1rem;">Újrapróbálás</button></div>`;
+            showError(`Elemzési hiba: ${e.message}`);
         }
-        
-        outDiv.innerHTML = `<div class="card error-card">
-            <h2>Hiba történt</h2>
-            <p><strong>Hiba:</strong> ${errorMessage}</p>
-            ${detailedMessage ? `<p><strong>Részletek:</strong> ${detailedMessage}</p>` : ''}
-            <p><strong>Javaslatok:</strong></p>
-            <ul>
-                <li>Ellenőrizd a backend URL beállítást</li>
-                <li>Győződj meg róla, hogy az API kulcsok be vannak állítva</li>
-                <li>Próbáld újra néhány másodperc múlva</li>
-                <li>Ellenőrizd a hálózati kapcsolatot</li>
-            </ul>
-            ${__retryCount < MAX_RETRIES ? '<button class="btn-primary retry-btn" onclick="retryLastOperation()">Újrapróbálás</button>' : ''}
-        </div>`;
-        
         setProgress(0, "Hiba.");
-        __retryCount++;
     } finally {
         goBtn.disabled = false;
-        goBtn.classList.remove('loading');
     }
-}
-
-function addChatInterface(container) {
-    const chatCard = document.createElement('div');
-    chatCard.className = 'card';
-    chatCard.innerHTML = `
-        <div class="chat-container">
-            <h3>AI-Párbeszéd Folytatása</h3>
-            <div id="chatHistory" class="chat-history"><p class="muted">Kérdezz rá az elemzés részleteire!</p></div>
-            <div class="chat-input-group">
-                <input id="chatInput" type="text" placeholder="Pl. Mi a helyzet, ha esik az eső?">
-                <button id="chatSendBtn" class="btn-primary btn-small" onclick="sendChatMessage()">Küldés</button>
-            </div>
-        </div>`;
-    container.appendChild(chatCard);
-    document.getElementById('chatInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendChatMessage(); });
 }
 
 async function sendChatMessage() {
@@ -482,59 +354,59 @@ async function sendChatMessage() {
     const historyDiv = document.getElementById('chatHistory');
     const userMessage = input.value.trim();
     
-    if (!userMessage) return;
+    if (!userMessage || !__gasUrl) {
+        showError("Írj be egy kérdést!");
+        return;
+    }
     
-    if (!__gasUrl) {
-        showError("Backend URL nincs beállítva!");
+    if (userMessage.length > 500) {
+        showError("A kérdés túl hosszú. Maximum 500 karakter.");
         return;
     }
 
     if (historyDiv.querySelector('.muted')) historyDiv.innerHTML = '';
-    historyDiv.innerHTML += `<div class="chat-message"><b>Te:</b> ${userMessage}</div>`;
+    historyDiv.innerHTML += `<div class="chat-message"><b>Te:</b> ${escapeHtml(userMessage)}</div>`;
     __chatHistory.push({ role: "user", parts: [{ text: userMessage }] });
+    
     input.value = ''; 
     input.disabled = true; 
     sendBtn.disabled = true;
-    sendBtn.classList.add('loading');
+    sendBtn.textContent = 'Küldés...';
     historyDiv.scrollTop = historyDiv.scrollHeight;
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 sec timeout
         
         const response = await fetch(__gasUrl, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'text/plain;charset=utf-8',
-                'Accept': 'application/json'
-            },
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'continueAnalysis', history: __chatHistory }),
             signal: controller.signal
         });
         
         clearTimeout(timeoutId);
         
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
+        if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
-        const aiMessage = data.response.replace(/\n/g, '<br>');
+        if (!data.response) throw new Error("Üres válasz az AI-tól");
+
+        const aiMessage = escapeHtml(data.response).replace(/\n/g, '<br>');
         historyDiv.innerHTML += `<div class="chat-message"><b>Gemini AI:</b> ${aiMessage}</div>`;
         __chatHistory.push({ role: "model", parts: [{ text: data.response }] });
+        
     } catch (e) {
-        console.error('Chat error:', e);
-        let errorMessage = e.message;
         if (e.name === 'AbortError') {
-            errorMessage = 'Kérés időtúllépés. Próbáld újra.';
+            historyDiv.innerHTML += `<div class="chat-message error-message"><b>Hiba:</b> Az AI válasz túllépte az időkorlátot.</div>`;
+        } else {
+            historyDiv.innerHTML += `<div class="chat-message error-message"><b>Hiba:</b> ${e.message}</div>`;
         }
-        historyDiv.innerHTML += `<div class="chat-message" style="color: #ff6b6b;"><b>Hiba:</b> ${errorMessage}</div>`;
     } finally {
         input.disabled = false; 
         sendBtn.disabled = false;
-        sendBtn.classList.remove('loading');
+        sendBtn.textContent = 'Küldés';
         historyDiv.scrollTop = historyDiv.scrollHeight; 
         input.focus();
     }
@@ -544,65 +416,108 @@ function setProgress(pct, msg) {
     const el = document.getElementById('progress');
     const statusEl = document.getElementById('status');
     const v = Math.round(pct || 0);
-    if(v > 0 && v < 100) el.style.display = 'grid';
-    else setTimeout(() => { el.style.display = 'none'; }, 1000);
+    
+    if(v > 0 && v < 100) {
+        el.style.display = 'grid';
+    } else {
+        setTimeout(() => { el.style.display = 'none'; }, 500);
+    }
+    
     el.style.background = `conic-gradient(var(--primary) ${v*3.6}deg, #333 0deg)`;
     el.querySelector('.progress-label').textContent = `${v}%`;
     if (msg) statusEl.textContent = msg;
 }
 
 function saveAnalysis(record) {
-    let history = getHistoryFromLocalStorage();
-    if (history.length > 0 && history[0].home === record.home && history[0].away === record.away) { return; }
-    history.unshift({ home: record.home, away: record.away, date: new Date().toLocaleString('hu-HU') });
-    if (history.length > 30) history = history.slice(0, 30);
-    localStorage.setItem('sportAnalysisHistory', JSON.stringify(history));
-    renderHistory(history);
+    try {
+        let history = getHistoryFromLocalStorage();
+        if (history.length > 0 && history[0].home === record.home && history[0].away === record.away) { 
+            return; 
+        }
+        history.unshift({ 
+            home: record.home, 
+            away: record.away, 
+            date: new Date().toLocaleString('hu-HU'),
+            sport: __currentSport
+        });
+        if (history.length > 30) history = history.slice(0, 30);
+        localStorage.setItem('analysisHistory', JSON.stringify(history));
+        renderHistory(history);
+    } catch (e) {
+        console.error('History save error:', e);
+    }
 }
 
 function getHistoryFromLocalStorage() {
-    try { return JSON.parse(localStorage.getItem('sportAnalysisHistory') || '[]'); } 
-    catch (e) { return []; }
+    try {
+        return JSON.parse(localStorage.getItem('analysisHistory') || '[]');
+    } catch (e) {
+        return [];
+    }
 }
 
 function renderHistory(history) {
-    const box = document.getElementById('history');
-    if (!box) return;
+    const historyDiv = document.getElementById('history');
     if (!history || history.length === 0) {
-        box.innerHTML = '<p class="muted">Nincsenek korábbi elemzések.</p>';
+        historyDiv.innerHTML = '<p class="muted">Nincsenek korábbi elemzések.</p>';
         return;
     }
-    box.innerHTML = history.map((item, index) =>
-        `<div class="fx-item">
+    
+    historyDiv.innerHTML = history.map((item, index) => `
+        <div class="fx-item">
             <div>
-                <div class="fx-title">${item.home} – ${item.away}</div>
-                <div class="fx-meta">${item.date}</div>
+                <div class="fx-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div>
+                <div class="fx-meta">${item.date} • ${item.sport || 'soccer'}</div>
             </div>
-            <div style="display:flex; gap: 8px;">
-                <button class="btn-primary btn-small btn-delete" onclick="deleteAnalysis(${index})">Törlés</button>
-                <button class="btn-primary btn-small" onclick="fillAndAnalyze('${item.home}','${item.away}', true)">Újra</button>
+            <div style="display: flex; gap: 5px;">
+                <button class="btn-primary btn-small" onclick="fillAndAnalyze('${escapeHtml(item.home)}','${escapeHtml(item.away)}')">Újra</button>
+                <button class="btn-primary btn-small btn-delete" onclick="deleteHistoryItem(${index})">Törlés</button>
             </div>
-        </div>`
-    ).join('');
+        </div>
+    `).join('');
 }
 
-function deleteAnalysis(index) {
-    if (!confirm("Biztosan törölni szeretnéd ezt az elemet az előzményekből?")) return;
-    let history = getHistoryFromLocalStorage();
-    history.splice(index, 1);
-    localStorage.setItem('sportAnalysisHistory', JSON.stringify(history));
-    renderHistory(history);
+function deleteHistoryItem(index) {
+    if (confirm('Biztosan törölni szeretnéd ezt az elemzést?')) {
+        let history = getHistoryFromLocalStorage();
+        history.splice(index, 1);
+        localStorage.setItem('analysisHistory', JSON.stringify(history));
+        renderHistory(history);
+    }
 }
 
 function filterHistory() {
     const query = document.getElementById('historySearch').value.toLowerCase();
-    const history = getHistoryFromLocalStorage();
-    renderHistory(history.filter(i => i.home.toLowerCase().includes(query) || i.away.toLowerCase().includes(query)));
+    const allHistory = getHistoryFromLocalStorage();
+    const filtered = allHistory.filter(item => 
+        item.home.toLowerCase().includes(query) || 
+        item.away.toLowerCase().includes(query)
+    );
+    renderHistory(filtered);
+}
+
+function saveFavLeagues() {
+    if (isSaving) return;
+    isSaving = true;
+    
+    const leagues = Array.from(__favLeagues);
+    fetch(__gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveFavLeagues', favLeagues: leagues })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) throw new Error(data.error);
+        showSuccess('Kedvenc ligák mentve!');
+    })
+    .catch(e => showError(`Mentési hiba: ${e.message}`))
+    .finally(() => { isSaving = false; });
 }
 
 function openSettingsModal() {
-    document.getElementById('gasUrlInput').value = localStorage.getItem('gasUrl') || '';
     document.getElementById('settingsModal').style.display = 'block';
+    document.getElementById('gasUrlInput').value = __gasUrl || '';
 }
 
 function closeModal() {
@@ -610,103 +525,58 @@ function closeModal() {
 }
 
 function saveSettings() {
-    const newUrl = document.getElementById('gasUrlInput').value.trim();
-    if (newUrl) {
-        // Validate URL format
-        try {
-            new URL(newUrl);
-        } catch (e) {
-            showError("Érvénytelen URL formátum!");
-            return;
-        }
-        
-        localStorage.setItem('gasUrl', newUrl);
-        __gasUrl = newUrl;
-        showSuccess('Beállítások sikeresen mentve!');
-        closeModal();
-        
-        // Clear previous warnings
-        document.querySelectorAll('.warning-card').forEach(el => el.remove());
-    } else {
-        showError('Kérlek, adj meg egy érvényes URL-t.');
+    const url = document.getElementById('gasUrlInput').value.trim();
+    if (!url) {
+        showError('Backend URL megadása kötelező!');
+        return;
     }
+    
+    if (!url.startsWith('https://')) {
+        showError('Az URL-nek https://-sel kell kezdődnie!');
+        return;
+    }
+    
+    __gasUrl = url;
+    localStorage.setItem('gasUrl', url);
+    closeModal();
+    showSuccess('Beállítások mentve!');
 }
 
-async function saveFavLeagues() {
-    if (!__gasUrl) { 
-        showError('Backend URL nincs beállítva!');
-        openSettingsModal();
-        return; 
-    }
-    
-    if (isSaving) return;
-    isSaving = true;
-    const statusEl = document.getElementById('fxStatus');
-    const saveBtn = document.querySelector('button[onclick="saveFavLeagues()"]');
-    
-    statusEl.textContent = 'Mentés...';
-    saveBtn.disabled = true;
-    saveBtn.classList.add('loading');
-    
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-        
-        const response = await fetch(__gasUrl, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'text/plain;charset=utf-8',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ action: 'saveFavLeagues', favLeagues: Array.from(__favLeagues) }),
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        
-        statusEl.textContent = 'Sikeresen mentve!';
-        showSuccess('Kedvenc ligák sikeresen mentve!');
-    } catch (e) {
-        console.error('Save favorites error:', e);
-        let errorMessage = e.message;
-        if (e.name === 'AbortError') {
-            errorMessage = 'Mentés időtúllépés';
-        }
-        statusEl.textContent = `Hiba: ${errorMessage}`;
-        showError(`Kedvencek mentése sikertelen: ${errorMessage}`);
-    } finally {
-        isSaving = false;
-        saveBtn.disabled = false;
-        saveBtn.classList.remove('loading');
-    }
+function showError(message) {
+    removeMessages();
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    document.querySelector('.container').insertBefore(errorDiv, document.querySelector('.layout'));
+    setTimeout(removeMessages, 5000);
 }
 
-// Window click event for modal
+function showSuccess(message) {
+    removeMessages();
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success-message';
+    successDiv.textContent = message;
+    document.querySelector('.container').insertBefore(successDiv, document.querySelector('.layout'));
+    setTimeout(removeMessages, 3000);
+}
+
+function removeMessages() {
+    document.querySelectorAll('.error-message, .success-message').forEach(el => el.remove());
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Modal close on outside click
 window.onclick = function(event) {
     const modal = document.getElementById('settingsModal');
-    if (event.target == modal) {
+    if (event.target === modal) {
         closeModal();
     }
 }
-
-// Global error handler
-window.addEventListener('error', function(e) {
-    console.error('Global error:', e.error);
-    showError(`Váratlan hiba: ${e.error.message}`);
-});
-
-// Unhandled promise rejection handler
-window.addEventListener('unhandledrejection', function(e) {
-    console.error('Unhandled promise rejection:', e.reason);
-    showError(`Aszinkron hiba: ${e.reason}`);
-});
 </script>
 </body>
 </html>
