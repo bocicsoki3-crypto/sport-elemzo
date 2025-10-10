@@ -95,7 +95,10 @@ details > input#historySearch { width: 100%; margin-top: 0.5rem; margin-bottom: 
 .btn-delete { background: linear-gradient(135deg, #991b1b, #7f1d1d) !important; }
 .btn-delete:hover { background: linear-gradient(135deg, #a52828, #922b2b) !important; }
 .error-card { background: rgba(255, 0, 0, 0.1); border: 1px solid #ff4444; color: #ff6666; }
-.demo-mode { background: rgba(255, 165, 0, 0.1); border: 1px solid #ffa500; color: #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 1rem; }
+.warning-card { background: rgba(255, 165, 0, 0.1); border: 1px solid #ffa500; color: #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 1rem; }
+.success-card { background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; color: #00ff88; padding: 10px; border-radius: 8px; margin-bottom: 1rem; }
+.loading { opacity: 0.6; pointer-events: none; }
+.retry-btn { background: linear-gradient(135deg, #ff6b35, #f7931e) !important; margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -120,7 +123,9 @@ details > input#historySearch { width: 100%; margin-top: 0.5rem; margin-bottom: 
             </div>
             <label for="leagueSearch">Keresés a ligákban</label>
             <input id="leagueSearch" placeholder="pl. Premier, NHL..." />
-            <div class="league-list" id="leagueList"></div>
+            <div class="league-list" id="leagueList">
+                <p class="muted">Frissíts a meccsekért!</p>
+            </div>
         </div>
         <div class="card">
             <h2>Közelgő meccsek</h2>
@@ -128,9 +133,6 @@ details > input#historySearch { width: 100%; margin-top: 0.5rem; margin-bottom: 
         </div>
     </div>
     <div class="col-center">
-        <div id="demoNotice" class="demo-mode" style="display:none;">
-            <strong>Demo mód:</strong> A backend API kulcsok nincsenek beállítva. Mock adatok használata.
-        </div>
         <div class="card">
             <h2>Meccselemzés</h2>
             <datalist id="teamlist"></datalist>
@@ -172,29 +174,14 @@ details > input#historySearch { width: 100%; margin-top: 0.5rem; margin-bottom: 
 <script>
 let __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', isSaving = false;
 let __chatHistory = [];
-let __demoMode = false;
-
-// Mock data for demo mode
-const mockLeagues = [
-    { name: "Premier League", count: 10 },
-    { name: "La Liga", count: 8 },
-    { name: "Bundesliga", count: 6 },
-    { name: "Serie A", count: 7 },
-    { name: "Ligue 1", count: 5 }
-];
-
-const mockFixtures = [
-    { id: "1", league: "Premier League", home: "Liverpool", away: "Manchester City", utcKickoff: new Date(Date.now() + 86400000).toISOString() },
-    { id: "2", league: "La Liga", home: "Real Madrid", away: "FC Barcelona", utcKickoff: new Date(Date.now() + 172800000).toISOString() },
-    { id: "3", league: "Bundesliga", home: "Bayern München", away: "Borussia Dortmund", utcKickoff: new Date(Date.now() + 259200000).toISOString() }
-];
-
-const mockTeams = ["Liverpool", "Manchester City", "Real Madrid", "FC Barcelona", "Bayern München", "Borussia Dortmund"];
+let __retryCount = 0;
+const MAX_RETRIES = 3;
+const REQUEST_TIMEOUT = 30000; // 30 seconds
 
 document.addEventListener("DOMContentLoaded", function() {
     __gasUrl = localStorage.getItem('gasUrl');
     if (!__gasUrl) { 
-        enableDemoMode();
+        showWarning("Backend URL nincs beállítva. Kattints a Beállítások gombra a konfiguráláshoz.");
         openSettingsModal(); 
     }
     document.getElementById('sportSelector').addEventListener('change', handleSportChange);
@@ -203,57 +190,78 @@ document.addEventListener("DOMContentLoaded", function() {
     renderHistory(getHistoryFromLocalStorage());
 });
 
-function enableDemoMode() {
-    __demoMode = true;
-    document.getElementById('demoNotice').style.display = 'block';
-    __allLeagues = mockLeagues;
-    __fixtures = mockFixtures;
-    __masterTeamList = mockTeams;
-    document.getElementById('teamlist').innerHTML = __masterTeamList.map(t => `<option value="${t}"></option>`).join('');
-    renderLeagueList();
-    renderFixtureList();
+function showWarning(message) {
+    const warningDiv = document.createElement('div');
+    warningDiv.className = 'warning-card';
+    warningDiv.innerHTML = `<strong>Figyelem:</strong> ${message}`;
+    document.querySelector('.col-center').insertBefore(warningDiv, document.querySelector('.col-center').firstChild);
+    setTimeout(() => warningDiv.remove(), 10000);
+}
+
+function showError(message, showRetry = false) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-card';
+    errorDiv.innerHTML = `<strong>Hiba:</strong> ${message}`;
+    if (showRetry) {
+        errorDiv.innerHTML += `<br><button class="btn-primary retry-btn" onclick="retryLastOperation()">Újrapróbálás</button>`;
+    }
+    document.querySelector('.col-center').insertBefore(errorDiv, document.querySelector('.col-center').firstChild);
+    setTimeout(() => errorDiv.remove(), 15000);
+}
+
+function showSuccess(message) {
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success-card';
+    successDiv.innerHTML = `<strong>Siker:</strong> ${message}`;
+    document.querySelector('.col-center').insertBefore(successDiv, document.querySelector('.col-center').firstChild);
+    setTimeout(() => successDiv.remove(), 5000);
 }
 
 function handleSportChange() {
     __currentSport = document.getElementById('sportSelector').value;
-    if (__demoMode) {
-        renderLeagueList();
-        renderFixtureList();
-    } else {
-        document.getElementById('leagueList').innerHTML = '<p class="muted">Frissíts a meccsekért!</p>';
-        document.getElementById('fixtures').innerHTML = '<p class="muted">Frissíts a meccsekért!</p>';
-        document.getElementById('teamlist').innerHTML = '';
-    }
+    document.getElementById('leagueList').innerHTML = '<p class="muted">Frissíts a meccsekért!</p>';
+    document.getElementById('fixtures').innerHTML = '<p class="muted">Frissíts a meccsekért!</p>';
+    document.getElementById('teamlist').innerHTML = '';
 }
 
 async function loadFixtures() {
     const statusEl = document.getElementById('fxStatus');
-    statusEl.textContent = 'Adatok lekérése...';
+    const refreshBtn = document.querySelector('button[onclick="loadFixtures()"]');
     
-    if (__demoMode) {
-        statusEl.textContent = 'Demo adatok betöltve.';
-        return;
-    }
+    statusEl.textContent = 'Adatok lekérése...';
+    refreshBtn.disabled = true;
+    refreshBtn.classList.add('loading');
     
     if (!__gasUrl) { 
-        statusEl.textContent = 'Hiba: URL nincs beállítva.'; 
+        statusEl.textContent = 'Hiba: URL nincs beállítva.';
+        showError("Backend URL nincs beállítva. Állítsd be a beállításokban.");
+        refreshBtn.disabled = false;
+        refreshBtn.classList.remove('loading');
         return; 
     }
     
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+        
         const response = await fetch(`${__gasUrl}?sport=${__currentSport}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-            }
+            },
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
-        if (data.error) throw new Error(data.error);
+        if (data.error) {
+            throw new Error(data.error);
+        }
 
         __allLeagues = data.leagues || [];
         __fixtures = data.fixtures || [];
@@ -265,11 +273,20 @@ async function loadFixtures() {
         renderLeagueList();
         renderFixtureList();
         statusEl.textContent = `Siker! ${__fixtures.length} meccs betöltve.`;
+        showSuccess(`${__fixtures.length} meccs és ${__allLeagues.length} liga betöltve.`);
+        __retryCount = 0; // Reset retry count on success
     } catch (e) { 
         console.error('LoadFixtures error:', e);
-        statusEl.textContent = `Hiba: ${e.message}`;
-        // Fallback to demo mode on error
-        enableDemoMode();
+        let errorMessage = e.message;
+        if (e.name === 'AbortError') {
+            errorMessage = 'Kérés időtúllépés (30s). Ellenőrizd a hálózati kapcsolatot.';
+        }
+        statusEl.textContent = `Hiba: ${errorMessage}`;
+        showError(`Meccsek betöltése sikertelen: ${errorMessage}`, __retryCount < MAX_RETRIES);
+        __retryCount++;
+    } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.classList.remove('loading');
     }
 }
 
@@ -278,7 +295,7 @@ function renderLeagueList() {
     const query = document.getElementById('leagueSearch').value.toLowerCase();
     const list = __allLeagues.filter(l => l.name.toLowerCase().includes(query));
     if (list.length === 0) {
-        box.innerHTML = '<p class="muted">Nincsenek ligák.</p>';
+        box.innerHTML = '<p class="muted">Nincsenek ligák vagy frissítés szükséges.</p>';
         return;
     }
     box.innerHTML = list.map(l => `<label class="league-item"><input type="checkbox" onchange="toggleFavLeague('${l.name}')" ${__favLeagues.has(l.name) ? 'checked' : ''}><div class="custom-checkbox"></div><span>${l.name} (${l.count})</span></label>`).join('');
@@ -288,7 +305,7 @@ function renderFixtureList() {
     const box = document.getElementById('fixtures');
     const list = __favLeagues.size > 0 ? __fixtures.filter(f => __favLeagues.has(f.league)) : __fixtures;
     if(list.length === 0) { 
-        box.innerHTML=`<p class="muted">Nincs megjeleníthető meccs.</p>`; 
+        box.innerHTML=`<p class="muted">Nincs megjeleníthető meccs vagy frissítés szükséges.</p>`; 
         return; 
     }
     box.innerHTML = list.map(f => {
@@ -310,150 +327,137 @@ function toggleFavLeague(leagueName) {
     renderFixtureList();
 }
 
+let __lastOperation = null;
+
+function retryLastOperation() {
+    if (__lastOperation && __retryCount < MAX_RETRIES) {
+        __lastOperation();
+    }
+}
+
 async function go(bypassCache = false) {
     const home = document.getElementById("home").value.trim();
     const away = document.getElementById("away").value.trim();
     
     if(!home || !away) { 
-        alert("Minden mező kitöltése kötelező!"); 
+        showError("Minden mező kitöltése kötelező!");
         return; 
     }
+    
+    if (!__gasUrl) {
+        showError("Backend URL nincs beállítva! Állítsd be a beállításokban.");
+        openSettingsModal();
+        return;
+    }
+    
+    __lastOperation = () => go(bypassCache);
     
     const outDiv = document.getElementById('out');
     const goBtn = document.getElementById('goBtn');
     const statusEl = document.getElementById('status');
     
+    // Clear previous results and errors
     outDiv.innerHTML = '';
+    document.querySelectorAll('.error-card, .warning-card, .success-card').forEach(el => el.remove());
+    
     goBtn.disabled = true;
+    goBtn.classList.add('loading');
     
     let progressInterval = setInterval(() => { 
         const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; 
-        setProgress(Math.min(90, c + 2), "AI válaszára várunk..."); 
-    }, 800);
+        setProgress(Math.min(90, c + 1), "AI válaszára várunk..."); 
+    }, 1000);
     
-    setProgress(1, "Elemzés indítása...");
+    setProgress(5, "Elemzés indítása...");
 
     try {
-        if (__demoMode) {
-            // Demo mode - generate mock analysis
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate delay
-            clearInterval(progressInterval);
-            setProgress(95, "Válasz feldolgozása...");
-            
-            const mockAnalysis = generateMockAnalysis(home, away);
-            outDiv.innerHTML = mockAnalysis;
-            
-            setProgress(100, "Kész.");
-            saveAnalysis({ home, away });
-        } else {
-            if (!__gasUrl) {
-                throw new Error("Backend URL nincs beállítva!");
-            }
-            
-            let url = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}`;
-            if (bypassCache) { url += `&_cb=${new Date().getTime()}`; }
-            
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                timeout: 30000
-            });
-            
-            clearInterval(progressInterval);
-            
-            if (!response.ok) {
-                throw new Error(`Szerver hiba: ${response.status} - ${response.statusText}`);
-            }
-            
-            setProgress(95, "Válasz feldolgozása...");
-            const data = await response.json();
-            
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            
-            if (!data.html) {
-                throw new Error("Hiányzó elemzés a válaszból");
-            }
-            
-            outDiv.innerHTML = data.html;
-            
-            if (data.context && data.context.initialPrompt) {
-                __chatHistory = [
-                    { role: "user", parts: [{ text: data.context.initialPrompt }] },
-                    { role: "model", parts: [{ text: "Az alap elemzés legenerálva. Készen állok a további kérdésekre." }] }
-                ];
-                addChatInterface(outDiv);
-            }
-            
-            if (!bypassCache) { saveAnalysis({ home, away }); }
-            setProgress(100, "Kész.");
+        let url = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}`;
+        if (bypassCache) { url += `&_cb=${new Date().getTime()}`; }
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+        
+        setProgress(20, "Backend kapcsolat...");
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        clearInterval(progressInterval);
+        
+        if (!response.ok) {
+            throw new Error(`Szerver hiba: ${response.status} - ${response.statusText}`);
         }
+        
+        setProgress(70, "Válasz feldolgozása...");
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        if (!data.html) {
+            throw new Error("Hiányzó elemzés a válaszból");
+        }
+        
+        setProgress(90, "Elemzés megjelenítése...");
+        outDiv.innerHTML = data.html;
+        
+        if (data.context && data.context.initialPrompt) {
+            __chatHistory = [
+                { role: "user", parts: [{ text: data.context.initialPrompt }] },
+                { role: "model", parts: [{ text: "Az alap elemzés legenerálva. Készen állok a további kérdésekre." }] }
+            ];
+            addChatInterface(outDiv);
+        }
+        
+        if (!bypassCache) { saveAnalysis({ home, away }); }
+        setProgress(100, "Kész.");
+        showSuccess(`Elemzés sikeresen elkészült: ${home} vs ${away}`);
+        __retryCount = 0; // Reset retry count on success
     } catch(e) {
         console.error('Analysis error:', e);
         clearInterval(progressInterval);
-        outDiv.innerHTML = `<div class="card error-card"><h2>Hiba történt</h2><p><strong>Hiba:</strong> ${e.message}</p><p><strong>Javaslat:</strong> Ellenőrizd a backend URL beállítást, vagy próbáld újra később.</p></div>`;
+        
+        let errorMessage = e.message;
+        let detailedMessage = "";
+        
+        if (e.name === 'AbortError') {
+            errorMessage = "Kérés időtúllépés (30s)";
+            detailedMessage = "A szerver nem válaszolt időben. Ellenőrizd a hálózati kapcsolatot és a backend URL-t.";
+        } else if (e.message.includes('GEMINI_API_KEY')) {
+            detailedMessage = "A Gemini API kulcs nincs beállítva a Google Apps Script-ben.";
+        } else if (e.message.includes('HTTP 4')) {
+            detailedMessage = "Kliens oldali hiba. Ellenőrizd a backend URL-t és a paramétereket.";
+        } else if (e.message.includes('HTTP 5')) {
+            detailedMessage = "Szerver oldali hiba. Próbáld újra később vagy ellenőrizd a backend logokat.";
+        }
+        
+        outDiv.innerHTML = `<div class="card error-card">
+            <h2>Hiba történt</h2>
+            <p><strong>Hiba:</strong> ${errorMessage}</p>
+            ${detailedMessage ? `<p><strong>Részletek:</strong> ${detailedMessage}</p>` : ''}
+            <p><strong>Javaslatok:</strong></p>
+            <ul>
+                <li>Ellenőrizd a backend URL beállítást</li>
+                <li>Győződj meg róla, hogy az API kulcsok be vannak állítva</li>
+                <li>Próbáld újra néhány másodperc múlva</li>
+                <li>Ellenőrizd a hálózati kapcsolatot</li>
+            </ul>
+            ${__retryCount < MAX_RETRIES ? '<button class="btn-primary retry-btn" onclick="retryLastOperation()">Újrapróbálás</button>' : ''}
+        </div>`;
+        
         setProgress(0, "Hiba.");
+        __retryCount++;
     } finally {
         goBtn.disabled = false;
+        goBtn.classList.remove('loading');
     }
-}
-
-function generateMockAnalysis(home, away) {
-    const homeXG = (Math.random() * 2 + 0.5).toFixed(2);
-    const awayXG = (Math.random() * 2 + 0.5).toFixed(2);
-    
-    return `
-        <div class="metrics">
-            <div class="xg-card">
-                <div class="badge">Várható gólok (xG)</div>
-                <div class="xg-row">
-                    <div class="xg-team">${home}<br><small class="muted">Forma: <b>WWDWL</b></small></div>
-                    <div class="xg-bar"><div class="xg-fill" style="width:${Math.min(100, (homeXG/3)*100)}%"></div></div>
-                    <div class="xg-val">${homeXG}</div>
-                </div>
-                <div class="xg-row">
-                    <div class="xg-team">${away}<br><small class="muted">Forma: <b>LWWDW</b></small></div>
-                    <div class="xg-bar"><div class="xg-fill" style="width:${Math.min(100, (awayXG/3)*100)}%"></div></div>
-                    <div class="xg-val">${awayXG}</div>
-                </div>
-            </div>
-        </div>
-        <div class="analysis-step-card">
-            <div class="step-header">
-                <span class="step-icon">📊</span>
-                <h3 class="step-title">1. Lépés: Tisztán Statisztikai Kép</h3>
-            </div>
-            <div class="step-content">
-                <p>A statisztikai modell alapján a <strong>${home}</strong> várható gólszáma ${homeXG}, míg a <strong>${away}</strong> várható gólszáma ${awayXG}. Ez egy kiegyensúlyozott mérkőzést vetít előre, ahol mindkét csapat képes lehet gólszerzésre.</p>
-                <p>A szimulációs eredmények alapján a hazai győzelem valószínűsége körülbelül ${(Math.random() * 30 + 35).toFixed(1)}%, a döntetlen ${(Math.random() * 20 + 25).toFixed(1)}%, míg a vendég győzelem ${(Math.random() * 30 + 30).toFixed(1)}%.</p>
-            </div>
-        </div>
-        <div class="analysis-step-card">
-            <div class="step-header">
-                <span class="step-icon">🧠</span>
-                <h3 class="step-title">2. Lépés: Kontextuális Finomítás</h3>
-            </div>
-            <div class="step-content">
-                <p>A kontextuális tényezők figyelembevételével a meccs dinamikája változhat. A hazai pálya előny, a csapatok jelenlegi formája és a korábbi egymás elleni eredmények mind befolyásolhatják a végeredményt.</p>
-                <p><strong>Fontos:</strong> Ez egy demo elemzés, valós adatok nélkül. A tényleges elemzéshez be kell állítani a backend API kulcsokat.</p>
-            </div>
-        </div>
-        <div class="analysis-step-card value-bet">
-            <div class="step-header">
-                <span class="step-icon">⭐</span>
-                <h3 class="step-title">3. Lépés: Érték Keresése a Piacon (Value Bet)</h3>
-            </div>
-            <div class="step-content">
-                <p><strong>Javasolt tipp:</strong> Over 2.5 gólok @ 1.85</p>
-                <p><strong>Bizalmi szint:</strong> 7/10</p>
-                <p><strong>Indoklás:</strong> Mindkét csapat támadó játékstílusa és a várható gólszámok alapján nagy valószínűséggel legalább 3 gól esik a mérkőzésen.</p>
-                <p><em>Megjegyzés: Ez egy demo elemzés, ne használd valós fogadáshoz!</em></p>
-            </div>
-        </div>
-    `;
 }
 
 function addChatInterface(container) {
@@ -479,6 +483,11 @@ async function sendChatMessage() {
     const userMessage = input.value.trim();
     
     if (!userMessage) return;
+    
+    if (!__gasUrl) {
+        showError("Backend URL nincs beállítva!");
+        return;
+    }
 
     if (historyDiv.querySelector('.muted')) historyDiv.innerHTML = '';
     historyDiv.innerHTML += `<div class="chat-message"><b>Te:</b> ${userMessage}</div>`;
@@ -486,46 +495,46 @@ async function sendChatMessage() {
     input.value = ''; 
     input.disabled = true; 
     sendBtn.disabled = true;
+    sendBtn.classList.add('loading');
     historyDiv.scrollTop = historyDiv.scrollHeight;
 
     try {
-        if (__demoMode) {
-            // Demo response
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const demoResponse = "Ez egy demo válasz. A tényleges AI funkciók használatához be kell állítani a backend API kulcsokat.";
-            historyDiv.innerHTML += `<div class="chat-message"><b>Gemini AI:</b> ${demoResponse}</div>`;
-            __chatHistory.push({ role: "model", parts: [{ text: demoResponse }] });
-        } else {
-            if (!__gasUrl) {
-                throw new Error("Backend URL nincs beállítva!");
-            }
-            
-            const response = await fetch(__gasUrl, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'text/plain;charset=utf-8',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ action: 'continueAnalysis', history: __chatHistory })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-
-            const aiMessage = data.response.replace(/\n/g, '<br>');
-            historyDiv.innerHTML += `<div class="chat-message"><b>Gemini AI:</b> ${aiMessage}</div>`;
-            __chatHistory.push({ role: "model", parts: [{ text: data.response }] });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+        
+        const response = await fetch(__gasUrl, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'text/plain;charset=utf-8',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ action: 'continueAnalysis', history: __chatHistory }),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+        
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        const aiMessage = data.response.replace(/\n/g, '<br>');
+        historyDiv.innerHTML += `<div class="chat-message"><b>Gemini AI:</b> ${aiMessage}</div>`;
+        __chatHistory.push({ role: "model", parts: [{ text: data.response }] });
     } catch (e) {
         console.error('Chat error:', e);
-        historyDiv.innerHTML += `<div class="chat-message" style="color: #ff6b6b;"><b>Hiba:</b> ${e.message}</div>`;
+        let errorMessage = e.message;
+        if (e.name === 'AbortError') {
+            errorMessage = 'Kérés időtúllépés. Próbáld újra.';
+        }
+        historyDiv.innerHTML += `<div class="chat-message" style="color: #ff6b6b;"><b>Hiba:</b> ${errorMessage}</div>`;
     } finally {
         input.disabled = false; 
         sendBtn.disabled = false;
+        sendBtn.classList.remove('loading');
         historyDiv.scrollTop = historyDiv.scrollHeight; 
         input.focus();
     }
@@ -536,7 +545,7 @@ function setProgress(pct, msg) {
     const statusEl = document.getElementById('status');
     const v = Math.round(pct || 0);
     if(v > 0 && v < 100) el.style.display = 'grid';
-    else setTimeout(() => { el.style.display = 'none'; }, 500);
+    else setTimeout(() => { el.style.display = 'none'; }, 1000);
     el.style.background = `conic-gradient(var(--primary) ${v*3.6}deg, #333 0deg)`;
     el.querySelector('.progress-label').textContent = `${v}%`;
     if (msg) statusEl.textContent = msg;
@@ -603,42 +612,57 @@ function closeModal() {
 function saveSettings() {
     const newUrl = document.getElementById('gasUrlInput').value.trim();
     if (newUrl) {
+        // Validate URL format
+        try {
+            new URL(newUrl);
+        } catch (e) {
+            showError("Érvénytelen URL formátum!");
+            return;
+        }
+        
         localStorage.setItem('gasUrl', newUrl);
         __gasUrl = newUrl;
-        __demoMode = false;
-        document.getElementById('demoNotice').style.display = 'none';
-        alert('Beállítások mentve!');
+        showSuccess('Beállítások sikeresen mentve!');
         closeModal();
+        
+        // Clear previous warnings
+        document.querySelectorAll('.warning-card').forEach(el => el.remove());
     } else {
-        alert('Kérlek, adj meg egy érvényes URL-t.');
+        showError('Kérlek, adj meg egy érvényes URL-t.');
     }
 }
 
 async function saveFavLeagues() {
-    if (__demoMode) {
-        document.getElementById('fxStatus').textContent = 'Demo módban nem menthető.';
-        return;
-    }
-    
     if (!__gasUrl) { 
-        alert('URL nincs beállítva!'); 
+        showError('Backend URL nincs beállítva!');
+        openSettingsModal();
         return; 
     }
     
     if (isSaving) return;
     isSaving = true;
     const statusEl = document.getElementById('fxStatus');
+    const saveBtn = document.querySelector('button[onclick="saveFavLeagues()"]');
+    
     statusEl.textContent = 'Mentés...';
+    saveBtn.disabled = true;
+    saveBtn.classList.add('loading');
     
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+        
         const response = await fetch(__gasUrl, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'text/plain;charset=utf-8',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ action: 'saveFavLeagues', favLeagues: Array.from(__favLeagues) })
+            body: JSON.stringify({ action: 'saveFavLeagues', favLeagues: Array.from(__favLeagues) }),
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -646,12 +670,21 @@ async function saveFavLeagues() {
         
         const data = await response.json();
         if (data.error) throw new Error(data.error);
+        
         statusEl.textContent = 'Sikeresen mentve!';
+        showSuccess('Kedvenc ligák sikeresen mentve!');
     } catch (e) {
         console.error('Save favorites error:', e);
-        statusEl.textContent = `Hiba: ${e.message}`;
+        let errorMessage = e.message;
+        if (e.name === 'AbortError') {
+            errorMessage = 'Mentés időtúllépés';
+        }
+        statusEl.textContent = `Hiba: ${errorMessage}`;
+        showError(`Kedvencek mentése sikertelen: ${errorMessage}`);
     } finally {
         isSaving = false;
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('loading');
     }
 }
 
@@ -662,6 +695,18 @@ window.onclick = function(event) {
         closeModal();
     }
 }
+
+// Global error handler
+window.addEventListener('error', function(e) {
+    console.error('Global error:', e.error);
+    showError(`Váratlan hiba: ${e.error.message}`);
+});
+
+// Unhandled promise rejection handler
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('Unhandled promise rejection:', e.reason);
+    showError(`Aszinkron hiba: ${e.reason}`);
+});
 </script>
 </body>
 </html>
