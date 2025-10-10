@@ -36,6 +36,7 @@ body {
 @media (max-width: 980px) {.layout {grid-template-columns: 1fr;}}
 .card{background: var(--card); border:1px solid var(--border); border-radius:16px; padding:1.1rem; margin-bottom:1rem; box-shadow:0 20px 40px rgba(0,0,0,.35);}
 h2{margin:0 0 .9rem 0;font-weight:800;color:var(--secondary)}
+h3{font-weight:700; margin-top:0;}
 label{display:block;font-weight:600;margin-top:.6rem}
 input,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#0c0c0c;color:var(--text);margin-top:.25rem;font-size:14px;font-family:inherit}
 input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0 0 0 3px rgba(184, 134, 11, .25)}
@@ -58,23 +59,6 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .modal { display:none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); }
 .modal-content { background-color: var(--card); margin: 10% auto; padding: 25px; border: 1px solid var(--border); width: 80%; max-width: 500px; border-radius: 16px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
 .modal-close { color: var(--muted); float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-        /* === DIZÁJN FINOMHANGOLÁSOK === */
-details > summary .summary-title {
-    flex-grow: 1; /* Biztosítja, hogy a cím kitöltse a rendelkezésre álló helyet */
-}
-.btn-small {
-    padding: 6px 12px !important; /* Kisebb gombméret */
-    font-size: 0.8rem !important;
-    border-radius: 10px !important;
-    width: auto !important; /* Gombok ne nyúljanak szét */
-    flex-shrink: 0;
-}
-.btn-delete {
-    background: linear-gradient(135deg, #991b1b, #7f1d1d) !important; /* Elegánsabb piros */
-}
-.btn-delete:hover {
-    background: linear-gradient(135deg, #a52828, #922b2b) !important;
-}
 
 /* === PROFI ELEMZÉSI STÍLUSOK === */
 .analysis-step-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
@@ -85,17 +69,6 @@ details > summary .summary-title {
 .analysis-step-card.value-bet .step-title { color: var(--primary); }
 .step-content { line-height: 1.7; font-size: 0.95rem; }
 .step-content strong { color: var(--accent); }
-.analysis-option{position:relative;padding:1rem .5rem;border-bottom:1px solid var(--border);transition:background-color .2s}
-.analysis-option:last-child{border-bottom:none}
-.option-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
-.option-label{font-weight:600}
-.option-meta{font-size:.9rem;color:var(--muted)}
-.option-bar-wrap{position:relative;width:100%;height:22px;background-color:rgba(0,0,0,.2);border-radius:6px;overflow:hidden}
-.option-bar{height:100%;border-radius:6px;transition:width .5s ease-out;background: linear-gradient(to right, var(--primary), var(--secondary));}
-.market-options-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:1rem}
-.grid-item{background:rgba(0,0,0,.2);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border)}
-.grid-item-label{font-weight:600;font-size:.9rem}
-.grid-item-value{font-weight:700;font-size:1.2rem;color:var(--accent);margin-top:4px}
 .metrics { margin-bottom: 1.5rem; }
 .xg-card { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1rem; border: 1px solid var(--border); }
 .xg-card .badge { display: inline-block; padding: 4px 10px; background: var(--secondary); color: var(--bg); font-weight: 700; border-radius: 12px; margin-bottom: 1rem; font-size: 0.8rem; }
@@ -104,6 +77,13 @@ details > summary .summary-title {
 .xg-bar { flex-grow: 1; height: 18px; background-color: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; }
 .xg-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 6px; transition: width 0.5s ease-out; }
 .xg-val { font-weight: 700; font-size: 1.1rem; }
+.chat-container { margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.chat-history { max-height: 300px; overflow-y: auto; margin-bottom: 1rem; padding-right: 10px; }
+.chat-message { margin-bottom: 1rem; line-height: 1.6; }
+.chat-message b { color: var(--secondary); display: block; margin-bottom: 4px;}
+.chat-input-group { display: flex; gap: 10px; }
+.chat-input-group input { flex-grow: 1; margin: 0; }
+.chat-input-group button { width: auto; }
 
 /* === ELŐZMÉNYEK ACCORDION STÍLUSOK (JAVÍTVA) === */
 details.card {
@@ -137,7 +117,6 @@ details > summary h2 {
     margin: 0;
     flex-grow: 1;
 }
-/* Az input mező stílusa, ami már a summary-n KÍVÜL van */
 details > input#historySearch {
     width: 100%;
     margin-top: 0.5rem;
@@ -149,8 +128,19 @@ details > input#historySearch {
     max-height: 400px;
     overflow-y: auto;
 }
-    max-height: 400px;
-    overflow-y: auto;
+/* === DIZÁJN FINOMHANGOLÁSOK === */
+.btn-small {
+    padding: 6px 12px !important;
+    font-size: 0.8rem !important;
+    border-radius: 10px !important;
+    width: auto !important;
+    flex-shrink: 0;
+}
+.btn-delete {
+    background: linear-gradient(135deg, #991b1b, #7f1d1d) !important;
+}
+.btn-delete:hover {
+    background: linear-gradient(135deg, #a52828, #922b2b) !important;
 }
 </style>
 </head>
@@ -200,15 +190,15 @@ details > input#historySearch {
         <div id="out"></div>
     </div>
     <div class="col-right">
-<details class="card">
-  <summary>
-    <div class="summary-title"><h2>Előző Elemzések</h2></div>
-  </summary>
-  <input id="historySearch" placeholder="Keresés az előzményekben...">
-  <div id="history" class="history-list">
-      <p class="muted">Nincsenek korábbi elemzések.</p>
-  </div>
-</details>
+       <details class="card">
+         <summary>
+           <div class="summary-title"><h2>Előző Elemzések</h2></div>
+         </summary>
+         <input id="historySearch" placeholder="Keresés az előzményekben...">
+         <div id="history" class="history-list">
+             <p class="muted">Nincsenek korábbi elemzések.</p>
+         </div>
+       </details>
     </div>
 </div>
 <div id="settingsModal" class="modal">
@@ -224,6 +214,7 @@ details > input#historySearch {
 </div>
 <script>
 let __allLeagues = [], __favLeagues = new Set(), __fixtures = [], __masterTeamList = [], __gasUrl = '', __currentSport = 'soccer', isSaving = false;
+let __chatHistory = [];
 
 document.addEventListener("DOMContentLoaded", function() {
     __gasUrl = localStorage.getItem('gasUrl');
@@ -277,7 +268,7 @@ function renderFixtureList() {
     if(list.length === 0) { box.innerHTML=`<p class="muted">Nincs megjeleníthető meccs.</p>`; return; }
     box.innerHTML = list.map(f => {
         const d = new Date(f.utcKickoff).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});
-        return `<div class="fx-item"><div><div class="fx-title">${f.home} – ${f.away}</div><div class="fx-meta">${f.league} · ${d}</div></div><button class="btn-primary" style="padding: 5px 10px; font-size:0.8rem;" onclick="fillAndAnalyze('${f.home}','${f.away}')">Elemzés</button></div>`;
+        return `<div class="fx-item"><div><div class="fx-title">${f.home} – ${f.away}</div><div class="fx-meta">${f.league} · ${d}</div></div><button class="btn-primary btn-small" onclick="fillAndAnalyze('${f.home}','${f.away}')">Elemzés</button></div>`;
     }).join('');
 }
 
@@ -307,7 +298,7 @@ async function go(bypassCache = false) {
     setProgress(1, "Elemzés indítása...");
 
     try {
-        let url = `${__gasUrl}?action=runFullAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}`;
+        let url = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}`;
         if (bypassCache) {
             url += `&_cb=${new Date().getTime()}`;
         }
@@ -322,7 +313,28 @@ async function go(bypassCache = false) {
         
         outDiv.innerHTML = data.html;
         
-        if (!bypassCache) { // Csak akkor mentsük, ha nem "Újra" gomb volt
+        // Chat funkció inicializálása
+        if (data.context && data.context.initialPrompt) {
+            __chatHistory = [
+                { role: "user", parts: [{ text: data.context.initialPrompt }] },
+                { role: "model", parts: [{ text: "Az alap elemzés legenerálva. Készen állok a további kérdésekre." }] }
+            ];
+            const chatCard = document.createElement('div');
+            chatCard.className = 'card';
+            chatCard.innerHTML = `
+                <div class="chat-container">
+                    <h3>AI-Párbeszéd Folytatása</h3>
+                    <div id="chatHistory" class="chat-history"><p class="muted">Kérdezz rá az elemzés részleteire!</p></div>
+                    <div class="chat-input-group">
+                        <input id="chatInput" type="text" placeholder="Pl. Mi a helyzet, ha esik az eső?">
+                        <button id="chatSendBtn" class="btn-primary btn-small" onclick="sendChatMessage()">Küldés</button>
+                    </div>
+                </div>`;
+            outDiv.appendChild(chatCard);
+            document.getElementById('chatInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendChatMessage(); });
+        }
+        
+        if (!bypassCache) {
             saveAnalysis({ home, away });
         }
         setProgress(100, "Kész.");
@@ -332,6 +344,40 @@ async function go(bypassCache = false) {
         setProgress(0, "Hiba.");
     } finally {
         goBtn.disabled = false;
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('chatSendBtn');
+    const historyDiv = document.getElementById('chatHistory');
+    const userMessage = input.value.trim();
+    if (!userMessage || !__gasUrl) return;
+
+    if (historyDiv.querySelector('.muted')) historyDiv.innerHTML = '';
+    historyDiv.innerHTML += `<div class="chat-message"><b>Te:</b> ${userMessage}</div>`;
+    __chatHistory.push({ role: "user", parts: [{ text: userMessage }] });
+    input.value = ''; input.disabled = true; sendBtn.disabled = true;
+    historyDiv.scrollTop = historyDiv.scrollHeight;
+
+    try {
+        const response = await fetch(__gasUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'continueAnalysis', history: __chatHistory })
+        });
+        if (!response.ok) throw new Error('Hálózati hiba.');
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        const aiMessage = data.response.replace(/\n/g, '<br>');
+        historyDiv.innerHTML += `<div class="chat-message"><b>Gemini AI:</b> ${aiMessage}</div>`;
+        __chatHistory.push({ role: "model", parts: [{ text: data.response }] });
+    } catch (e) {
+        historyDiv.innerHTML += `<div class="chat-message" style="color: #ff6b6b;"><b>Hiba:</b> ${e.message}</div>`;
+    } finally {
+        input.disabled = false; sendBtn.disabled = false;
+        historyDiv.scrollTop = historyDiv.scrollHeight; input.focus();
     }
 }
 
@@ -348,10 +394,7 @@ function setProgress(pct, msg) {
 
 function saveAnalysis(record) {
     let history = getHistoryFromLocalStorage();
-    // Ne mentsük, ha már a legutóbbi elem ugyanez
-    if (history.length > 0 && history[0].home === record.home && history[0].away === record.away) {
-        return;
-    }
+    if (history.length > 0 && history[0].home === record.home && history[0].away === record.away) { return; }
     history.unshift({ home: record.home, away: record.away, date: new Date().toLocaleString('hu-HU') });
     if (history.length > 30) history = history.slice(0, 30);
     localStorage.setItem('sportAnalysisHistory', JSON.stringify(history));
@@ -359,11 +402,8 @@ function saveAnalysis(record) {
 }
 
 function getHistoryFromLocalStorage() {
-    try {
-        return JSON.parse(localStorage.getItem('sportAnalysisHistory') || '[]');
-    } catch (e) {
-        return [];
-    }
+    try { return JSON.parse(localStorage.getItem('sportAnalysisHistory') || '[]'); } 
+    catch (e) { return []; }
 }
 
 function renderHistory(history) {
@@ -446,5 +486,3 @@ async function saveFavLeagues() {
 </script>
 </body>
 </html>
-
-
