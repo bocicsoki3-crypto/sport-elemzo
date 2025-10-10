@@ -87,6 +87,50 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .xg-bar { flex-grow: 1; height: 18px; background-color: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; }
 .xg-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 6px; transition: width 0.5s ease-out; }
 .xg-val { font-weight: 700; font-size: 1.1rem; }
+
+/* === ELŐZMÉNYEK ACCORDION STÍLUSOK === */
+details.card {
+    transition: all 0.3s ease-in-out;
+}
+details.card[open] {
+    background: #212121; /* Kicsit világosabb háttér nyitott állapotban */
+}
+details > summary {
+    list-style: none; /* Eltávolítja az alapértelmezett nyilat */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.5rem 0;
+}
+details > summary::-webkit-details-marker {
+    display: none; /* Eltávolítja az alapértelmezett nyilat Chrome-ban */
+}
+details > summary::before {
+    content: '▶'; /* Egyedi nyíl ikon */
+    font-size: 0.8em;
+    color: var(--secondary);
+    margin-right: 0.8rem;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease-in-out;
+}
+details[open] > summary::before {
+    transform: rotate(90deg);
+}
+details > summary h2 {
+    margin: 0;
+}
+details > summary input {
+    width: 180px; /* Kisebb keresőmező */
+    font-size: 0.9em;
+    padding: 8px 10px;
+    background-color: #000;
+}
+.history-list {
+    margin-top: 1rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.5rem;
+}
 </style>
 </head>
 <body>
@@ -135,15 +179,16 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
         <div id="out"></div>
     </div>
     <div class="col-right">
-   <details class="card">
-  <summary>
-    <h2>Előző Elemzések</h2>
-    <input id="historySearch" placeholder="Keresés az előzményekben..." onclick="event.stopPropagation()">
-  </summary>
-  <div id="history" class="history-list">
-      <p class="muted">Nincsenek korábbi elemzések.</p>
-  </div>
-</details>
+       <details class="card">
+         <summary>
+           <h2>Előző Elemzések</h2>
+           <input id="historySearch" placeholder="Keresés az előzményekben..." onclick="event.stopPropagation()">
+         </summary>
+         <div id="history" class="history-list">
+             <p class="muted">Nincsenek korábbi elemzések.</p>
+         </div>
+       </details>
+    </div>
 </div>
 <div id="settingsModal" class="modal">
   <div class="modal-content">
@@ -207,7 +252,7 @@ function renderLeagueList() {
 
 function renderFixtureList() {
     const box = document.getElementById('fixtures');
-    const list = __favLeagues.size > 0 ? __fixtures.filter(f => __favLeagues.has(f.league)) : __fixtures;
+    const list = __favLeagues.size > 0 ? __fixtures.filter(f => !__favLeagues.has(f.league)) : __fixtures;
     if(list.length === 0) { box.innerHTML=`<p class="muted">Nincs megjeleníthető meccs.</p>`; return; }
     box.innerHTML = list.map(f => {
         const d = new Date(f.utcKickoff).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});
@@ -282,11 +327,21 @@ function saveAnalysis(record) {
 }
 
 function getHistoryFromLocalStorage() {
-    return JSON.parse(localStorage.getItem('sportAnalysisHistory') || '[]');
+    try {
+        return JSON.parse(localStorage.getItem('sportAnalysisHistory') || '[]');
+    } catch (e) {
+        return [];
+    }
 }
 
 function renderHistory(history) {
-    document.getElementById('history').innerHTML = history.map(item =>
+    const box = document.getElementById('history');
+    if (!box) return;
+    if (!history || history.length === 0) {
+        box.innerHTML = '<p class="muted">Nincsenek korábbi elemzések.</p>';
+        return;
+    }
+    box.innerHTML = history.map(item =>
         `<div class="fx-item"><div><div class="fx-title">${item.home} – ${item.away}</div><div class="fx-meta">${item.date}</div></div><button class="btn-primary" style="padding: 5px 10px; font-size:0.8rem;" onclick="fillAndAnalyze('${item.home}','${item.away}')">Újra</button></div>`
     ).join('');
 }
@@ -311,7 +366,7 @@ function saveSettings() {
     if (newUrl) {
         localStorage.setItem('gasUrl', newUrl);
         __gasUrl = newUrl;
-        alert('Beállítások mentve! Az oldal frissítése javasolt.');
+        alert('Beállítások mentve!');
         closeModal();
     } else {
         alert('Kérlek, adj meg egy érvényes URL-t.');
@@ -327,7 +382,8 @@ async function saveFavLeagues() {
     try {
         const response = await fetch(__gasUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Fontos a GAS számára
+            // A GAS-nak a text/plain header kell a sima JSON.parse-hoz a doPost-ban
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'saveFavLeagues', favLeagues: Array.from(__favLeagues) })
         });
         const data = await response.json();
@@ -342,4 +398,3 @@ async function saveFavLeagues() {
 </script>
 </body>
 </html>
-
