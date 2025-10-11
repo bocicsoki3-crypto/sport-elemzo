@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000000;--card:#1a1a1a;--border:#38301d;--muted:#aaa;--primary:#D4AF37;--secondary:#B8860B;--accent:#FFD700;--text:#f5f5dc;--danger:#d9534f;--font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+:root{--bg:#000000;--card:#1a1a1a;--border:#38301d;--muted:#aaa;--primary:#D4AF37;--secondary:#B8860B;--accent:#FFD700;--text:#f5f5dc;--danger:#d9534f;--success: #28a745; --font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-family);color:var(--text);background-color:#000;background-image:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2338301d' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");min-height:100vh}
 .app-header{background:linear-gradient(90deg,#1a1a1a,#000000);color:var(--primary);padding:1.1rem;text-align:center;border-bottom:1px solid var(--border)}
@@ -81,6 +81,16 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .fixture-card .fx-meta { font-size: 0.85rem; color: var(--muted); margin: 0.5rem 0 1rem 0; }
 .fixture-card .btn-primary { width: 100%; }
 .fx-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.fx-item:hover{background-color:rgba(255,255,255,.05)}.fx-item-details{flex-grow:1}
+
+/* ÚJ STÍLUSOK A v27.0-HOZ */
+.market-pulse-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; }
+.market-pulse-card h4 { color: var(--secondary); }
+.odds-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.odds-row:last-child { border-bottom: none; }
+.odds-value { font-weight: 700; font-size: 1.1rem; color: var(--accent); }
+.value-bet-card { border-color: var(--success); background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(40, 167, 69, 0.1)); }
+.value-bet-card h4 { color: var(--success); }
+.value-highlight { color: var(--success); font-weight: 800; font-size: 1.2em; }
 </style>
 </head>
 <body>
@@ -231,7 +241,7 @@ async function runAnalysis(forceNew = false) {
         setProgress(1, "Elemzés indítása...");
         let analysisUrl = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&force=true`;
         
-        progressInterval = setInterval(() => { const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; setProgress(Math.min(90, c + 2), "Szerver válaszára várunk...") }, 800);
+        progressInterval = setInterval(() => { const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; setProgress(Math.min(90, c + 3), "Adatok gyűjtése a Piacról és az AI-tól...") }, 800);
         const response = await fetch(analysisUrl);
         clearInterval(progressInterval);
         if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
@@ -254,51 +264,13 @@ function filterHistory(){renderHistory()}
 function loadAnalysisFromHistory(id){const html=localStorage.getItem(id);if(html){const record=getHistoryFromLocalStorage().find(item=>item.id===id);if(record){document.getElementById('home').value=record.home;document.getElementById('away').value=record.away;document.getElementById('sportSelector').value=record.sport;__currentSport=record.sport;const weights=id.split('_w')[1]?.split('-')||[50,50];document.getElementById('homeFormWeight').value=weights[0];document.getElementById('awayFormWeight').value=weights[1];document.getElementById('homeFormWeightLabel').textContent=`${weights[0]}%`;document.getElementById('awayFormWeightLabel').textContent=`${weights[1]}%`;openAnalysisModal(record.home,record.away,html)}document.getElementById('status').textContent="Előzmény betöltve.";document.querySelector('.col-center').scrollIntoView({behavior:'smooth'})}else{alert("Hiba: Az elemzés nem található.")}}
 function deleteHistoryItem(id,event){event.stopPropagation();if(confirm("Biztosan törölni szeretnéd ezt az elemet?")){let history=getHistoryFromLocalStorage();const updatedHistory=history.filter(item=>item.id!==id);localStorage.setItem('sportAnalysisHistory',JSON.stringify(updatedHistory));localStorage.removeItem(id);renderHistory()}}
 
-// MODÁLIS ABLAK KEZELŐ FUNKCIÓK
 function openAnalysisModal(home,away,htmlContent){document.getElementById('modalTitle').textContent=`${home} vs ${away}`;document.getElementById('modalBody').innerHTML=htmlContent;document.getElementById('analysisModal').style.display='flex'}
 function closeAnalysisModal(){document.getElementById('analysisModal').style.display='none'}
 function openListModal(title, content) { document.getElementById('listModalTitle').textContent = title; document.getElementById('listModalBody').innerHTML = content; document.getElementById('listModal').style.display = 'flex'; }
 function closeListModal(){document.getElementById('listModal').style.display='none'}
 
-// ÚJ: LISTA MEGJELENÍTŐ FUNKCIÓK
-function showLeaguesInModal() {
-    if (__fixtures.length === 0) { alert("Először töltsd be a meccseket!"); return; }
-    const leagues = [...new Set(__fixtures.map(f => f.league))];
-    let content = '<div class="modal-list-grid">';
-    content += `<div class="league-card" onclick="showMatchesInModal('all')"><h3>Összes Bajnokság</h3></div>`;
-    content += leagues.map(l => `<div class="league-card" onclick="showMatchesInModal('${escapeHtml(l)}')"><h3>${escapeHtml(l)}</h3></div>`).join('');
-    content += '</div>';
-    openListModal("Bajnokságok", content);
-}
-
-function showMatchesInModal(league = 'all') {
-    if (__fixtures.length === 0) { alert("Először töltsd be a meccseket!"); return; }
-    const filteredFixtures = league === 'all' ? __fixtures : __fixtures.filter(f => f.league === league);
-
-    if (filteredFixtures.length === 0) {
-        openListModal(league, `<p class="muted" style="text-align:center;">Nincs megjeleníthető mérkőzés ebben a kategóriában.</p>`);
-        return;
-    }
-
-    let content = '<div class="modal-list-grid">';
-    content += filteredFixtures.map(fx => {
-        const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
-        return `
-            <div class="fixture-card">
-                <div>
-                    <div class="fx-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div>
-                    <div class="fx-meta">${escapeHtml(fx.league)}<br>${d}</div>
-                </div>
-                <button class="btn-primary btn-sm" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">Elemzés</button>
-            </div>
-        `;
-    }).join('');
-    content += '</div>';
-    
-    const title = league === 'all' ? "Összes Mérkőzés" : league;
-    openListModal(title, content);
-}
-
+function showLeaguesInModal() { if (__fixtures.length === 0) { alert("Először töltsd be a meccseket!"); return; } const leagues = [...new Set(__fixtures.map(f => f.league))]; let content = '<div class="modal-list-grid">'; content += `<div class="league-card" onclick="showMatchesInModal('all')"><h3>Összes Bajnokság</h3></div>`; content += leagues.map(l => `<div class="league-card" onclick="showMatchesInModal('${escapeHtml(l)}')"><h3>${escapeHtml(l)}</h3></div>`).join(''); content += '</div>'; openListModal("Bajnokságok", content); }
+function showMatchesInModal(league = 'all') { if (__fixtures.length === 0) { alert("Először töltsd be a meccseket!"); return; } const filteredFixtures = league === 'all' ? __fixtures : __fixtures.filter(f => f.league === league); if (filteredFixtures.length === 0) { openListModal(league, `<p class="muted" style="text-align:center;">Nincs megjeleníthető mérkőzés ebben a kategóriában.</p>`); return; } let content = '<div class="modal-list-grid">'; content += filteredFixtures.map(fx => { const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' }); return ` <div class="fixture-card"> <div> <div class="fx-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div> <div class="fx-meta">${escapeHtml(fx.league)}<br>${d}</div> </div> <button class="btn-primary btn-sm" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">Elemzés</button> </div> `; }).join(''); content += '</div>'; const title = league === 'all' ? "Összes Mérkőzés" : league; openListModal(title, content); }
 </script>
 </body>
 </html>
