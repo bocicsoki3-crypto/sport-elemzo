@@ -73,7 +73,6 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .xg-bar-container{flex-grow:1;height:20px;background:rgba(0,0,0,0.3);border-radius:8px;overflow:hidden}
 .xg-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:8px}
 .xg-value{font-weight:700;font-size:1.2rem}
-/* ÚJ STÍLUSOK A LISTA MODÁLIS ABLAKHOZ */
 .modal-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
 .league-card, .fixture-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s ease; }
 .league-card:hover, .fixture-card:hover { transform: translateY(-3px); border-color: var(--secondary); box-shadow: 0 8px 20px rgba(0,0,0,.2); }
@@ -81,6 +80,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .fixture-card .fx-title { font-weight: 700; font-size: 1.1rem; }
 .fixture-card .fx-meta { font-size: 0.85rem; color: var(--muted); margin: 0.5rem 0 1rem 0; }
 .fixture-card .btn-primary { width: 100%; }
+.fx-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.fx-item:hover{background-color:rgba(255,255,255,.05)}.fx-item-details{flex-grow:1}
 </style>
 </head>
 <body>
@@ -126,8 +126,8 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
     </div>
     <div class="col-right">
        <div class="card">
-          <details>
-             <summary><span class="summary-title">Elemzési Előzmények (Napló)</span></summary>
+          <details open>
+             <summary style="font-weight: 800; font-size: 1.2rem; color: var(--secondary); cursor: pointer; margin-bottom: 0.5rem; list-style: none;">Elemzési Előzmények (Napló)</summary>
              <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory()" style="margin-top: .5rem; margin-bottom:0.8rem"/>
              <div id="history"><p class="muted">Itt fognak megjelenni a korábbi elemzéseid.</p></div>
           </details>
