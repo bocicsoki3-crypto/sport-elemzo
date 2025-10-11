@@ -126,7 +126,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                 <div class="col"><label for="awayFormWeight">Vendég Forma Súlya: <span id="awayFormWeightLabel">50%</span></label><input type="range" min="0" max="100" value="50" id="awayFormWeight"></div>
             </div>
             <div class="actions">
-                <button id="goBtn" class="btn-primary" onclick="runAnalysis(false)">Elemzés Futtatása</button>
+<button id="goBtn" class="btn-primary" onclick="runAnalysis(true)">Elemzés Futtatása</button>
             </div>
             <div id="progress" class="progress-ring" style="display:none"><span class="progress-label"></span></div>
             <p id="status" class="muted" style="text-align:center">Kész.</p>
@@ -135,7 +135,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
     </div>
     <div class="col-right">
        <div class="card">
-          <details open>
+          <details>
              <summary style="font-weight: 800; font-size: 1.2rem; color: var(--secondary); cursor: pointer; margin-bottom: 0.5rem; list-style: none;">Elemzési Előzmények (Napló)</summary>
              <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory()" style="margin-top: .5rem; margin-bottom:0.8rem"/>
              <div id="history"><p class="muted">Itt fognak megjelenni a korábbi elemzéseid.</p></div>
@@ -263,3 +263,4 @@ function showMatchesInModal(league = 'all') { if (__fixtures.length === 0) { ale
 </script>
 </body>
 </html>
+
