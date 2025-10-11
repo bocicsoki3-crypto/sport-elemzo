@@ -36,6 +36,8 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .btn-danger:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(217,83,79,.2)}
 .btn-primary:disabled,.btn-danger:disabled{background:#555;cursor:not-allowed;opacity:.7}
 .muted{color:var(--muted);font-size:.9rem}
+@keyframes pulse-text { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+#fxStatus.loading { animation: pulse-text 1.5s infinite; }
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(212,175,55,.7)}70%{box-shadow:0 0 0 10px rgba(212,175,55,0)}100%{box-shadow:0 0 0 0 rgba(212,175,55,0)}}
 .progress-ring{width:80px;height:80px;border-radius:50%;display:grid;place-items:center;margin:1rem auto;transition:opacity .5s}
 .progress-label{font-size:1.5rem;font-weight:700}
@@ -98,9 +100,9 @@ details[open] > summary > .summary-title::before{transform:rotate(90deg)}
                 <option value="basketball">Kosárlabda</option>
             </select>
             <div class="actions" style="margin-top: 1rem;">
-                <button class="btn-primary" onclick="loadFixtures()">Meccsek Betöltése (2 nap)</button>
+                <button id="loadFixturesBtn" class="btn-primary" onclick="loadFixtures()">Meccsek Betöltése (2 nap)</button>
+                 <span id="fxStatus" class="muted" style="text-align:center;"></span>
             </div>
-            <span id="fxStatus" class="muted"></span>
         </div>
         <div class="card">
              <details><summary><span class="summary-title">Bajnokságok</span><span id="leagueCount" class="count-badge"></span></summary><ul id="leagueList" class="league-selector"><li class="muted">Töltsd be a meccseket.</li></ul></details>
@@ -163,7 +165,7 @@ document.addEventListener("DOMContentLoaded", function(){
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m])}
 function setProgress(pct,msg=null){const el=document.getElementById('progress');const goBtn=document.getElementById('goBtn');const statusEl=document.getElementById('status');const v=Math.max(0,Math.min(100,Math.round(pct||0)));const indicator=el.style;indicator.display=v>0&&v<100?'grid':'none';if(v>0&&v<100){indicator.animation='pulse 2s infinite'}else{indicator.animation='none'}indicator.background=`conic-gradient(var(--primary) ${v*3.6}deg, rgba(255,255,255,.18) 0deg)`;el.querySelector('.progress-label').textContent=v+'%';if(msg)statusEl.textContent=msg}
 function handleSportChange(){__currentSport=document.getElementById('sportSelector').value;document.getElementById('fixtures').innerHTML='<p class="muted">Töltsd be a meccseket!</p>';document.getElementById('leagueList').innerHTML='<li class="muted">Töltsd be a meccseket.</li>';['leagueCount','matchCount'].forEach(id=>document.getElementById(id).style.display='none');}
-async function loadFixtures(){const statusEl=document.getElementById('fxStatus');statusEl.textContent='Adatok lekérése...';['leagueCount','matchCount'].forEach(id=>document.getElementById(id).style.display='none');try{const response=await fetch(`${__gasUrl}?sport=${__currentSport}&days=2`);if(!response.ok)throw new Error(`Hálózati hiba: ${response.status}`);const data=await response.json();if(data.error)throw new Error(data.error);__fixtures=data.fixtures||[];renderFixtureList('all');renderLeagues();statusEl.textContent=``}catch(e){statusEl.textContent=`Hiba: ${e.message}`}}
+async function loadFixtures(){const statusEl=document.getElementById('fxStatus');const loadBtn=document.getElementById('loadFixturesBtn');statusEl.textContent='Adatok lekérése...';statusEl.classList.add('loading');loadBtn.disabled=true;['leagueCount','matchCount'].forEach(id=>document.getElementById(id).style.display='none');try{const response=await fetch(`${__gasUrl}?sport=${__currentSport}&days=2`);if(!response.ok)throw new Error(`Hálózati hiba: ${response.status}`);const data=await response.json();if(data.error)throw new Error(data.error);__fixtures=data.fixtures||[];renderFixtureList('all');renderLeagues();statusEl.textContent=``}catch(e){statusEl.textContent=`Hiba: ${e.message}`}finally{statusEl.classList.remove('loading');loadBtn.disabled=false;}}
 
 function renderLeagues(){const box=document.getElementById('leagueList');const leagueCountEl=document.getElementById('leagueCount');if(__fixtures.length===0){box.innerHTML='<li class="muted">Nincsenek meccsek.</li>';leagueCountEl.style.display='none';return}const leagues=[...new Set(__fixtures.map(f=>f.league))];leagueCountEl.textContent=leagues.length;leagueCountEl.style.display='inline-block';let html=`<li class="league-item active" onclick="filterFixturesByLeague('all', this)">Összes Bajnokság</li>`;html+=leagues.map(l=>`<li class="league-item" onclick="filterFixturesByLeague('${escapeHtml(l)}', this)">${escapeHtml(l)}</li>`).join('');box.innerHTML=html}
 function filterFixturesByLeague(league, element){document.querySelectorAll('.league-item').forEach(el=>el.classList.remove('active'));element.classList.add('active');renderFixtureList(league)}
