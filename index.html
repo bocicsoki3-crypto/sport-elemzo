@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SportElemző Gemini AI</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -68,6 +68,7 @@ summary::before{content:'>';display:inline-block;margin-right:8px;transition:tra
 @media (max-width:900px){.modal-grid{grid-template-columns:1fr}}
 .market-group{background:rgba(0,0,0,0.2);border-radius:12px;padding:1rem;border:1px solid var(--border)}
 .market-group h5{margin:0 0 1rem 0;font-size:1.1rem;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:.5rem}
+.market-subtitle{color:var(--accent);font-weight:bold;display:block;margin-top:1.2rem;margin-bottom:0.8rem;font-size:1.05em}
 .prob-item{margin-bottom:.8rem}
 .prob-label{display:flex;justify-content:space-between;font-weight:600;margin-bottom:4px}
 .prob-bar-bg{width:100%;background:rgba(0,0,0,.3);border-radius:5px;height:10px;overflow:hidden}
@@ -81,7 +82,6 @@ summary::before{content:'>';display:inline-block;margin-right:8px;transition:tra
 .xg-bar-container{flex-grow:1;height:20px;background:rgba(0,0,0,0.3);border-radius:8px;overflow:hidden}
 .xg-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:8px}
 .xg-value{font-weight:700;font-size:1.2rem}
-.market-title{color:var(--accent);font-weight:bold;display:block;margin-bottom:0.5rem;}
 </style>
 </head>
 <body>
@@ -103,7 +103,7 @@ summary::before{content:'>';display:inline-block;margin-right:8px;transition:tra
         </div>
         <div class="card">
              <details><summary>Bajnokságok</summary><ul id="leagueList" class="league-selector"><li class="muted">Töltsd be a meccseket.</li></ul></details>
-             <details open><summary>Mérkőzések</summary><div id="fixtures"><p class="muted">Válassz sportágat és töltsd be a meccseket!</p></div></details>
+             <details><summary>Mérkőzések</summary><div id="fixtures"><p class="muted">Válassz sportágat és töltsd be a meccseket!</p></div></details>
         </div>
     </div>
     <div class="col-center">
