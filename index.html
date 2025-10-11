@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SportElemző Gemini AI</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -170,7 +170,47 @@ function filterFixturesByLeague(league, element){document.querySelectorAll('.lea
 function renderFixtureList(league='all'){const box=document.getElementById('fixtures');const filteredFixtures=league==='all'?__fixtures:__fixtures.filter(f=>f.league===league);if(filteredFixtures.length===0){box.innerHTML=`<div class="muted">Nincs meccs ebben a bajnokságban.</div>`;return}box.innerHTML=filteredFixtures.map(fx=>{const d=new Date(fx.utcKickoff).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});return`<div class="fx-item"><div class="fx-item-details"><div style="flex-grow:1"><div class="fx-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div><div class="fx-meta">${escapeHtml(fx.league)} · ${d}</div></div></div><button class="btn-primary btn-sm" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">Elemzés</button></div>`}).join('')}
 function fillAndAnalyze(home,away){document.getElementById('home').value=home;document.getElementById('away').value=away;document.querySelector('.col-center').scrollIntoView({behavior:'smooth'});runAnalysis(false)}
 
-async function runAnalysis(forceNew=false){const home=document.getElementById("home").value.trim();const away=document.getElementById("away").value.trim();const homeFormWeight=document.getElementById("homeFormWeight").value;const awayFormWeight=document.getElementById("awayFormWeight").value;if(!home||!away||!__gasUrl){setProgress(0,"Hiba: Hiányzó adatok.");return}const historyId=`analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}`;if(!forceNew){const cachedAnalysis=localStorage.getItem(historyId);if(cachedAnalysis){openModal(home,away,cachedAnalysis);document.getElementById('status').textContent="Előzmény betöltve.";return}}let progressInterval;try{setProgress(1,"Elemzés indítása...");let analysisUrl=`${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}`;if(forceNew){analysisUrl+='&force=true'}progressInterval=setInterval(()=>{const c=parseInt(document.querySelector('#progress .progress-label').textContent)||0;setProgress(Math.min(90,c+2),"Szerver válaszára várunk...")},800);const response=await fetch(analysisUrl);clearInterval(progressInterval);if(!response.ok)throw new Error(`Szerver hiba: ${response.status}`);setProgress(95,"Válasz feldolgozása...");const data=await response.json();if(data.error)throw new Error(data.error);openModal(home,away,data.html);saveAnalysis(home,away,data.html,historyId);setProgress(100,"Kész.")}catch(e){if(progressInterval)clearInterval(progressInterval);setProgress(0,"Hiba: "+e.message)}}
+// === JAVÍTÁS: Intelligens újraelemzési logika ===
+async function runAnalysis(forceNew = false) {
+    const home = document.getElementById("home").value.trim();
+    const away = document.getElementById("away").value.trim();
+    const homeFormWeight = document.getElementById("homeFormWeight").value;
+    const awayFormWeight = document.getElementById("awayFormWeight").value;
+    if (!home || !away || !__gasUrl) { setProgress(0, "Hiba: Hiányzó adatok."); return; }
+
+    const historyId = `analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}`;
+    const isCachedLocally = localStorage.getItem(historyId);
+
+    // Ha nincs explicit kényszerítés ÉS megvan a helyi tárolóban, akkor azt használjuk
+    if (!forceNew && isCachedLocally) {
+        openModal(home, away, isCachedLocally);
+        document.getElementById('status').textContent = "Előzmény betöltve a naplóból.";
+        return;
+    }
+
+    // Ha ide eljut, akkor vagy kényszerített újraelemzés van, vagy nincs helyi másolat
+    // Ilyenkor MINDIG kérünk egy friss verziót a szervertől (force=true)
+    let progressInterval;
+    try {
+        setProgress(1, "Elemzés indítása...");
+        let analysisUrl = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&force=true`;
+        
+        progressInterval = setInterval(() => { const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; setProgress(Math.min(90, c + 2), "Szerver válaszára várunk...") }, 800);
+        const response = await fetch(analysisUrl);
+        clearInterval(progressInterval);
+        if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
+        setProgress(95, "Válasz feldolgozása...");
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        openModal(home, away, data.html);
+        saveAnalysis(home, away, data.html, historyId);
+        setProgress(100, "Kész.");
+    } catch (e) {
+        if (progressInterval) clearInterval(progressInterval);
+        setProgress(0, "Hiba: " + e.message);
+    }
+}
+
 
 function saveAnalysis(home,away,html,id){let history=getHistoryFromLocalStorage();const now=new Date().toLocaleString('hu-HU');const record={id,home,away,date:now,sport:__currentSport};const existingIndex=history.findIndex(item=>item.id.startsWith(`analysis_${__currentSport}_${home}_vs_${away}`));if(existingIndex>-1){history.splice(existingIndex,1)}history.unshift(record);localStorage.setItem('sportAnalysisHistory',JSON.stringify(history));localStorage.setItem(id,html);renderHistory()}
 function getHistoryFromLocalStorage(){try{const json=localStorage.getItem('sportAnalysisHistory');return json?JSON.parse(json):[]}catch(e){return[]}}
