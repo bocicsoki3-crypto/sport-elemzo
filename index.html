@@ -35,21 +35,25 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .btn-danger:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(217,83,79,.2)}
 .btn-primary:disabled,.btn-danger:disabled{background:#555;cursor:not-allowed;opacity:.7}
 .muted{color:var(--muted);font-size:.9rem}
-.progress-ring{width:80px;height:80px;border-radius:50%;display:grid;place-items:center;margin:1rem auto;transition:opacity .5s}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(212,175,55,.7)}70%{box-shadow:0 0 0 10px rgba(212,175,55,0)}100%{box-shadow:0 0 0 0 rgba(212,175,55,0)}}
+.progress-ring{width:80px;height:80px;border-radius:50%;display:grid;place-items:center;margin:1rem auto;transition:opacity .5s;animation:pulse 2s infinite}
 .progress-label{font-size:1.5rem;font-weight:700}
 details > summary{cursor:pointer;list-style:none;font-weight:800;font-size:1.2rem;color:var(--secondary);margin-bottom:.5rem}
 details > summary::-webkit-details-marker{display:none}
 details[open] > summary::before{transform:rotate(90deg)}
 summary::before{content:'>';display:inline-block;margin-right:8px;transition:transform .2s}
 #leaguesDisplay{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
-.league-badge{background:rgba(212,175,55,0.1);border:1px solid var(--primary);color:var(--accent);padding:5px 12px;border-radius:20px;font-size:.9rem;font-weight:600}
+.league-selector{list-style:none;padding:0;margin:0 0 1rem 0;border-bottom:1px solid var(--border)}
+.league-item{padding:12px 10px;cursor:pointer;border-radius:8px;font-weight:600;transition:background-color .2s;border-left:3px solid transparent}
+.league-item:hover{background-color:rgba(255,255,255,.05)}
+.league-item.active{color:var(--accent);background-color:rgba(212,175,55,.1);border-left:3px solid var(--primary)}
 .fx-item{display:flex;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--border);gap:8px}
 .fx-title{font-weight:600}
 .fx-meta{font-size:.8rem;color:var(--muted)}
 .btn-sm{padding:8px 12px;font-size:.9rem;width:auto}
 #out{min-height:20px}
 .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
-.modal-content{background:var(--card);border:1px solid var(--primary);border-radius:16px;width:90%;max-width:1100px; /* === JAVÍTÁS: Nagyobb szélesség === */ max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.modal-content{background:var(--card);border:1px solid var(--primary);border-radius:16px;width:95%;max-width:1200px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.5)}
 .modal-header{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);z-index:1}
 .modal-title{font-size:1.5rem;font-weight:800;color:var(--primary);margin:0}
 .close-button{background:none;border:none;color:var(--muted);font-size:2rem;cursor:pointer;line-height:1}
@@ -86,7 +90,7 @@ summary::before{content:'>';display:inline-block;margin-right:8px;transition:tra
         <div class="card">
              <details>
                 <summary>Közelgő meccsek</summary>
-                <div id="leaguesDisplay"><p class="muted">Töltsd be a meccseket a ligák megjelenítéséhez.</p></div>
+                <ul id="leagueList" class="league-selector"><li class="muted">Töltsd be a meccseket.</li></ul>
                 <div id="fixtures"><p class="muted">Válassz sportágat és töltsd be a meccseket!</p></div>
             </details>
         </div>
@@ -112,9 +116,11 @@ summary::before{content:'>';display:inline-block;margin-right:8px;transition:tra
     </div>
     <div class="col-right">
        <div class="card">
-          <h2>Elemzési Előzmények (Napló)</h2>
-          <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory()" style="margin-bottom:0.8rem"/>
-          <div id="history"><p class="muted">Itt fognak megjelenni a korábbi elemzéseid.</p></div>
+          <details>
+             <summary>Elemzési Előzmények (Napló)</summary>
+             <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory()" style="margin-top: .5rem; margin-bottom:0.8rem"/>
+             <div id="history"><p class="muted">Itt fognak megjelenni a korábbi elemzéseid.</p></div>
+          </details>
         </div>
     </div>
 </div>
@@ -143,53 +149,26 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m])}
-function setProgress(pct,msg=null){const el=document.getElementById('progress');const goBtn=document.getElementById('goBtn');const statusEl=document.getElementById('status');const v=Math.max(0,Math.min(100,Math.round(pct||0)));if(v>0&&v<100){el.style.display='grid';goBtn.disabled=true}else{setTimeout(()=>{el.style.display='none'},250);goBtn.disabled=false}el.style.background=`conic-gradient(var(--primary) ${v*3.6}deg, rgba(255,255,255,.18) 0deg)`;el.querySelector('.progress-label').textContent=v+'%';if(msg)statusEl.textContent=msg}
-function handleSportChange(){__currentSport=document.getElementById('sportSelector').value;document.getElementById('fixtures').innerHTML='<p class="muted">Töltsd be a meccseket!</p>';document.getElementById('leaguesDisplay').innerHTML='<p class="muted">Töltsd be a meccseket!</p>'}
+function setProgress(pct,msg=null){const el=document.getElementById('progress');const goBtn=document.getElementById('goBtn');const statusEl=document.getElementById('status');const v=Math.max(0,Math.min(100,Math.round(pct||0)));const indicator=el.style;indicator.display=v>0&&v<100?'grid':'none';indicator.animation=v>0&&v<100?'pulse 2s infinite':'none';indicator.background=`conic-gradient(var(--primary) ${v*3.6}deg, rgba(255,255,255,.18) 0deg)`;el.querySelector('.progress-label').textContent=v+'%';if(msg)statusEl.textContent=msg}
+function handleSportChange(){__currentSport=document.getElementById('sportSelector').value;document.getElementById('fixtures').innerHTML='<p class="muted">Töltsd be a meccseket!</p>';document.getElementById('leagueList').innerHTML='<li class="muted">Töltsd be a meccseket.</li>'}
 async function loadFixtures(){const statusEl=document.getElementById('fxStatus');statusEl.textContent='Adatok lekérése...';if(!__gasUrl){statusEl.textContent='Hiba: Hiányzó GAS URL.';return}try{const response=await fetch(`${__gasUrl}?sport=${__currentSport}&days=2`);if(!response.ok)throw new Error(`Hálózati hiba: ${response.status}`);const data=await response.json();if(data.error)throw new Error(data.error);__fixtures=data.fixtures||[];renderFixtureList();renderLeagues();statusEl.textContent=`Siker! ${__fixtures.length} meccs betöltve.`}catch(e){statusEl.textContent=`Hiba: ${e.message}`}}
-function renderLeagues(){const box=document.getElementById('leaguesDisplay');if(__fixtures.length===0){box.innerHTML='<p class="muted">Nincsenek meccsek.</p>';return}const leagues=[...new Set(__fixtures.map(f=>f.league))];box.innerHTML=leagues.map(l=>`<div class="league-badge">${escapeHtml(l)}</div>`).join('')}
-function renderFixtureList(){const box=document.getElementById('fixtures');if(__fixtures.length===0){box.innerHTML=`<div class="muted">Nincs meccs.</div>`;return}box.innerHTML=__fixtures.map(fx=>{const d=new Date(fx.utcKickoff).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});return`<div class="fx-item"><div class="fx-item-details"><div style="flex-grow:1"><div class="fx-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div><div class="fx-meta">${escapeHtml(fx.league)} · ${d}</div></div></div><button class="btn-primary btn-sm" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">Elemzés</button></div>`}).join('')}
+
+function renderLeagues(){const box=document.getElementById('leagueList');if(__fixtures.length===0){box.innerHTML='<li class="muted">Nincsenek meccsek.</li>';return}const leagues=[...new Set(__fixtures.map(f=>f.league))];let html=`<li class="league-item active" onclick="filterFixturesByLeague('all', this)">Összes Bajnokság</li>`;html+=leagues.map(l=>`<li class="league-item" onclick="filterFixturesByLeague('${escapeHtml(l)}', this)">${escapeHtml(l)}</li>`).join('');box.innerHTML=html}
+function filterFixturesByLeague(league, element){document.querySelectorAll('.league-item').forEach(el=>el.classList.remove('active'));element.classList.add('active');const allFixtures=document.querySelectorAll('.fx-item');allFixtures.forEach(fx=>{fx.style.display=league==='all'||fx.dataset.league===league?'flex':'none'})}
+
+function renderFixtureList(){const box=document.getElementById('fixtures');if(__fixtures.length===0){box.innerHTML=`<div class="muted">Nincs meccs.</div>`;return}box.innerHTML=__fixtures.map(fx=>{const d=new Date(fx.utcKickoff).toLocaleString('hu-HU',{dateStyle:'short',timeStyle:'short'});return`<div class="fx-item" data-league="${escapeHtml(fx.league)}"><div class="fx-item-details"><div style="flex-grow:1"><div class="fx-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div><div class="fx-meta">${escapeHtml(fx.league)} · ${d}</div></div></div><button class="btn-primary btn-sm" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">Elemzés</button></div>`}).join('')}
 function fillAndAnalyze(home,away){document.getElementById('home').value=home;document.getElementById('away').value=away;document.querySelector('.col-center').scrollIntoView({behavior:'smooth'});runAnalysis(false)}
 
-async function runAnalysis(forceNew=false){
-    const home=document.getElementById("home").value.trim();
-    const away=document.getElementById("away").value.trim();
-    const homeFormWeight = document.getElementById("homeFormWeight").value;
-    const awayFormWeight = document.getElementById("awayFormWeight").value;
-
-    if(!home||!away||!__gasUrl){setProgress(0,"Hiba: Hiányzó adatok.");return}
-    const historyId=`analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}`;
-    if(!forceNew){const cachedAnalysis=localStorage.getItem(historyId);if(cachedAnalysis){openModal(home,away,cachedAnalysis);document.getElementById('status').textContent="Előzmény betöltve.";return}}
-    
-    let progressInterval;
-    try{
-        setProgress(1,"Elemzés indítása...");
-        let analysisUrl=`${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}`;
-        if(forceNew){analysisUrl+='&force=true'}
-        progressInterval=setInterval(()=>{const c=parseInt(document.querySelector('#progress .progress-label').textContent)||0;setProgress(Math.min(90,c+2),"Szerver válaszára várunk...")},800);
-        const response=await fetch(analysisUrl);
-        clearInterval(progressInterval);
-        if(!response.ok)throw new Error(`Szerver hiba: ${response.status}`);
-        setProgress(95,"Válasz feldolgozása...");
-        const data=await response.json();
-        if(data.error)throw new Error(data.error);
-        openModal(home,away,data.html);
-        saveAnalysis(home,away,data.html,historyId);
-        setProgress(100,"Kész.")
-    }catch(e){
-        if(progressInterval)clearInterval(progressInterval);
-        setProgress(0,"Hiba: "+e.message)
-    }
-}
+async function runAnalysis(forceNew=false){const home=document.getElementById("home").value.trim();const away=document.getElementById("away").value.trim();const homeFormWeight=document.getElementById("homeFormWeight").value;const awayFormWeight=document.getElementById("awayFormWeight").value;if(!home||!away||!__gasUrl){setProgress(0,"Hiba: Hiányzó adatok.");return}const historyId=`analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}`;if(!forceNew){const cachedAnalysis=localStorage.getItem(historyId);if(cachedAnalysis){openModal(home,away,cachedAnalysis);document.getElementById('status').textContent="Előzmény betöltve.";return}}let progressInterval;try{setProgress(1,"Elemzés indítása...");let analysisUrl=`${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}`;if(forceNew){analysisUrl+='&force=true'}progressInterval=setInterval(()=>{const c=parseInt(document.querySelector('#progress .progress-label').textContent)||0;setProgress(Math.min(90,c+2),"Szerver válaszára várunk...")},800);const response=await fetch(analysisUrl);clearInterval(progressInterval);if(!response.ok)throw new Error(`Szerver hiba: ${response.status}`);setProgress(95,"Válasz feldolgozása...");const data=await response.json();if(data.error)throw new Error(data.error);openModal(home,away,data.html);saveAnalysis(home,away,data.html,historyId);setProgress(100,"Kész.")}catch(e){if(progressInterval)clearInterval(progressInterval);setProgress(0,"Hiba: "+e.message)}}
 
 function saveAnalysis(home,away,html,id){let history=getHistoryFromLocalStorage();const now=new Date().toLocaleString('hu-HU');const record={id,home,away,date:now,sport:__currentSport};const existingIndex=history.findIndex(item=>item.id.startsWith(`analysis_${__currentSport}_${home}_vs_${away}`));if(existingIndex>-1){history.splice(existingIndex,1)}history.unshift(record);localStorage.setItem('sportAnalysisHistory',JSON.stringify(history));localStorage.setItem(id,html);renderHistory()}
 function getHistoryFromLocalStorage(){try{const json=localStorage.getItem('sportAnalysisHistory');return json?JSON.parse(json):[]}catch(e){return[]}}
-function renderHistory(){const history=getHistoryFromLocalStorage();const query=document.getElementById('historySearch').value.toLowerCase();const box=document.getElementById('history');if(!history||history.length===0){box.innerHTML='<p class="muted">Nincsenek előzmények.</p>';return}const filtered=history.filter(item=>item.home.toLowerCase().includes(query)||item.away.toLowerCase().includes(query));box.innerHTML=filtered.map(item=>`<div class="fx-item"><div class="fx-item-details" onclick="loadAnalysisFromHistory('${item.id}')" style="cursor:pointer;flex-grow:1"><div><div class="fx-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div><div class="fx-meta">${item.sport} · ${item.date}</div></div></div><div class="fx-actions" style="display:flex;gap:5px"><button class="btn-primary btn-sm" onclick="reAnalyze('${item.home}','${item.away}')" title="Újraelemzés">🔄</button><button class="btn-danger btn-sm" onclick="deleteHistoryItem('${item.id}',event)" title="Törlés">🗑️</button></div></div>`).join('')}
+function renderHistory(){const history=getHistoryFromLocalStorage();const query=document.getElementById('historySearch').value.toLowerCase();const box=document.getElementById('history');if(!history||history.length===0){box.innerHTML='<p class="muted">Nincsenek előzmények.</p>';return}const filtered=history.filter(item=>item.home.toLowerCase().includes(query)||item.away.toLowerCase().includes(query));box.innerHTML=filtered.map(item=>`<div class="fx-item"><div class="fx-item-details" onclick="loadAnalysisFromHistory('${item.id}')" style="cursor:pointer;flex-grow:1"><div><div class="fx-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div><div class="fx-meta">${item.sport} · ${item.date}</div></div></div><div class="fx-actions" style="display:flex;gap:5px"><button class="btn-primary btn-sm" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése">👁️</button><button class="btn-danger btn-sm" onclick="deleteHistoryItem('${item.id}',event)" title="Törlés">🗑️</button></div></div>`).join('')}
 function filterHistory(){renderHistory()}
 function loadAnalysisFromHistory(id){const html=localStorage.getItem(id);if(html){const record=getHistoryFromLocalStorage().find(item=>item.id===id);if(record){document.getElementById('home').value=record.home;document.getElementById('away').value=record.away;document.getElementById('sportSelector').value=record.sport;__currentSport=record.sport;const weights=id.split('_w')[1]?.split('-')||[50,50];document.getElementById('homeFormWeight').value=weights[0];document.getElementById('awayFormWeight').value=weights[1];document.getElementById('homeFormWeightLabel').textContent=`${weights[0]}%`;document.getElementById('awayFormWeightLabel').textContent=`${weights[1]}%`;openModal(record.home,record.away,html)}document.getElementById('status').textContent="Előzmény betöltve.";document.querySelector('.col-center').scrollIntoView({behavior:'smooth'})}else{alert("Hiba: Az elemzés nem található.")}}
-function reAnalyze(home,away){document.getElementById('home').value=home;document.getElementById('away').value=away;runAnalysis(true)}
 function deleteHistoryItem(id,event){event.stopPropagation();if(confirm("Biztosan törölni szeretnéd ezt az elemet?")){let history=getHistoryFromLocalStorage();const updatedHistory=history.filter(item=>item.id!==id);localStorage.setItem('sportAnalysisHistory',JSON.stringify(updatedHistory));localStorage.removeItem(id);renderHistory()}}
-function openModal(home, away, htmlContent) {document.getElementById('modalTitle').textContent = `${home} vs ${away}`; document.getElementById('modalBody').innerHTML = htmlContent; document.getElementById('analysisModal').style.display = 'flex';}
-function closeModal() {document.getElementById('analysisModal').style.display = 'none';}
+function openModal(home,away,htmlContent){document.getElementById('modalTitle').textContent=`${home} vs ${away}`;document.getElementById('modalBody').innerHTML=htmlContent;document.getElementById('analysisModal').style.display='flex'}
+function closeModal(){document.getElementById('analysisModal').style.display='none'}
 </script>
 </body>
 </html>
