@@ -86,12 +86,16 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .value-bet-card { border-color: var(--success) !important; background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(40, 167, 69, 0.1)) !important; }
 .value-bet-card h4 { color: var(--success) !important; }
 .value-highlight { color: var(--success); font-weight: 800; font-size: 1.2em; }
-.history-date-header {color: var(--primary); margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 5px; border-bottom: 1px solid var(--border); font-size: 1rem; font-weight: 700;}
-.history-date-header:first-child {margin-top: 0;}
 .sport-filter-container {display: flex; gap: 8px; margin-bottom: 0.8rem;}
 .sport-filter-btn {background-color: #0c0c0c; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; flex-grow: 1;}
 .sport-filter-btn:hover {border-color: var(--secondary); color: var(--text);}
 .sport-filter-btn.active {background-color: var(--primary); color: #000; border-color: var(--primary); font-weight: 700;}
+.history-date-group { border-bottom: 1px solid var(--border); }
+.history-date-group:last-of-type { border-bottom: none; }
+.history-date-summary { cursor: pointer; padding: 0.8rem 0.5rem; font-size: 1rem; font-weight: 700; color: var(--primary); list-style: none; display: flex; align-items: center; }
+.history-date-summary::-webkit-details-marker { display: none; }
+.history-date-summary::before { content: '▶'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; }
+.history-date-group[open] > .history-date-summary::before { transform: rotate(90deg); }
 </style>
 </head>
 <body>
@@ -123,7 +127,6 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                 <div class="col"><label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/></div>
                 <div class="col"><label for="away">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/></div>
             </div>
-            
             <div class="actions">
                 <button id="goBtn" class="btn-primary" onclick="runAnalysis(true)">Elemzés Futtatása</button>
             </div>
@@ -138,10 +141,10 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
              <summary style="font-weight: 800; font-size: 1.2rem; color: var(--secondary); cursor: pointer; margin-bottom: 0.5rem; list-style: none;">Elemzési Előzmények (Napló)</summary>
              <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory()" style="margin-top: .5rem; margin-bottom:0.8rem"/>
              <div class="sport-filter-container">
-    <button class="sport-filter-btn active" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
-    <button class="sport-filter-btn" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
-    <button class="sport-filter-btn" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
-</div>
+                <button class="sport-filter-btn active" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
+                <button class="sport-filter-btn" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
+                <button class="sport-filter-btn" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
+             </div>
              <div id="history"><p class="muted">Itt fognak megjelenni a korábbi elemzéseid.</p></div>
           </details>
         </div>
@@ -172,7 +175,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 let __gasUrl = 'https://script.google.com/macros/s/AKfycbxdUvCC1ZmiCmSk_UUM6ryen5yw7v7M9vc9Iep3uKhrJBVMwTb714mKvNJLDm6mrttmgQ/exec';
 let __fixtures = [];
 let __currentSport = 'soccer';
-let __historySportFilter = 'all';
+let __historySportFilter = 'soccer';
 
 document.addEventListener("DOMContentLoaded", function(){
     if(!__gasUrl||!__gasUrl.startsWith('https://script.google.com')){document.getElementById('userInfo').textContent='HIBA: Kérlek, add meg a Web App URL-t!'}else{document.getElementById('userInfo').textContent=`Csatlakozva.`}
@@ -284,7 +287,7 @@ function renderHistory() {
     }
 
     const filtered = history.filter(item =>
-        (__historySportFilter === 'all' || item.sport === __historySportFilter) &&
+        (item.sport === __historySportFilter) &&
         (item.home.toLowerCase().includes(query) || item.away.toLowerCase().includes(query))
     );
 
@@ -294,25 +297,26 @@ function renderHistory() {
     }
 
     const groupedByDate = filtered.reduce((acc, item) => {
-        const dateKey = item.date.substring(0, 13).trim();
+        const dateKey = new Date(item.date.replace(/\./g, '/')).toISOString().split('T')[0];
         if (!acc[dateKey]) acc[dateKey] = [];
         acc[dateKey].push(item);
         return acc;
     }, {});
 
     let finalHtml = '';
-    const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b.replace(/\./g, '/')) - new Date(a.replace(/\./g, '/')));
+    const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
     for (const date of sortedDates) {
-        finalHtml += `<h4 class="history-date-header">${new Date(date.replace(/\./g, '/')).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</h4>`;
+        finalHtml += `<details class="history-date-group">`;
+        finalHtml += `<summary class="history-date-summary">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
         
-        groupedByDate[date].forEach(item => {
+        groupedByDate[date].sort((a, b) => new Date(b.date.replace(/\./g, '/')) - new Date(a.date.replace(/\./g, '/'))).forEach(item => {
             finalHtml += `
                 <div class="fx-item">
                     <div class="fx-item-details" onclick="loadAnalysisFromHistory('${item.id}')" style="cursor:pointer;flex-grow:1">
                         <div>
                             <div class="fx-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div>
-                            <div class="fx-meta">${item.sport} · ${item.date}</div>
+                            <div class="fx-meta">${item.date}</div>
                         </div>
                     </div>
                     <div class="fx-actions" style="display:flex;gap:5px">
@@ -322,6 +326,7 @@ function renderHistory() {
                 </div>
             `;
         });
+        finalHtml += `</details>`;
     }
 
     box.innerHTML = finalHtml;
@@ -357,4 +362,3 @@ function showMatchesInModal(league = 'all') { if (__fixtures.length === 0) { ale
 </script>
 </body>
 </html>
-
