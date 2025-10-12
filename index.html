@@ -90,6 +90,13 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .value-bet-card { border-color: var(--success) !important; background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(40, 167, 69, 0.1)) !important; }
 .value-bet-card h4 { color: var(--success) !important; }
 .value-highlight { color: var(--success); font-weight: 800; font-size: 1.2em; }
+/* NAPLÓ FEJLESZTÉS STÍLUSAI */
+.history-date-header {color: var(--primary); margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 5px; border-bottom: 1px solid var(--border); font-size: 1rem; font-weight: 700;}
+.history-date-header:first-child {margin-top: 0;}
+.sport-filter-container {display: flex; gap: 8px; margin-bottom: 0.8rem;}
+.sport-filter-btn {background-color: #0c0c0c; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; flex-grow: 1;}
+.sport-filter-btn:hover {border-color: var(--secondary); color: var(--text);}
+.sport-filter-btn.active {background-color: var(--primary); color: #000; border-color: var(--primary); font-weight: 700;}
 </style>
 </head>
 <body>
@@ -126,7 +133,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                 <div class="col"><label for="awayFormWeight">Vendég Forma Súlya: <span id="awayFormWeightLabel">50%</span></label><input type="range" min="0" max="100" value="50" id="awayFormWeight"></div>
             </div>
             <div class="actions">
-<button id="goBtn" class="btn-primary" onclick="runAnalysis(true)">Elemzés Futtatása</button>
+                <button id="goBtn" class="btn-primary" onclick="runAnalysis(true)">Elemzés Futtatása</button>
             </div>
             <div id="progress" class="progress-ring" style="display:none"><span class="progress-label"></span></div>
             <p id="status" class="muted" style="text-align:center">Kész.</p>
@@ -138,6 +145,12 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
           <details>
              <summary style="font-weight: 800; font-size: 1.2rem; color: var(--secondary); cursor: pointer; margin-bottom: 0.5rem; list-style: none;">Elemzési Előzmények (Napló)</summary>
              <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory()" style="margin-top: .5rem; margin-bottom:0.8rem"/>
+             <div class="sport-filter-container">
+                <button class="sport-filter-btn active" onclick="filterHistoryBySport('all', this)" title="Összes sportág">Összes</button>
+                <button class="sport-filter-btn" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
+                <button class="sport-filter-btn" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
+                <button class="sport-filter-btn" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
+             </div>
              <div id="history"><p class="muted">Itt fognak megjelenni a korábbi elemzéseid.</p></div>
           </details>
         </div>
@@ -168,6 +181,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 let __gasUrl = 'https://script.google.com/macros/s/AKfycbxdUvCC1ZmiCmSk_UUM6ryen5yw7v7M9vc9Iep3uKhrJBVMwTb714mKvNJLDm6mrttmgQ/exec';
 let __fixtures = [];
 let __currentSport = 'soccer';
+let __historySportFilter = 'all'; // Ez tárolja az aktív napló szűrőt
 
 document.addEventListener("DOMContentLoaded", function(){
     if(!__gasUrl||!__gasUrl.startsWith('')){document.getElementById('userInfo').textContent='HIBA: Kérlek, add meg a Web App URL-t!'}else{document.getElementById('userInfo').textContent=`Csatlakozva.`}
@@ -214,7 +228,7 @@ function fillAndAnalyze(home,away){
     document.getElementById('away').value=away;
     closeListModal();
     document.querySelector('.col-center').scrollIntoView({behavior:'smooth'});
-    runAnalysis(false);
+    runAnalysis(true);
 }
 async function runAnalysis(forceNew = false) {
     const home = document.getElementById("home").value.trim();
@@ -250,7 +264,68 @@ async function runAnalysis(forceNew = false) {
 }
 function saveAnalysis(home,away,html,id){let history=getHistoryFromLocalStorage();const now=new Date().toLocaleString('hu-HU');const record={id,home,away,date:now,sport:__currentSport};const existingIndex=history.findIndex(item=>item.id.startsWith(`analysis_${__currentSport}_${home}_vs_${away}`));if(existingIndex>-1){history.splice(existingIndex,1)}history.unshift(record);localStorage.setItem('sportAnalysisHistory',JSON.stringify(history));localStorage.setItem(id,html);renderHistory()}
 function getHistoryFromLocalStorage(){try{const json=localStorage.getItem('sportAnalysisHistory');return json?JSON.parse(json):[]}catch(e){return[]}}
-function renderHistory(){const history=getHistoryFromLocalStorage();const query=document.getElementById('historySearch').value.toLowerCase();const box=document.getElementById('history');if(!history||history.length===0){box.innerHTML='<p class="muted">Nincsenek előzmények.</p>';return}const filtered=history.filter(item=>item.home.toLowerCase().includes(query)||item.away.toLowerCase().includes(query));box.innerHTML=filtered.map(item=>`<div class="fx-item"><div class="fx-item-details" onclick="loadAnalysisFromHistory('${item.id}')" style="cursor:pointer;flex-grow:1"><div><div class="fx-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div><div class="fx-meta">${item.sport} · ${item.date}</div></div></div><div class="fx-actions" style="display:flex;gap:5px"><button class="btn-primary btn-sm" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése">👁️</button><button class="btn-danger btn-sm" onclick="deleteHistoryItem('${item.id}',event)" title="Törlés">🗑️</button></div></div>`).join('')}
+
+function filterHistoryBySport(sport, clickedButton) {
+    __historySportFilter = sport;
+    document.querySelectorAll('.sport-filter-btn').forEach(btn => btn.classList.remove('active'));
+    clickedButton.classList.add('active');
+    renderHistory();
+}
+
+function renderHistory() {
+    const history = getHistoryFromLocalStorage();
+    const query = document.getElementById('historySearch').value.toLowerCase();
+    const box = document.getElementById('history');
+
+    if (!history || history.length === 0) {
+        box.innerHTML = '<p class="muted">Nincsenek előzmények.</p>';
+        return;
+    }
+
+    const filtered = history.filter(item =>
+        (__historySportFilter === 'all' || item.sport === __historySportFilter) &&
+        (item.home.toLowerCase().includes(query) || item.away.toLowerCase().includes(query))
+    );
+
+    if (filtered.length === 0) {
+        box.innerHTML = '<p class="muted">Nincs a szűrési feltételeknek megfelelő találat.</p>';
+        return;
+    }
+
+    const groupedByDate = filtered.reduce((acc, item) => {
+        const dateKey = item.date.substring(0, 13).trim();
+        if (!acc[dateKey]) acc[dateKey] = [];
+        acc[dateKey].push(item);
+        return acc;
+    }, {});
+
+    let finalHtml = '';
+    const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b.replace(/\./g, '/')) - new Date(a.replace(/\./g, '/')));
+
+    for (const date of sortedDates) {
+        finalHtml += `<h4 class="history-date-header">${new Date(date.replace(/\./g, '/')).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</h4>`;
+        
+        groupedByDate[date].forEach(item => {
+            finalHtml += `
+                <div class="fx-item">
+                    <div class="fx-item-details" onclick="loadAnalysisFromHistory('${item.id}')" style="cursor:pointer;flex-grow:1">
+                        <div>
+                            <div class="fx-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div>
+                            <div class="fx-meta">${item.sport} · ${item.date}</div>
+                        </div>
+                    </div>
+                    <div class="fx-actions" style="display:flex;gap:5px">
+                        <button class="btn-primary btn-sm" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése">👁️</button>
+                        <button class="btn-danger btn-sm" onclick="deleteHistoryItem('${item.id}',event)" title="Törlés">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    box.innerHTML = finalHtml;
+}
+
 function filterHistory(){renderHistory()}
 function loadAnalysisFromHistory(id){const html=localStorage.getItem(id);if(html){const record=getHistoryFromLocalStorage().find(item=>item.id===id);if(record){document.getElementById('home').value=record.home;document.getElementById('away').value=record.away;document.getElementById('sportSelector').value=record.sport;__currentSport=record.sport;const weights=id.split('_w')[1]?.split('-')||[50,50];document.getElementById('homeFormWeight').value=weights[0];document.getElementById('awayFormWeight').value=weights[1];document.getElementById('homeFormWeightLabel').textContent=`${weights[0]}%`;document.getElementById('awayFormWeightLabel').textContent=`${weights[1]}%`;openAnalysisModal(record.home,record.away,html)}document.getElementById('status').textContent="Előzmény betöltve.";document.querySelector('.col-center').scrollIntoView({behavior:'smooth'})}else{alert("Hiba: Az elemzés nem található.")}}
 function deleteHistoryItem(id,event){event.stopPropagation();if(confirm("Biztosan törölni szeretnéd ezt az elemet?")){let history=getHistoryFromLocalStorage();const updatedHistory=history.filter(item=>item.id!==id);localStorage.setItem('sportAnalysisHistory',JSON.stringify(updatedHistory));localStorage.removeItem(id);renderHistory()}}
@@ -263,4 +338,3 @@ function showMatchesInModal(league = 'all') { if (__fixtures.length === 0) { ale
 </script>
 </body>
 </html>
-
