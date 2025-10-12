@@ -24,9 +24,6 @@ h2{margin:0 0 .9rem 0;font-weight:800;color:var(--secondary)}
 h3{font-weight:700;margin-top:0;color:var(--text)}
 label{display:block;font-weight:600;margin-top:.6rem}
 input,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#0c0c0c;color:var(--text);margin-top:.25rem;font-size:14px;font-family:inherit}
-input[type="range"]{-webkit-appearance:none;width:100%;height:8px;background:linear-gradient(to right,var(--primary),var(--secondary));border-radius:10px;outline:none;opacity:.9;transition:opacity .2s;box-shadow:inset 0 1px 3px rgba(0,0,0,.3)}
-input[type="range"]:hover{opacity:1}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;background:#fff;border-radius:50%;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.4);margin-top:-6px;border:2px solid var(--primary)}
 input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0 0 0 3px rgba(184,134,11,.25)}
 .actions{margin-top:1.5rem;display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;flex-direction:column}
 .btn-primary,.btn-danger{padding:12px 18px;border:none;border-radius:14px;color:#000;font-weight:800;cursor:pointer;white-space:nowrap;width:100%;transition:transform .2s ease;font-family:var(--font-family);text-align:center}
@@ -81,7 +78,6 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .fixture-card .fx-meta { font-size: 0.85rem; color: var(--muted); margin: 0.5rem 0 1rem 0; }
 .fixture-card .btn-primary { width: 100%; }
 .fx-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.fx-item:hover{background-color:rgba(255,255,255,.05)}.fx-item-details{flex-grow:1}
-/* ÚJ STÍLUSOK A v31.0-HOZ */
 .market-pulse-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; }
 .market-pulse-card h4 { color: var(--secondary); }
 .odds-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -90,7 +86,6 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .value-bet-card { border-color: var(--success) !important; background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(40, 167, 69, 0.1)) !important; }
 .value-bet-card h4 { color: var(--success) !important; }
 .value-highlight { color: var(--success); font-weight: 800; font-size: 1.2em; }
-/* NAPLÓ FEJLESZTÉS STÍLUSAI */
 .history-date-header {color: var(--primary); margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 5px; border-bottom: 1px solid var(--border); font-size: 1rem; font-weight: 700;}
 .history-date-header:first-child {margin-top: 0;}
 .sport-filter-container {display: flex; gap: 8px; margin-bottom: 0.8rem;}
@@ -128,6 +123,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                 <div class="col"><label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/></div>
                 <div class="col"><label for="away">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/></div>
             </div>
+            
             <div class="actions">
                 <button id="goBtn" class="btn-primary" onclick="runAnalysis(true)">Elemzés Futtatása</button>
             </div>
@@ -177,19 +173,15 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 let __gasUrl = 'https://script.google.com/macros/s/AKfycbxdUvCC1ZmiCmSk_UUM6ryen5yw7v7M9vc9Iep3uKhrJBVMwTb714mKvNJLDm6mrttmgQ/exec';
 let __fixtures = [];
 let __currentSport = 'soccer';
-let __historySportFilter = 'all'; // Ez tárolja az aktív napló szűrőt
+let __historySportFilter = 'all';
 
 document.addEventListener("DOMContentLoaded", function(){
-    if(!__gasUrl||!__gasUrl.startsWith('')){document.getElementById('userInfo').textContent='HIBA: Kérlek, add meg a Web App URL-t!'}else{document.getElementById('userInfo').textContent=`Csatlakozva.`}
+    if(!__gasUrl||!__gasUrl.startsWith('https://script.google.com')){document.getElementById('userInfo').textContent='HIBA: Kérlek, add meg a Web App URL-t!'}else{document.getElementById('userInfo').textContent=`Csatlakozva.`}
     renderHistory();
-    ['homeFormWeight', 'awayFormWeight'].forEach(id => {
-        const slider = document.getElementById(id);
-        const label = document.getElementById(id + 'Label');
-        slider.addEventListener('input', (e) => { label.textContent = `${e.target.value}%`; });
-    });
 });
+
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m])}
-function setProgress(pct,msg=null){const el=document.getElementById('progress');const goBtn=document.getElementById('goBtn');const statusEl=document.getElementById('status');const v=Math.max(0,Math.min(100,Math.round(pct||0)));const indicator=el.style;indicator.display=v>0&&v<100?'grid':'none';if(v>0&&v<100){indicator.animation='pulse 2s infinite'}else{indicator.animation='none'}indicator.background=`conic-gradient(var(--primary) ${v*3.6}deg, rgba(255,255,255,.18) 0deg)`;el.querySelector('.progress-label').textContent=v+'%';if(msg)statusEl.textContent=msg}
+function setProgress(pct,msg=null){const el=document.getElementById('progress');const statusEl=document.getElementById('status');const v=Math.max(0,Math.min(100,Math.round(pct||0)));el.style.display=v>0&&v<100?'grid':'none';if(v>0&&v<100){el.style.animation='pulse 2s infinite'}else{el.style.animation='none'}el.style.background=`conic-gradient(var(--primary) ${v*3.6}deg, rgba(255,255,255,.18) 0deg)`;el.querySelector('.progress-label').textContent=v+'%';if(msg)statusEl.textContent=msg}
 function handleSportChange(){__currentSport=document.getElementById('sportSelector').value;['leagueCount','matchCount'].forEach(id=>document.getElementById(id).style.display='none'); __fixtures = [];}
 async function loadFixtures(){
     const statusEl=document.getElementById('fxStatus');
@@ -226,30 +218,43 @@ function fillAndAnalyze(home,away){
     document.querySelector('.col-center').scrollIntoView({behavior:'smooth'});
     runAnalysis(true);
 }
+
 async function runAnalysis(forceNew = false) {
     const home = document.getElementById("home").value.trim();
     const away = document.getElementById("away").value.trim();
-    const homeFormWeight = document.getElementById("homeFormWeight").value;
-    const awayFormWeight = document.getElementById("awayFormWeight").value;
-    if (!home || !away || !__gasUrl) { setProgress(0, "Hiba: Hiányzó adatok."); return; }
-    const historyId = `analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}`;
+    
+    if (!home || !away || !__gasUrl) { 
+        setProgress(0, "Hiba: Hiányzó adatok."); 
+        return; 
+    }
+    
+    const historyId = `analysis_${__currentSport}_${home}_vs_${away}`; 
     const isCachedLocally = localStorage.getItem(historyId);
+    
     if (!forceNew && isCachedLocally) {
         openAnalysisModal(home, away, isCachedLocally);
         document.getElementById('status').textContent = "Előzmény betöltve a naplóból.";
         return;
     }
+    
     let progressInterval;
     try {
         setProgress(1, "Elemzés indítása...");
-        let analysisUrl = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&force=true`;
-        progressInterval = setInterval(() => { const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; setProgress(Math.min(90, c + 3), "Adatok gyűjtése a Piacról és az AI-tól...") }, 800);
+        let analysisUrl = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true`;
+        
+        progressInterval = setInterval(() => { 
+            const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; 
+            setProgress(Math.min(90, c + 3), "Adatok gyűjtése a Piacról és az AI-tól...") 
+        }, 800);
+        
         const response = await fetch(analysisUrl);
         clearInterval(progressInterval);
         if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
+        
         setProgress(95, "Válasz feldolgozása...");
         const data = await response.json();
         if (data.error) throw new Error(data.error);
+        
         openAnalysisModal(home, away, data.html);
         saveAnalysis(home, away, data.html, historyId);
         setProgress(100, "Kész.");
@@ -258,7 +263,8 @@ async function runAnalysis(forceNew = false) {
         setProgress(0, "Hiba: " + e.message);
     }
 }
-function saveAnalysis(home,away,html,id){let history=getHistoryFromLocalStorage();const now=new Date().toLocaleString('hu-HU');const record={id,home,away,date:now,sport:__currentSport};const existingIndex=history.findIndex(item=>item.id.startsWith(`analysis_${__currentSport}_${home}_vs_${away}`));if(existingIndex>-1){history.splice(existingIndex,1)}history.unshift(record);localStorage.setItem('sportAnalysisHistory',JSON.stringify(history));localStorage.setItem(id,html);renderHistory()}
+
+function saveAnalysis(home,away,html,id){let history=getHistoryFromLocalStorage();const now=new Date().toLocaleString('hu-HU');const record={id,home,away,date:now,sport:__currentSport};const existingIndex=history.findIndex(item=>item.home===home && item.away===away && item.sport===__currentSport);if(existingIndex>-1){history.splice(existingIndex,1)}history.unshift(record);localStorage.setItem('sportAnalysisHistory',JSON.stringify(history));localStorage.setItem(id,html);renderHistory()}
 function getHistoryFromLocalStorage(){try{const json=localStorage.getItem('sportAnalysisHistory');return json?JSON.parse(json):[]}catch(e){return[]}}
 
 function filterHistoryBySport(sport, clickedButton) {
@@ -323,7 +329,25 @@ function renderHistory() {
 }
 
 function filterHistory(){renderHistory()}
-function loadAnalysisFromHistory(id){const html=localStorage.getItem(id);if(html){const record=getHistoryFromLocalStorage().find(item=>item.id===id);if(record){document.getElementById('home').value=record.home;document.getElementById('away').value=record.away;document.getElementById('sportSelector').value=record.sport;__currentSport=record.sport;const weights=id.split('_w')[1]?.split('-')||[50,50];document.getElementById('homeFormWeight').value=weights[0];document.getElementById('awayFormWeight').value=weights[1];document.getElementById('homeFormWeightLabel').textContent=`${weights[0]}%`;document.getElementById('awayFormWeightLabel').textContent=`${weights[1]}%`;openAnalysisModal(record.home,record.away,html)}document.getElementById('status').textContent="Előzmény betöltve.";document.querySelector('.col-center').scrollIntoView({behavior:'smooth'})}else{alert("Hiba: Az elemzés nem található.")}}
+
+function loadAnalysisFromHistory(id){
+    const html=localStorage.getItem(id);
+    if(html){
+        const record=getHistoryFromLocalStorage().find(item=>item.id===id);
+        if(record){
+            document.getElementById('home').value=record.home;
+            document.getElementById('away').value=record.away;
+            document.getElementById('sportSelector').value=record.sport;
+            __currentSport=record.sport;
+            openAnalysisModal(record.home,record.away,html);
+        }
+        document.getElementById('status').textContent="Előzmény betöltve.";
+        document.querySelector('.col-center').scrollIntoView({behavior:'smooth'});
+    } else {
+        alert("Hiba: Az elemzés nem található.");
+    }
+}
+
 function deleteHistoryItem(id,event){event.stopPropagation();if(confirm("Biztosan törölni szeretnéd ezt az elemet?")){let history=getHistoryFromLocalStorage();const updatedHistory=history.filter(item=>item.id!==id);localStorage.setItem('sportAnalysisHistory',JSON.stringify(updatedHistory));localStorage.removeItem(id);renderHistory()}}
 function openAnalysisModal(home,away,htmlContent){document.getElementById('modalTitle').textContent=`${home} vs ${away}`;document.getElementById('modalBody').innerHTML=htmlContent;document.getElementById('analysisModal').style.display='flex'}
 function closeAnalysisModal(){document.getElementById('analysisModal').style.display='none'}
@@ -334,4 +358,3 @@ function showMatchesInModal(league = 'all') { if (__fixtures.length === 0) { ale
 </script>
 </body>
 </html>
-
