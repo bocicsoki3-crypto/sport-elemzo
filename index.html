@@ -128,10 +128,6 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                 <div class="col"><label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/></div>
                 <div class="col"><label for="away">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/></div>
             </div>
-            <div class="row" style="margin-top: .7rem;">
-                <div class="col"><label for="homeFormWeight">Hazai Forma Súlya: <span id="homeFormWeightLabel">50%</span></label><input type="range" min="0" max="100" value="50" id="homeFormWeight"></div>
-                <div class="col"><label for="awayFormWeight">Vendég Forma Súlya: <span id="awayFormWeightLabel">50%</span></label><input type="range" min="0" max="100" value="50" id="awayFormWeight"></div>
-            </div>
             <div class="actions">
                 <button id="goBtn" class="btn-primary" onclick="runAnalysis(true)">Elemzés Futtatása</button>
             </div>
@@ -338,3 +334,4 @@ function showMatchesInModal(league = 'all') { if (__fixtures.length === 0) { ale
 </script>
 </body>
 </html>
+
