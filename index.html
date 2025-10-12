@@ -138,11 +138,10 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
              <summary style="font-weight: 800; font-size: 1.2rem; color: var(--secondary); cursor: pointer; margin-bottom: 0.5rem; list-style: none;">Elemzési Előzmények (Napló)</summary>
              <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory()" style="margin-top: .5rem; margin-bottom:0.8rem"/>
              <div class="sport-filter-container">
-                <button class="sport-filter-btn active" onclick="filterHistoryBySport('all', this)" title="Összes sportág">Összes</button>
-                <button class="sport-filter-btn" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
-                <button class="sport-filter-btn" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
-                <button class="sport-filter-btn" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
-             </div>
+    <button class="sport-filter-btn active" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
+    <button class="sport-filter-btn" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
+    <button class="sport-filter-btn" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
+</div>
              <div id="history"><p class="muted">Itt fognak megjelenni a korábbi elemzéseid.</p></div>
           </details>
         </div>
@@ -358,3 +357,4 @@ function showMatchesInModal(league = 'all') { if (__fixtures.length === 0) { ale
 </script>
 </body>
 </html>
+
