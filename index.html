@@ -303,7 +303,7 @@ async function runAnalysis(forceNew = false) {
         return; 
     }
     
-    const historyId = `analysis_v32.1_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}`;
+    const historyId = `analysis_v33.0_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}`;
     const isCachedLocally = localStorage.getItem(historyId);
     
     if (!forceNew && isCachedLocally) {
@@ -435,4 +435,3 @@ function showMatchesInModal(league = 'all') { if (__fixtures.length === 0) { ale
 </script>
 </body>
 </html>
-
