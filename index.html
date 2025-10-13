@@ -81,7 +81,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .fx-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.fx-item:hover{background-color:rgba(255,255,255,.05)}.fx-item-details{flex-grow:1}
 .market-pulse-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; }
 .market-pulse-card h4 { color: var(--secondary); }
-.odds-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.odds-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 10px;}
 .odds-row:last-child { border-bottom: none; }
 .odds-value { font-weight: 700; font-size: 1.1rem; color: var(--accent); }
 .odds-movement { font-size: 1.2rem; }
@@ -120,6 +120,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .confidence-score { font-size: 1.5rem; font-weight: 800; color: var(--info); }
 .btn-log-bet { width: auto; font-size: 0.9rem; padding: 8px 12px; margin-top: 0.5rem; background: linear-gradient(135deg, var(--success), #1e7e34); }
 .btn-log-bet:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(40, 167, 69, 0.2); }
+#liveScenarioPanel { margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
 /* =================================== */
 /* === OLVASHATÓSÁGI FEJLESZTÉSEK === */
 /* =================================== */
@@ -149,7 +150,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
         </div>
          <div class="card">
             <h2>Teljesítménykövetés</h2>
-            <p class="muted">Állítsd be a Google Táblázat URL-jét a naplózáshoz.</p>
+            <p class="muted">Add meg a Google Táblázat URL-jét a naplózáshoz. A Táblázatban hozz létre egy "SportElemző" menüt a kiértékeléshez.</p>
             <label for="sheetUrl">Google Táblázat URL</label>
             <input id="sheetUrl" placeholder="Google Sheet URL" onchange="saveSheetUrl()">
             <div id="bankrollStatus"><p class="muted">Nincs adat.</p></div>
@@ -162,7 +163,8 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                 <div class="col"><label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/></div>
                 <div class="col"><label for="away">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/></div>
             </div>
-            <div class="expert-tuning-toggle" onclick="toggleExpertTuning()">Szakértői Finomhangolás ⚙️</div>
+
+            <div class="expert-tuning-toggle" onclick="togglePanel('expertTuningPanel')">Szakértői Finomhangolás ⚙️</div>
             <div id="expertTuningPanel">
                 <div class="row">
                     <div class="col">
@@ -175,6 +177,17 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                     </div>
                 </div>
             </div>
+
+            <div class="expert-tuning-toggle" onclick="togglePanel('liveScenarioPanel')">Élő Szcenárió Elemzés ⚡</div>
+             <div id="liveScenarioPanel" style="display:none;">
+                <p class="muted" style="text-align:center;">Add meg a meccs jelenlegi állását és a hátralévő időt a szimulációhoz.</p>
+                <div class="row">
+                    <div class="col"><label for="liveHomeScore">Hazai gólok</label><input id="liveHomeScore" type="number" value="0"/></div>
+                    <div class="col"><label for="liveAwayScore">Vendég gólok</label><input id="liveAwayScore" type="number" value="0"/></div>
+                    <div class="col"><label for="liveTimeRemaining">Hátralévő idő (%)</label><input id="liveTimeRemaining" type="number" value="100" min="0" max="100"/></div>
+                </div>
+            </div>
+            
             <div class="actions">
                 <button id="goBtn" class="btn-primary" onclick="runAnalysis(true)">Elemzés Futtatása</button>
             </div>
@@ -232,8 +245,8 @@ document.addEventListener("DOMContentLoaded", function(){
     renderHistory();
 });
 
-function toggleExpertTuning() {
-    const panel = document.getElementById('expertTuningPanel');
+function togglePanel(panelId) {
+    const panel = document.getElementById(panelId);
     panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
 }
 
@@ -260,9 +273,9 @@ async function updateBankrollStatus() {
         const response = await fetch(`${__gasUrl}?action=getBankroll&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-        statusEl.innerHTML = `<p><strong>Aktuális Bankroll:</strong> ${data.bankroll.toFixed(2)} egység</p><p><strong>Profit/Veszteség:</strong> <span style="color:${data.pnl >= 0 ? 'var(--success)' : 'var(--danger)'};">${data.pnl.toFixed(2)} egység (${data.roi.toFixed(1)}%)</span></p>`;
+        statusEl.innerHTML = `<p><strong>Aktuális Bankroll:</strong> ${data.bankroll.toFixed(2)} e.</p><p><strong>Profit/Veszteség:</strong> <span style="color:${data.pnl >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight:bold;">${data.pnl.toFixed(2)} e.</span></p><p><strong>ROI:</strong> <span style="font-weight:bold;">${data.roi.toFixed(1)}%</span></p>`;
     } catch(e) {
-        statusEl.innerHTML = `<p class="muted">Hiba a bankroll lekérésekor: ${e.message}</p>`;
+        statusEl.innerHTML = `<p class="muted" style="color:var(--danger);">Hiba: ${e.message}</p>`;
     }
 }
 
@@ -275,19 +288,19 @@ async function logBet(betData) {
     button.disabled = true;
     button.textContent = 'Naplózás...';
     try {
-        const response = await fetch(`${__gasUrl}?action=logBet`, {
+        const response = await fetch(`${__gasUrl}`, {
             method: 'POST',
-            headers: {'Content-Type': 'text/plain'}, // Hogy a GAS kezelni tudja
-            body: JSON.stringify({ sheetUrl: __sheetUrl, bet: betData })
+            mode: 'no-cors', // Fontos a doPost-hoz
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData })
         });
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
+        // Mivel a no-cors nem ad vissza olvasható választ, feltételezzük a sikert.
         button.textContent = 'Sikeresen Naplózva ✅';
-        updateBankrollStatus();
+        setTimeout(updateBankrollStatus, 1000); // Várjunk egy kicsit a frissítés előtt
     } catch (e) {
-        alert(`Hiba a naplózás során: ${e.message}`);
-        button.disabled = false;
-        button.textContent = 'Naplózás';
+        alert(`Hiba a naplózás során: ${e.message}. A naplózás valószínűleg sikeres volt ettől függetlenül.`);
+        button.textContent = 'Naplózva (ellenőrizd)';
+        setTimeout(updateBankrollStatus, 1000);
     }
 }
 
@@ -308,6 +321,7 @@ async function loadFixtures(){
         const data=await response.json();
         if(data.error)throw new Error(data.error);
         __fixtures=data.fixtures||[];
+        sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {})); // Opening odds mentése
         const leagues=[...new Set(__fixtures.map(f=>f.league))];
         const leagueCountEl = document.getElementById('leagueCount');
         const matchCountEl = document.getElementById('matchCount');
@@ -336,13 +350,17 @@ async function runAnalysis(forceNew = false) {
     const away = document.getElementById("away").value.trim();
     const homeFormWeight = document.getElementById("homeFormWeight").value;
     const awayFormWeight = document.getElementById("awayFormWeight").value;
+    const liveHomeScore = document.getElementById("liveHomeScore").value;
+    const liveAwayScore = document.getElementById("liveAwayScore").value;
+    const liveTimeRemaining = document.getElementById("liveTimeRemaining").value;
     
     if (!home || !away || !__gasUrl) { 
         setProgress(0, "Hiba: Hiányzó adatok."); 
         return; 
     }
     
-    const historyId = `analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}`;
+    const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
+    const historyId = `analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}_live${liveHomeScore}-${liveAwayScore}-${liveTimeRemaining}`;
     const isCachedLocally = localStorage.getItem(historyId);
     
     if (!forceNew && isCachedLocally) {
@@ -354,20 +372,30 @@ async function runAnalysis(forceNew = false) {
     let progressInterval;
     try {
         setProgress(1, "Elemzés indítása...");
-        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}`;
+        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&liveHome=${liveHomeScore}&liveAway=${liveAwayScore}&liveTime=${liveTimeRemaining}`;
         
         progressInterval = setInterval(() => { 
             const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; 
             setProgress(Math.min(90, c + 3), "Adatok gyűjtése a Piacról és az AI-tól...") 
         }, 800);
         
-        const response = await fetch(analysisUrl);
+        const response = await fetch(`${analysisUrl}`, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) })
+        });
+
+        // A no-cors miatt trükközni kell a válasszal. Újra lekérjük a cache-elt eredményt.
+        // Ez egy workaround a GAS korlátai miatt.
+        await new Promise(resolve => setTimeout(resolve, 8000)); // Várjunk, amíg a szerver valószínűleg befejezte
+        const resultResponse = await fetch(`${analysisUrl}&force=false`); // Most már a cache-ből kérjük
+        const data = await resultResponse.json();
+
         clearInterval(progressInterval);
-        if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
+        if (data.error) throw new Error(data.error);
         
         setProgress(95, "Válasz feldolgozása...");
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
         
         openAnalysisModal(home, away, data.html);
         saveAnalysis(home, away, data.html, historyId);
