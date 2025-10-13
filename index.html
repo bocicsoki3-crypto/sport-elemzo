@@ -6,10 +6,10 @@
 <title>SportElemző Gemini AI</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000000;--card:#1a1a1a;--border:#38301d;--muted:#aaa;--primary:#D4AF37;--secondary:#B8860B;--accent:#FFD700;--text:#f5f5dc;--danger:#d9534f; --success: #28a745; --font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+:root{--bg:#000000;--card:#1a1a1a;--border:#38301d;--muted:#aaa;--primary:#D4AF37;--secondary:#B8860B;--accent:#FFD700;--text:#f5f5dc;--danger:#d9534f; --success: #28a745; --info: #17a2b8; --font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-family);color:var(--text);background-color:#000;background-image:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2338301d' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");min-height:100vh}
 .app-header{background:linear-gradient(90deg,#1a1a1a,#000000);color:var(--primary);padding:1.1rem;text-align:center;border-bottom:1px solid var(--border)}
@@ -26,12 +26,14 @@ label{display:block;font-weight:600;margin-top:.6rem}
 input,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#0c0c0c;color:var(--text);margin-top:.25rem;font-size:14px;font-family:inherit}
 input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0 0 0 3px rgba(184,134,11,.25)}
 .actions{margin-top:1.5rem;display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;flex-direction:column}
-.btn-primary,.btn-danger{padding:12px 18px;border:none;border-radius:14px;color:#000;font-weight:800;cursor:pointer;white-space:nowrap;width:100%;transition:transform .2s ease;font-family:var(--font-family);text-align:center}
+.btn-primary,.btn-danger,.btn-info{padding:12px 18px;border:none;border-radius:14px;color:#000;font-weight:800;cursor:pointer;white-space:nowrap;width:100%;transition:transform .2s ease;font-family:var(--font-family);text-align:center}
 .btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary))}
 .btn-danger{background:linear-gradient(135deg,var(--danger),#b32b27)}
+.btn-info {background: linear-gradient(135deg, var(--info), #107686);}
 .btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(212,175,55,.2)}
 .btn-danger:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(217,83,79,.2)}
-.btn-primary:disabled,.btn-danger:disabled{background:#555;cursor:not-allowed;opacity:.7}
+.btn-info:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(23, 162, 184, 0.2);}
+.btn-primary:disabled,.btn-danger:disabled,.btn-info:disabled{background:#555;cursor:not-allowed;opacity:.7}
 .muted{color:var(--muted);font-size:.9rem}
 @keyframes pulse-text { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 #fxStatus.loading { animation: pulse-text 1.5s infinite; text-align: center; width: 100%; display: block; }
@@ -82,6 +84,9 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .odds-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .odds-row:last-child { border-bottom: none; }
 .odds-value { font-weight: 700; font-size: 1.1rem; color: var(--accent); }
+.odds-movement { font-size: 1.2rem; }
+.odds-movement.up { color: var(--danger); }
+.odds-movement.down { color: var(--success); }
 .value-bet-card { border-color: var(--success) !important; background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(40, 167, 69, 0.1)) !important; }
 .value-bet-card h4 { color: var(--success) !important; }
 .value-highlight { color: var(--success); font-weight: 800; font-size: 1.2em; }
@@ -95,57 +100,30 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .history-date-summary::-webkit-details-marker { display: none; }
 .history-date-summary::before { content: '▶'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; }
 .history-date-group[open] > .history-date-summary::before { transform: rotate(90deg); }
-
 .form-comparison { margin-bottom: 1rem; padding: 0.8rem; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--border); }
 .form-row { display: flex; align-items: center; gap: 10px; }
 .form-row:first-child { margin-bottom: 8px; }
 .form-label { font-weight: 600; }
 .form-badges { display: flex; gap: 5px; }
-.form-badge {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #000;
-    font-weight: 700;
-    font-size: 0.8rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
+.form-badge { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #000; font-weight: 700; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
 .form-w { background-color: var(--success); }
 .form-d { background-color: #f0ad4e; }
 .form-l { background-color: var(--danger); }
 .value-bet-item { border-top: 1px solid rgba(40, 167, 69, 0.3); padding-top: 1rem; margin-top: 1rem; }
 .value-bet-item:first-child { border-top: none; margin-top: 0; padding-top: 0; }
 .value-details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem 1rem; margin: 0.5rem 0; }
-
-.expert-tuning-toggle {
-    color: var(--secondary);
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9rem;
-    text-align: center;
-    margin-top: 1rem;
-    padding: 5px;
-}
+.expert-tuning-toggle { color: var(--secondary); cursor: pointer; font-weight: 600; font-size: 0.9rem; text-align: center; margin-top: 1rem; padding: 5px; }
 .expert-tuning-toggle:hover { text-decoration: underline; }
-#expertTuningPanel {
-    display: none;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px dashed var(--border);
-}
-
+#expertTuningPanel { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
+.model-confidence-card { border-color: var(--info) !important; background: linear-gradient(135deg, rgba(23, 162, 184, 0.05), rgba(23, 162, 184, 0.1)) !important; }
+.model-confidence-card h4 { color: var(--info) !important; }
+.confidence-score { font-size: 1.5rem; font-weight: 800; color: var(--info); }
+.btn-log-bet { width: auto; font-size: 0.9rem; padding: 8px 12px; margin-top: 0.5rem; background: linear-gradient(135deg, var(--success), #1e7e34); }
+.btn-log-bet:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(40, 167, 69, 0.2); }
 /* =================================== */
 /* === OLVASHATÓSÁGI FEJLESZTÉSEK === */
 /* =================================== */
-.analysis-section p {
-    font-size: 1rem;              /* Betűméret növelése a jobb láthatóságért (kb. 16px) */
-    line-height: 1.7;             /* Sorköz növelése, ez a legfontosabb a "szellősséghez"! */
-    color: rgba(245, 245, 220, 0.95); /* A szövegszín enyhe tompítása a szemfáradtság ellen */
-    margin-bottom: 1rem;          /* Térköz a bekezdések között, hogy a szöveg tagolt legyen */
-}
+.analysis-section p { font-size: 1rem; line-height: 1.7; color: rgba(245, 245, 220, 0.95); margin-bottom: 1rem; }
 </style>
 </head>
 <body>
@@ -169,6 +147,13 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
              <div class="list-summary" onclick="showLeaguesInModal()"><span class="summary-title">Bajnokságok</span><span id="leagueCount" class="count-badge"></span></div>
              <div class="list-summary" onclick="showMatchesInModal()"><span class="summary-title">Mérkőzések</span><span id="matchCount" class="count-badge"></span></div>
         </div>
+         <div class="card">
+            <h2>Teljesítménykövetés</h2>
+            <p class="muted">Állítsd be a Google Táblázat URL-jét a naplózáshoz.</p>
+            <label for="sheetUrl">Google Táblázat URL</label>
+            <input id="sheetUrl" placeholder="Google Sheet URL" onchange="saveSheetUrl()">
+            <div id="bankrollStatus"><p class="muted">Nincs adat.</p></div>
+        </div>
     </div>
     <div class="col-center">
         <div class="card">
@@ -177,9 +162,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                 <div class="col"><label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/></div>
                 <div class="col"><label for="away">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/></div>
             </div>
-
             <div class="expert-tuning-toggle" onclick="toggleExpertTuning()">Szakértői Finomhangolás ⚙️</div>
-
             <div id="expertTuningPanel">
                 <div class="row">
                     <div class="col">
@@ -192,7 +175,6 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                     </div>
                 </div>
             </div>
-            
             <div class="actions">
                 <button id="goBtn" class="btn-primary" onclick="runAnalysis(true)">Elemzés Futtatása</button>
             </div>
@@ -203,7 +185,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
     </div>
     <div class="col-right">
        <div class="card">
-          <details>
+          <details open>
              <summary style="font-weight: 800; font-size: 1.2rem; color: var(--secondary); cursor: pointer; margin-bottom: 0.5rem; list-style: none;">Elemzési Előzmények (Napló)</summary>
              <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory()" style="margin-top: .5rem; margin-bottom:0.8rem"/>
              <div class="sport-filter-container">
@@ -238,13 +220,15 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 </div>
 
 <script>
-let __gasUrl = 'https://script.google.com/macros/s/AKfycby4niVCyxuBtsMHYY1X6HJowk39s__pJm7OGMAhMEHKo5Bitu6-M1igJRm_h2zWXB3dXQ/exec';
+let __gasUrl = 'https://script.google.com/macros/s/AKfycbzezgLIW-VE1ZCaRUU7nQ6lebTEH6VpUrjW-rpnJXUnXnkdlM9B3suv6dw-RZTTyfGiCg/exec'; // CSERÉLD LE A SAJÁT WEB APP URL-EDRE!
 let __fixtures = [];
 let __currentSport = 'soccer';
 let __historySportFilter = 'soccer';
+let __sheetUrl = '';
 
 document.addEventListener("DOMContentLoaded", function(){
     if(!__gasUrl||!__gasUrl.startsWith('https://script.google.com')){document.getElementById('userInfo').textContent='HIBA: Kérlek, add meg a Web App URL-t!'}else{document.getElementById('userInfo').textContent=`Csatlakozva.`}
+    loadSheetUrl();
     renderHistory();
 });
 
@@ -252,6 +236,61 @@ function toggleExpertTuning() {
     const panel = document.getElementById('expertTuningPanel');
     panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
 }
+
+function saveSheetUrl() {
+    __sheetUrl = document.getElementById('sheetUrl').value;
+    localStorage.setItem('sheetUrl', __sheetUrl);
+    alert('Táblázat URL elmentve!');
+    updateBankrollStatus();
+}
+
+function loadSheetUrl() {
+    __sheetUrl = localStorage.getItem('sheetUrl');
+    if (__sheetUrl) {
+        document.getElementById('sheetUrl').value = __sheetUrl;
+        updateBankrollStatus();
+    }
+}
+
+async function updateBankrollStatus() {
+    if (!__sheetUrl) return;
+    const statusEl = document.getElementById('bankrollStatus');
+    statusEl.innerHTML = `<p class="muted">Bankroll állapotának lekérése...</p>`;
+    try {
+        const response = await fetch(`${__gasUrl}?action=getBankroll&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        statusEl.innerHTML = `<p><strong>Aktuális Bankroll:</strong> ${data.bankroll.toFixed(2)} egység</p><p><strong>Profit/Veszteség:</strong> <span style="color:${data.pnl >= 0 ? 'var(--success)' : 'var(--danger)'};">${data.pnl.toFixed(2)} egység (${data.roi.toFixed(1)}%)</span></p>`;
+    } catch(e) {
+        statusEl.innerHTML = `<p class="muted">Hiba a bankroll lekérésekor: ${e.message}</p>`;
+    }
+}
+
+async function logBet(betData) {
+    if (!__sheetUrl) {
+        alert('Kérlek, add meg a Google Táblázat URL-jét a naplózáshoz!');
+        return;
+    }
+    const button = event.target;
+    button.disabled = true;
+    button.textContent = 'Naplózás...';
+    try {
+        const response = await fetch(`${__gasUrl}?action=logBet`, {
+            method: 'POST',
+            headers: {'Content-Type': 'text/plain'}, // Hogy a GAS kezelni tudja
+            body: JSON.stringify({ sheetUrl: __sheetUrl, bet: betData })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        button.textContent = 'Sikeresen Naplózva ✅';
+        updateBankrollStatus();
+    } catch (e) {
+        alert(`Hiba a naplózás során: ${e.message}`);
+        button.disabled = false;
+        button.textContent = 'Naplózás';
+    }
+}
+
 
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m])}
 function setProgress(pct,msg=null){const el=document.getElementById('progress');const statusEl=document.getElementById('status');const v=Math.max(0,Math.min(100,Math.round(pct||0)));el.style.display=v>0&&v<100?'grid':'none';if(v>0&&v<100){el.style.animation='pulse 2s infinite'}else{el.style.animation='none'}el.style.background=`conic-gradient(var(--primary) ${v*3.6}deg, rgba(255,255,255,.18) 0deg)`;el.querySelector('.progress-label').textContent=v+'%';if(msg)statusEl.textContent=msg}
@@ -264,7 +303,7 @@ async function loadFixtures(){
     loadBtn.disabled=true;
     ['leagueCount','matchCount'].forEach(id=>document.getElementById(id).style.display='none');
     try{
-        const response=await fetch(`${__gasUrl}?sport=${__currentSport}&days=2`);
+        const response=await fetch(`${__gasUrl}?action=getFixtures&sport=${__currentSport}&days=2`);
         if(!response.ok)throw new Error(`Hálózati hiba: ${response.status}`);
         const data=await response.json();
         if(data.error)throw new Error(data.error);
@@ -315,7 +354,7 @@ async function runAnalysis(forceNew = false) {
     let progressInterval;
     try {
         setProgress(1, "Elemzés indítása...");
-        let analysisUrl = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}`;
+        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}`;
         
         progressInterval = setInterval(() => { 
             const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; 
