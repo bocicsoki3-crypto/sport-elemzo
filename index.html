@@ -141,10 +141,10 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 /* === OLVASHATÓSÁGI FEJLESZTÉSEK === */
 /* =================================== */
 .analysis-section p {
-    font-size: 1rem;              /* Betűméret növelése a jobb láthatóságért (kb. 16px) */
-    line-height: 1.7;             /* Sorköz növelése, ez a legfontosabb a "szellősséghez"! */
-    color: rgba(245, 245, 220, 0.95); /* A szövegszín enyhe tompítása a szemfáradtság ellen */
-    margin-bottom: 1rem;          /* Térköz a bekezdések között, hogy a szöveg tagolt legyen */
+    font-size: 1rem;
+    line-height: 1.7;
+    color: rgba(245, 245, 220, 0.95);
+    margin-bottom: 1rem;
 }
 </style>
 </head>
@@ -303,7 +303,7 @@ async function runAnalysis(forceNew = false) {
         return; 
     }
     
-    const historyId = `analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}`;
+    const historyId = `analysis_v32.1_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}`;
     const isCachedLocally = localStorage.getItem(historyId);
     
     if (!forceNew && isCachedLocally) {
@@ -326,7 +326,7 @@ async function runAnalysis(forceNew = false) {
         clearInterval(progressInterval);
         if (!response.ok) throw new Error(`Szerver hiba: ${response.status}`);
         
-        setProgress(95, "Válasz feldolgozása...");
+        setProgress(95, "Válasz feldgozása...");
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         
