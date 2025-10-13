@@ -51,7 +51,6 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .modal-body{padding:1.5rem}
 .analysis-section{margin-bottom:1.5rem}
 .analysis-section h4{color:var(--secondary);margin:0 0 .8rem 0;font-size:1.2rem;border-bottom:1px solid var(--border);padding-bottom:.5rem}
-.analysis-section p{margin:.5rem 0 1rem 0;line-height:1.7}
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem}
 @media (max-width:900px){.modal-grid{grid-template-columns:1fr}}
 .market-group{background:rgba(0,0,0,0.2);border-radius:12px;padding:1rem;border:1px solid var(--border)}
@@ -64,7 +63,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .best-bet-card{background:linear-gradient(135deg,rgba(212,175,55,.05),rgba(184,134,11,.05));border:1px solid var(--primary);border-radius:12px;padding:1rem;margin-top:1.5rem}
 .row{display:flex;gap:12px;flex-wrap:wrap}
 .col{flex:1 1 200px}
-.xg-comparison{padding:1rem;background:rgba(0,0,0,0.2);border-radius:12px;border:1px solid var(--border);margin:1rem 0}
+.xg-comparison{padding:1rem;background:rgba(0,0,0,0.2);border-radius:12px;border:1px solid var(--border);margin-top:1rem; margin-bottom:1rem;}
 .xg-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .xg-label{flex-basis:120px;font-weight:600}
 .xg-bar-container{flex-grow:1;height:20px;background:rgba(0,0,0,0.3);border-radius:8px;overflow:hidden}
@@ -96,6 +95,47 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .history-date-summary::-webkit-details-marker { display: none; }
 .history-date-summary::before { content: '▶'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; }
 .history-date-group[open] > .history-date-summary::before { transform: rotate(90deg); }
+
+.form-comparison { margin-bottom: 1rem; padding: 0.8rem; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--border); }
+.form-row { display: flex; align-items: center; gap: 10px; }
+.form-row:first-child { margin-bottom: 8px; }
+.form-label { font-weight: 600; }
+.form-badges { display: flex; gap: 5px; }
+.form-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-weight: 700;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.form-w { background-color: var(--success); }
+.form-d { background-color: #f0ad4e; }
+.form-l { background-color: var(--danger); }
+.value-bet-item { border-top: 1px solid rgba(40, 167, 69, 0.3); padding-top: 1rem; margin-top: 1rem; }
+.value-bet-item:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+.value-details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem 1rem; margin: 0.5rem 0; }
+
+.expert-tuning-toggle {
+    color: var(--secondary);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 1rem;
+    padding: 5px;
+}
+.expert-tuning-toggle:hover { text-decoration: underline; }
+#expertTuningPanel {
+    display: none;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border);
+}
 
 /* =================================== */
 /* === OLVASHATÓSÁGI FEJLESZTÉSEK === */
@@ -137,6 +177,22 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                 <div class="col"><label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/></div>
                 <div class="col"><label for="away">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/></div>
             </div>
+
+            <div class="expert-tuning-toggle" onclick="toggleExpertTuning()">Szakértői Finomhangolás ⚙️</div>
+
+            <div id="expertTuningPanel">
+                <div class="row">
+                    <div class="col">
+                        <label for="homeFormWeight">Hazai Forma Súlyozása (<span id="homeFormWeightLabel">50</span>%)</label>
+                        <input type="range" id="homeFormWeight" min="0" max="100" value="50" oninput="document.getElementById('homeFormWeightLabel').textContent = this.value">
+                    </div>
+                    <div class="col">
+                        <label for="awayFormWeight">Vendég Forma Súlyozása (<span id="awayFormWeightLabel">50</span>%)</label>
+                        <input type="range" id="awayFormWeight" min="0" max="100" value="50" oninput="document.getElementById('awayFormWeightLabel').textContent = this.value">
+                    </div>
+                </div>
+            </div>
+            
             <div class="actions">
                 <button id="goBtn" class="btn-primary" onclick="runAnalysis(true)">Elemzés Futtatása</button>
             </div>
@@ -192,6 +248,11 @@ document.addEventListener("DOMContentLoaded", function(){
     renderHistory();
 });
 
+function toggleExpertTuning() {
+    const panel = document.getElementById('expertTuningPanel');
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+}
+
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m])}
 function setProgress(pct,msg=null){const el=document.getElementById('progress');const statusEl=document.getElementById('status');const v=Math.max(0,Math.min(100,Math.round(pct||0)));el.style.display=v>0&&v<100?'grid':'none';if(v>0&&v<100){el.style.animation='pulse 2s infinite'}else{el.style.animation='none'}el.style.background=`conic-gradient(var(--primary) ${v*3.6}deg, rgba(255,255,255,.18) 0deg)`;el.querySelector('.progress-label').textContent=v+'%';if(msg)statusEl.textContent=msg}
 function handleSportChange(){__currentSport=document.getElementById('sportSelector').value;['leagueCount','matchCount'].forEach(id=>document.getElementById(id).style.display='none'); __fixtures = [];}
@@ -234,13 +295,15 @@ function fillAndAnalyze(home,away){
 async function runAnalysis(forceNew = false) {
     const home = document.getElementById("home").value.trim();
     const away = document.getElementById("away").value.trim();
+    const homeFormWeight = document.getElementById("homeFormWeight").value;
+    const awayFormWeight = document.getElementById("awayFormWeight").value;
     
     if (!home || !away || !__gasUrl) { 
         setProgress(0, "Hiba: Hiányzó adatok."); 
         return; 
     }
     
-    const historyId = `analysis_${__currentSport}_${home}_vs_${away}`; 
+    const historyId = `analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}`;
     const isCachedLocally = localStorage.getItem(historyId);
     
     if (!forceNew && isCachedLocally) {
@@ -252,7 +315,7 @@ async function runAnalysis(forceNew = false) {
     let progressInterval;
     try {
         setProgress(1, "Elemzés indítása...");
-        let analysisUrl = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true`;
+        let analysisUrl = `${__gasUrl}?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}`;
         
         progressInterval = setInterval(() => { 
             const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; 
@@ -276,7 +339,7 @@ async function runAnalysis(forceNew = false) {
     }
 }
 
-function saveAnalysis(home,away,html,id){let history=getHistoryFromLocalStorage();const now=new Date().toLocaleString('hu-HU');const record={id,home,away,date:now,sport:__currentSport};const existingIndex=history.findIndex(item=>item.home===home && item.away===away && item.sport===__currentSport);if(existingIndex>-1){history.splice(existingIndex,1)}history.unshift(record);localStorage.setItem('sportAnalysisHistory',JSON.stringify(history));localStorage.setItem(id,html);renderHistory()}
+function saveAnalysis(home,away,html,id){let history=getHistoryFromLocalStorage();const now=new Date().toLocaleString('hu-HU');const record={id,home,away,date:now,sport:__currentSport};const existingIndex=history.findIndex(item=>item.id===id);if(existingIndex>-1){history.splice(existingIndex,1)}history.unshift(record);localStorage.setItem('sportAnalysisHistory',JSON.stringify(history));localStorage.setItem(id,html);renderHistory()}
 function getHistoryFromLocalStorage(){try{const json=localStorage.getItem('sportAnalysisHistory');return json?JSON.parse(json):[]}catch(e){return[]}}
 
 function filterHistoryBySport(sport, clickedButton) {
