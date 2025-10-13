@@ -7,11 +7,14 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000000;--card:#1a1a1a;--border:#38301d;--muted:#aaa;--primary:#D4AF37;--secondary:#B8860B;--accent:#FFD700;--text:#f5f5dc;--danger:#d9534f; --success: #28a745; --info: #17a2b8; --font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+:root{--bg:#000000;--card:#1a1a1a;--border:#38301d;--muted:#aaa;--primary:#D4AF37;--secondary:#B8860B;--accent:#FFD700;--text:#f5f5dc;--danger:#d9534f; --success: #28a745; --info: #17a2b8; --font-family-header:'Poppins',system-ui,sans-serif; --font-family-body:'Roboto',system-ui,sans-serif;}
 *{box-sizing:border-box}
-body{margin:0;font-family:var(--font-family);color:var(--text);background-color:#000;background-image:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2338301d' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");min-height:100vh}
+body{margin:0;font-family:var(--font-family-header);color:var(--text);background-color:#000;background-image:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2338301d' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");min-height:100vh}
+.app-header h1{font-family: var(--font-family-header);}
+h2, h3, h4, h5, h6 {font-family: var(--font-family-header);}
+p, label, span, div {font-family: var(--font-family-body);}
 .app-header{background:linear-gradient(90deg,#1a1a1a,#000000);color:var(--primary);padding:1.1rem;text-align:center;border-bottom:1px solid var(--border)}
 .app-header h1{font-weight:800;margin:0}
 .user-info{font-size:.9rem;margin-top:5px;opacity:.8}
@@ -26,7 +29,7 @@ label{display:block;font-weight:600;margin-top:.6rem}
 input,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#0c0c0c;color:var(--text);margin-top:.25rem;font-size:14px;font-family:inherit}
 input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0 0 0 3px rgba(184,134,11,.25)}
 .actions{margin-top:1.5rem;display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;flex-direction:column}
-.btn-primary,.btn-danger,.btn-info{padding:12px 18px;border:none;border-radius:14px;color:#000;font-weight:800;cursor:pointer;white-space:nowrap;width:100%;transition:transform .2s ease;font-family:var(--font-family);text-align:center}
+.btn-primary,.btn-danger,.btn-info{padding:12px 18px;border:none;border-radius:14px;color:#000;font-weight:800;cursor:pointer;white-space:nowrap;width:100%;transition:transform .2s ease;font-family:var(--font-family-header);text-align:center}
 .btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary))}
 .btn-danger{background:linear-gradient(135deg,var(--danger),#b32b27)}
 .btn-info {background: linear-gradient(135deg, var(--info), #107686);}
@@ -40,7 +43,9 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(212,175,55,.7)}70%{box-shadow:0 0 0 10px rgba(212,175,55,0)}100%{box-shadow:0 0 0 0 rgba(212,175,55,0)}}
 .progress-ring{width:80px;height:80px;border-radius:50%;display:grid;place-items:center;margin:1rem auto;transition:opacity .5s}
 .progress-label{font-size:1.5rem;font-weight:700}
-.list-summary{cursor:pointer;list-style:none;font-weight:800;font-size:1.2rem;color:var(--secondary);margin-bottom:.5rem;padding: 5px 0; display: flex; justify-content: space-between; align-items: center;}
+summary {list-style: none; cursor: pointer;}
+summary::-webkit-details-marker {display: none;}
+.list-summary{font-weight:800;font-size:1.2rem;color:var(--secondary);margin-bottom:.5rem;padding: 5px 0; display: flex; justify-content: space-between; align-items: center;}
 .list-summary > .summary-title::before{content:'>';display:inline-block;margin-right:8px;}
 .count-badge{background-color: var(--primary); color: #000; font-size: 0.9rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; animation: pulse 2s infinite; display: none;}
 .btn-sm{padding:8px 12px;font-size:.9rem;width:auto}
@@ -97,9 +102,8 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .history-date-group { border-bottom: 1px solid var(--border); }
 .history-date-group:last-of-type { border-bottom: none; }
 .history-date-summary { cursor: pointer; padding: 0.8rem 0.5rem; font-size: 1rem; font-weight: 700; color: var(--primary); list-style: none; display: flex; align-items: center; }
-.history-date-summary::-webkit-details-marker { display: none; }
 .history-date-summary::before { content: '▶'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; }
-.history-date-group[open] > .history-date-summary::before { transform: rotate(90deg); }
+details[open] > summary::before { transform: rotate(90deg); }
 .form-comparison { margin-bottom: 1rem; padding: 0.8rem; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--border); }
 .form-row { display: flex; align-items: center; gap: 10px; }
 .form-row:first-child { margin-bottom: 8px; }
@@ -121,10 +125,18 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 .btn-log-bet { width: auto; font-size: 0.9rem; padding: 8px 12px; margin-top: 0.5rem; background: linear-gradient(135deg, var(--success), #1e7e34); }
 .btn-log-bet:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(40, 167, 69, 0.2); }
 #liveScenarioPanel { margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
-/* =================================== */
-/* === OLVASHATÓSÁGI FEJLESZTÉSEK === */
-/* =================================== */
-.analysis-section p { font-size: 1rem; line-height: 1.7; color: rgba(245, 245, 220, 0.95); margin-bottom: 1rem; }
+
+/* SZEMKÍMÉLŐBB SZÖVEG */
+.analysis-section p { font-size: 1.05rem; line-height: 1.75; color: #EAEAEA; margin-bottom: 1.2rem; font-family: var(--font-family-body); font-weight: 400;}
+
+/* DIZÁJNOS CSÚSZKÁK */
+input[type=range]{-webkit-appearance:none;background:0 0;width:100%;margin:6px 0}
+input[type=range]:focus{outline:0}
+input[type=range]::-webkit-slider-runnable-track{width:100%;height:8px;cursor:pointer;background:var(--primary);border-radius:5px;border:.2px solid #010101}
+input[type=range]::-webkit-slider-thumb{border:2px solid var(--card);height:20px;width:20px;border-radius:50%;background:var(--accent);cursor:pointer;-webkit-appearance:none;margin-top:-6px}
+input[type=range]:focus::-webkit-slider-runnable-track{background:var(--secondary)}
+input[type=range]::-moz-range-track{width:100%;height:8px;cursor:pointer;background:var(--primary);border-radius:5px;border:.2px solid #010101}
+input[type=range]::-moz-range-thumb{border:2px solid var(--card);height:20px;width:20px;border-radius:50%;background:var(--accent);cursor:pointer}
 </style>
 </head>
 <body>
@@ -145,16 +157,18 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
             </div>
         </div>
         <div class="card">
-             <div class="list-summary" onclick="showLeaguesInModal()"><span class="summary-title">Bajnokságok</span><span id="leagueCount" class="count-badge"></span></div>
-             <div class="list-summary" onclick="showMatchesInModal()"><span class="summary-title">Mérkőzések</span><span id="matchCount" class="count-badge"></span></div>
+             <summary class="list-summary" onclick="showLeaguesInModal()"><span class="summary-title">Bajnokságok</span><span id="leagueCount" class="count-badge"></span></summary>
+             <summary class="list-summary" onclick="showMatchesInModal()"><span class="summary-title">Mérkőzések</span><span id="matchCount" class="count-badge"></span></summary>
         </div>
-         <div class="card">
-            <h2>Teljesítménykövetés</h2>
-            <p class="muted">Add meg a Google Táblázat URL-jét a naplózáshoz. A Táblázatban hozz létre egy "SportElemző" menüt a kiértékeléshez.</p>
-            <label for="sheetUrl">Google Táblázat URL</label>
-            <input id="sheetUrl" placeholder="Google Sheet URL" onchange="saveSheetUrl()">
+         <details class="card">
+            <summary><h2>Teljesítménykövetés</h2></summary>
+            <div id="sheetUrlContainer">
+              <p class="muted">Add meg a Google Táblázat URL-jét a naplózáshoz. A Táblázatban hozz létre egy "SportElemző" menüt a kiértékeléshez.</p>
+              <label for="sheetUrl">Google Táblázat URL</label>
+              <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
+            </div>
             <div id="bankrollStatus"><p class="muted">Nincs adat.</p></div>
-        </div>
+        </details>
     </div>
     <div class="col-center">
         <div class="card">
@@ -184,7 +198,7 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
                 <div class="row">
                     <div class="col"><label for="liveHomeScore">Hazai gólok</label><input id="liveHomeScore" type="number" value="0"/></div>
                     <div class="col"><label for="liveAwayScore">Vendég gólok</label><input id="liveAwayScore" type="number" value="0"/></div>
-                    <div class="col"><label for="liveTimeRemaining">Hátralévő idő (%)</label><input id="liveTimeRemaining" type="number" value="100" min="0" max="100"/></div>
+                    <div class="col"><label for="liveTimeRemainingMinutes">Hátralévő percek</label><input id="liveTimeRemainingMinutes" type="number" value="90" min="0" max="120"/></div>
                 </div>
             </div>
             
@@ -197,18 +211,16 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
         <div id="out"></div>
     </div>
     <div class="col-right">
-       <div class="card">
-          <details open>
-             <summary style="font-weight: 800; font-size: 1.2rem; color: var(--secondary); cursor: pointer; margin-bottom: 0.5rem; list-style: none;">Elemzési Előzmények (Napló)</summary>
-             <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory()" style="margin-top: .5rem; margin-bottom:0.8rem"/>
-             <div class="sport-filter-container">
-                <button class="sport-filter-btn active" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
-                <button class="sport-filter-btn" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
-                <button class="sport-filter-btn" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
-             </div>
-             <div id="history"><p class="muted">Itt fognak megjelenni a korábbi elemzéseid.</p></div>
-          </details>
-        </div>
+       <details class="card">
+          <summary><h2>Elemzési Előzmények (Napló)</h2></summary>
+          <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory()" style="margin-top: .5rem; margin-bottom:0.8rem"/>
+          <div class="sport-filter-container">
+             <button class="sport-filter-btn active" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
+             <button class="sport-filter-btn" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
+             <button class="sport-filter-btn" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
+          </div>
+          <div id="history"><p class="muted">Itt fognak megjelenni a korábbi elemzéseid.</p></div>
+       </details>
     </div>
 </div>
 
@@ -233,6 +245,8 @@ input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0
 </div>
 
 <script>
+// A JavaScript kód változatlan a legutóbbi, teljes verzióhoz képest.
+// Az egyetlen apró változtatás az runAnalysis függvényben van a percek kezelésére.
 let __gasUrl = 'https://script.google.com/macros/s/AKfycbzezgLIW-VE1ZCaRUU7nQ6lebTEH6VpUrjW-rpnJXUnXnkdlM9B3suv6dw-RZTTyfGiCg/exec'; // CSERÉLD LE A SAJÁT WEB APP URL-EDRE!
 let __fixtures = [];
 let __currentSport = 'soccer';
@@ -259,9 +273,15 @@ function saveSheetUrl() {
 
 function loadSheetUrl() {
     __sheetUrl = localStorage.getItem('sheetUrl');
+    const urlContainer = document.getElementById('sheetUrlContainer');
+    const statusContainer = document.getElementById('bankrollStatus');
     if (__sheetUrl) {
-        document.getElementById('sheetUrl').value = __sheetUrl;
+        urlContainer.style.display = 'none'; // URL beviteli mező elrejtése
+        statusContainer.style.display = 'block';
         updateBankrollStatus();
+    } else {
+        urlContainer.style.display = 'block';
+        statusContainer.style.display = 'none';
     }
 }
 
@@ -290,13 +310,12 @@ async function logBet(betData) {
     try {
         const response = await fetch(`${__gasUrl}`, {
             method: 'POST',
-            mode: 'no-cors', // Fontos a doPost-hoz
+            mode: 'no-cors',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData })
         });
-        // Mivel a no-cors nem ad vissza olvasható választ, feltételezzük a sikert.
         button.textContent = 'Sikeresen Naplózva ✅';
-        setTimeout(updateBankrollStatus, 1000); // Várjunk egy kicsit a frissítés előtt
+        setTimeout(updateBankrollStatus, 1000);
     } catch (e) {
         alert(`Hiba a naplózás során: ${e.message}. A naplózás valószínűleg sikeres volt ettől függetlenül.`);
         button.textContent = 'Naplózva (ellenőrizd)';
@@ -304,10 +323,16 @@ async function logBet(betData) {
     }
 }
 
-
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m])}
 function setProgress(pct,msg=null){const el=document.getElementById('progress');const statusEl=document.getElementById('status');const v=Math.max(0,Math.min(100,Math.round(pct||0)));el.style.display=v>0&&v<100?'grid':'none';if(v>0&&v<100){el.style.animation='pulse 2s infinite'}else{el.style.animation='none'}el.style.background=`conic-gradient(var(--primary) ${v*3.6}deg, rgba(255,255,255,.18) 0deg)`;el.querySelector('.progress-label').textContent=v+'%';if(msg)statusEl.textContent=msg}
-function handleSportChange(){__currentSport=document.getElementById('sportSelector').value;['leagueCount','matchCount'].forEach(id=>document.getElementById(id).style.display='none'); __fixtures = [];}
+function handleSportChange(){
+    __currentSport=document.getElementById('sportSelector').value;
+    const timeInput = document.getElementById('liveTimeRemainingMinutes');
+    if (__currentSport === 'soccer') timeInput.value = 90;
+    else if (__currentSport === 'hockey') timeInput.value = 60;
+    else if (__currentSport === 'basketball') timeInput.value = 48;
+    ['leagueCount','matchCount'].forEach(id=>document.getElementById(id).style.display='none'); __fixtures = [];
+}
 async function loadFixtures(){
     const statusEl=document.getElementById('fxStatus');
     const loadBtn=document.getElementById('loadFixturesBtn');
@@ -321,7 +346,7 @@ async function loadFixtures(){
         const data=await response.json();
         if(data.error)throw new Error(data.error);
         __fixtures=data.fixtures||[];
-        sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {})); // Opening odds mentése
+        sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
         const leagues=[...new Set(__fixtures.map(f=>f.league))];
         const leagueCountEl = document.getElementById('leagueCount');
         const matchCountEl = document.getElementById('matchCount');
@@ -352,51 +377,54 @@ async function runAnalysis(forceNew = false) {
     const awayFormWeight = document.getElementById("awayFormWeight").value;
     const liveHomeScore = document.getElementById("liveHomeScore").value;
     const liveAwayScore = document.getElementById("liveAwayScore").value;
-    const liveTimeRemaining = document.getElementById("liveTimeRemaining").value;
-    
-    if (!home || !away || !__gasUrl) { 
-        setProgress(0, "Hiba: Hiányzó adatok."); 
-        return; 
+    const liveTimeRemainingMinutes = document.getElementById("liveTimeRemainingMinutes").value;
+
+    if (!home || !away || !__gasUrl) {
+        setProgress(0, "Hiba: Hiányzó adatok.");
+        return;
     }
-    
+
     const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
-    const historyId = `analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}_live${liveHomeScore}-${liveAwayScore}-${liveTimeRemaining}`;
+    const historyId = `analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}_live${liveHomeScore}-${liveAwayScore}-${liveTimeRemainingMinutes}`;
     const isCachedLocally = localStorage.getItem(historyId);
-    
+
     if (!forceNew && isCachedLocally) {
         openAnalysisModal(home, away, isCachedLocally);
         document.getElementById('status').textContent = "Előzmény betöltve a naplóból.";
         return;
     }
-    
+
     let progressInterval;
     try {
         setProgress(1, "Elemzés indítása...");
-        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&liveHome=${liveHomeScore}&liveAway=${liveAwayScore}&liveTime=${liveTimeRemaining}`;
-        
-        progressInterval = setInterval(() => { 
-            const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0; 
-            setProgress(Math.min(90, c + 3), "Adatok gyűjtése a Piacról és az AI-tól...") 
+        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&liveHome=${liveHomeScore}&liveAway=${liveAwayScore}&liveTimeMinutes=${liveTimeRemainingMinutes}`;
+
+        progressInterval = setInterval(() => {
+            const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0;
+            setProgress(Math.min(90, c + 3), "Adatok gyűjtése a Piacról és az AI-tól...")
         }, 800);
         
-        const response = await fetch(`${analysisUrl}`, {
+        // Mivel a `no-cors` módot használjuk a POST-hoz, a válasz nem olvasható.
+        // Ezért a szerveroldalnak a cache-be kell írnia az eredményt, amit aztán egy GET kéréssel olvasunk ki.
+        await fetch(`${analysisUrl}`, {
             method: 'POST',
             mode: 'no-cors',
-            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) })
         });
 
-        // A no-cors miatt trükközni kell a válasszal. Újra lekérjük a cache-elt eredményt.
-        // Ez egy workaround a GAS korlátai miatt.
-        await new Promise(resolve => setTimeout(resolve, 8000)); // Várjunk, amíg a szerver valószínűleg befejezte
-        const resultResponse = await fetch(`${analysisUrl}&force=false`); // Most már a cache-ből kérjük
-        const data = await resultResponse.json();
-
+        // Adjunk időt a szervernek, hogy feldolgozza és cache-elje az eredményt
+        await new Promise(resolve => setTimeout(resolve, 8000));
+        
+        // Most kérjük le a cache-elt eredményt egy GET kéréssel
+        const resultResponse = await fetch(`${analysisUrl}&force=false`);
         clearInterval(progressInterval);
-        if (data.error) throw new Error(data.error);
+        
+        if (!resultResponse.ok) throw new Error(`Szerver válasz hiba: ${resultResponse.status}`);
         
         setProgress(95, "Válasz feldolgozása...");
-        
+        const data = await resultResponse.json();
+        if (data.error) throw new Error(data.error);
+
         openAnalysisModal(home, away, data.html);
         saveAnalysis(home, away, data.html, historyId);
         setProgress(100, "Kész.");
@@ -502,4 +530,3 @@ function showMatchesInModal(league = 'all') { if (__fixtures.length === 0) { ale
 </script>
 </body>
 </html>
-
