@@ -77,7 +77,6 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
 #loading-skeleton .skeleton-line{background:rgba(255,255,255,0.1);border-radius:4px;margin-bottom:10px;animation:pulse-bg 1.5s infinite}
 @keyframes pulse-bg{0%{background:rgba(255,255,255,0.1)}50%{background:rgba(255,255,255,0.05)}100%{background:rgba(255,255,255,0.1)}}
 
-/* === Elemzés Dizájn === */
 .analysis-body p { font-size: 1.05rem; line-height: 1.8; color: var(--text-secondary); }
 .analysis-body strong { color: var(--text-primary); font-weight: 600; }
 .at-a-glance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
@@ -111,6 +110,26 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
 .quick-view-popup { position: absolute; left: 105%; top: 50%; transform: translateY(-50%); width: 280px; z-index: 10; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.5); backdrop-filter: blur(10px); display: none; animation: fadeIn .3s; pointer-events: none; }
 .list-item:hover .quick-view-popup { display: block; }
 #theme-switcher { cursor: pointer; stroke: var(--muted); } #theme-switcher:hover { stroke: var(--primary); }
+.performance-center .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.performance-center .kpi-card { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px; text-align: center; }
+.performance-center .kpi-card h5 { margin: 0 0 0.5rem 0; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; font-weight: 500;}
+.performance-center .kpi-card .value { font-size: 1.4rem; font-weight: 700; }
+.performance-center .pnl-value.positive { color: var(--success); }
+.performance-center .pnl-value.negative { color: var(--danger); }
+.performance-center .view-switcher { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.performance-center .view-btn { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 8px; cursor: pointer; color: var(--muted); font-size: 0.8rem;}
+.performance-center .view-btn.active { background: var(--primary); color: #000; font-weight: 700; }
+.performance-center .chart-view { display: none; }
+.performance-center .chart-view.active { display: block; }
+.performance-center .bar-chart-item { display: flex; align-items: center; margin-bottom: 0.5rem; font-size: 0.9rem; }
+.performance-center .bar-label { width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.performance-center .bar-bg { flex-grow: 1; height: 12px; background: rgba(0,0,0,0.2); border-radius: 6px; }
+.performance-center .bar-fill { height: 100%; border-radius: 6px; }
+.performance-center .bar-fill.positive { background: var(--success); }
+.performance-center .bar-fill.negative { background: var(--danger); margin-left: auto; }
+.performance-center .bar-value { width: 60px; text-align: right; font-weight: 700; }
+.light-theme .performance-center .kpi-card { background: rgba(0,0,0,0.05); }
+.light-theme .performance-center .view-btn { background: rgba(0,0,0,0.05); }
 </style>
 </head>
 <body>
@@ -159,16 +178,11 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
             </div>
         </div>
 
-        <div class="card">
-             <details>
-                <summary>Teljesítménykövetés</summary>
-                <div style="margin-top: 1rem;">
-                    <div id="sheetUrlContainer">
-                      <p class="muted" style="font-size: .8rem;">A napló és bankroll funkciókhoz add meg a Google Táblázat URL-jét.</p>
-                      <label for="sheetUrl">Google Táblázat URL</label>
-                      <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
-                    </div>
-                    <div id="bankrollStatus" style="display:none;"></div>
+        <div class="card" id="performance-center-card">
+             <details open>
+                <summary>Teljesítmény Központ</summary>
+                <div style="margin-top: 1rem;" id="performance-center-content">
+                    <p class="muted">A funkcióhoz add meg a Google Táblázat URL-jét.</p>
                 </div>
             </details>
         </div>
@@ -254,44 +268,104 @@ function saveSheetUrl() {
 
 function loadSheetUrl() {
     __sheetUrl = localStorage.getItem('sheetUrl');
-    const urlInput = document.getElementById('sheetUrl');
-    const statusContainer = document.getElementById('bankrollStatus');
-    const urlContainer = document.getElementById('sheetUrlContainer');
-    const bankrollHeader = document.getElementById('bankrollDisplay');
+    const performanceCard = document.getElementById('performance-center-card');
     
     if (__sheetUrl) {
-        urlInput.value = __sheetUrl;
-        urlContainer.style.display = 'none';
-        statusContainer.style.display = 'block';
-        bankrollHeader.style.display = 'block';
-        updateBankrollStatus();
+        performanceCard.style.display = 'block';
+        updatePerformanceCenter();
         if(document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
             loadHistory();
         }
     } else {
-        urlContainer.style.display = 'block';
-        statusContainer.style.display = 'none';
-        bankrollHeader.style.display = 'none';
+        performanceCard.style.display = 'none';
     }
 }
 
-async function updateBankrollStatus() {
+async function updatePerformanceCenter() {
     if (!__sheetUrl) return;
-    const statusEl = document.getElementById('bankrollStatus');
+    const contentEl = document.getElementById('performance-center-content');
     const bankrollValueEl = document.getElementById('bankrollValue');
-    statusEl.innerHTML = `<p class="muted">Bankroll állapotának lekérése...</p>`;
+    contentEl.innerHTML = `<p class="muted">Teljesítmény adatok lekérése...</p>`;
     bankrollValueEl.textContent = '...';
+    document.getElementById('bankrollDisplay').style.display = 'block';
+    
     try {
-        const response = await fetch(`${__gasUrl}?action=getBankroll&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
+        const response = await fetch(`${__gasUrl}?action=getPerformanceData&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-        statusEl.innerHTML = `<p><strong>Profit/Veszteség:</strong> <span style="color:${data.pnl >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight:bold;">${data.pnl.toFixed(2)} e.</span></p><p><strong>ROI:</strong> <span style="font-weight:bold;">${data.roi.toFixed(1)}%</span></p>`;
-        bankrollValueEl.textContent = `${data.bankroll.toFixed(2)} e.`;
+
+        bankrollValueEl.textContent = `${data.mainKPIs.bankroll.toFixed(2)} e.`;
+
+        let html = `
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <h5>Profit/Veszteség</h5>
+                    <div class="value pnl-value ${data.mainKPIs.pnl >= 0 ? 'positive' : 'negative'}">${data.mainKPIs.pnl >= 0 ? '+' : ''}${data.mainKPIs.pnl.toFixed(2)} e.</div>
+                </div>
+                <div class="kpi-card">
+                    <h5>ROI</h5>
+                    <div class="value">${data.mainKPIs.roi.toFixed(1)}%</div>
+                </div>
+                <div class="kpi-card">
+                    <h5>Találati Arány</h5>
+                    <div class="value">${data.mainKPIs.winRate.toFixed(1)}%</div>
+                </div>
+                 <div class="kpi-card">
+                    <h5>Összes Fogadás</h5>
+                    <div class="value">${data.mainKPIs.totalBets}</div>
+                </div>
+            </div>
+            <div class="view-switcher">
+                <button class="view-btn active" onclick="switchPcView('sport')">Sportágak</button>
+                <button class="view-btn" onclick="switchPcView('strategy')">Stratégiák</button>
+            </div>
+            <div id="pc-view-sport" class="chart-view active"></div>
+            <div id="pc-view-strategy" class="chart-view"></div>
+        `;
+        contentEl.innerHTML = html;
+
+        renderBarChart('pc-view-sport', data.bySport);
+        renderBarChart('pc-view-strategy', data.byStrategy);
+
     } catch(e) {
-        const errorMsg = `Hiba: ${e.message}`;
-        statusEl.innerHTML = `<p class="muted" style="color:var(--danger);">${errorMsg}</p>`;
+        contentEl.innerHTML = `<p class="muted" style="color:var(--danger);">${e.message}</p>`;
         bankrollValueEl.textContent = 'Hiba';
     }
+}
+
+function renderBarChart(containerId, data) {
+    const container = document.getElementById(containerId);
+    let chartHtml = '';
+    const values = Object.values(data);
+    if(values.length === 0) {
+        container.innerHTML = '<p class="muted" style="text-align:center;">Nincs megjeleníthető adat.</p>';
+        return;
+    }
+    const maxVal = Math.max(...values.map(Math.abs));
+
+    for(const key in data) {
+        const value = data[key];
+        const width = maxVal > 0 ? (Math.abs(value) / maxVal) * 100 : 0;
+        const isPositive = value >= 0;
+        
+        chartHtml += `
+            <div class="bar-chart-item">
+                <div class="bar-label" title="${key}">${key}</div>
+                <div class="bar-bg">
+                    <div class="bar-fill ${isPositive ? 'positive' : 'negative'}" style="width: ${width}%;"></div>
+                </div>
+                <div class="bar-value" style="color: ${isPositive ? 'var(--success)' : 'var(--danger)'};">${value.toFixed(2)}</div>
+            </div>
+        `;
+    }
+    container.innerHTML = chartHtml;
+}
+
+function switchPcView(view) {
+    document.querySelectorAll('.chart-view').forEach(el => el.classList.remove('active'));
+    document.getElementById(`pc-view-${view}`).classList.add('active');
+    document.querySelectorAll('.view-btn').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.view-btn[onclick="switchPcView('${view}')"]`).classList.add('active');
 }
 
 async function logBet(betData) {
@@ -307,7 +381,7 @@ async function logBet(betData) {
             body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData })
         });
         button.textContent = 'Sikeresen Naplózva ✅';
-        setTimeout(updateBankrollStatus, 1000);
+        setTimeout(updatePerformanceCenter, 1000);
     } catch (e) {
         alert(`Hiba a naplózás során: ${e.message}.`);
         button.textContent = 'Naplózás Sikertelen';
