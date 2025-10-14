@@ -14,7 +14,7 @@
 body{margin:0;font-family:var(--font-family-header);color:var(--text);background-color:#000;background-image:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2338301d' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");min-height:100vh}
 .app-header h1{font-family: var(--font-family-header);}
 h2, h3, h4, h5, h6 {font-family: var(--font-family-header);}
-p, label, span, div {font-family: var(--font-family-body);}
+p, label, span, div, input, select {font-family: var(--font-family-body);}
 .app-header{background:linear-gradient(90deg,#1a1a1a,#000000);color:var(--primary);padding:1.1rem;text-align:center;border-bottom:1px solid var(--border)}
 .app-header h1{font-weight:800;margin:0}
 .user-info{font-size:.9rem;margin-top:5px;opacity:.8}
@@ -213,13 +213,9 @@ input[type=range]::-moz-range-thumb{border:2px solid var(--card);height:20px;wid
     <div class="col-right">
        <details class="card">
           <summary><h2>Elemzési Előzmények (Napló)</h2></summary>
-          <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory()" style="margin-top: .5rem; margin-bottom:0.8rem"/>
-          <div class="sport-filter-container">
-             <button class="sport-filter-btn active" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
-             <button class="sport-filter-btn" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
-             <button class="sport-filter-btn" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
+          <div id="history">
+             <p class="muted">A napló megtekintéséhez add meg a Google Táblázat URL-jét a "Teljesítménykövetés" szekcióban.</p>
           </div>
-          <div id="history"><p class="muted">Itt fognak megjelenni a korábbi elemzéseid.</p></div>
        </details>
     </div>
 </div>
@@ -245,9 +241,7 @@ input[type=range]::-moz-range-thumb{border:2px solid var(--card);height:20px;wid
 </div>
 
 <script>
-// A JavaScript kód változatlan a legutóbbi, teljes verzióhoz képest.
-// Az egyetlen apró változtatás az runAnalysis függvényben van a percek kezelésére.
-let __gasUrl = 'https://script.google.com/macros/s/AKfycbzezgLIW-VE1ZCaRUU7nQ6lebTEH6VpUrjW-rpnJXUnXnkdlM9B3suv6dw-RZTTyfGiCg/exec'; // CSERÉLD LE A SAJÁT WEB APP URL-EDRE!
+let __gasUrl = 'https://script.google.com/macros/s/AKfycbzezgLIW-VE1ZCaRUU7nQ6lebTEH6VpUrjW-rpnJXUnXnkdlM9B3suv6dw-RZTTyfGiCg/exec';
 let __fixtures = [];
 let __currentSport = 'soccer';
 let __historySportFilter = 'soccer';
@@ -256,7 +250,6 @@ let __sheetUrl = '';
 document.addEventListener("DOMContentLoaded", function(){
     if(!__gasUrl||!__gasUrl.startsWith('https://script.google.com')){document.getElementById('userInfo').textContent='HIBA: Kérlek, add meg a Web App URL-t!'}else{document.getElementById('userInfo').textContent=`Csatlakozva.`}
     loadSheetUrl();
-    renderHistory();
 });
 
 function togglePanel(panelId) {
@@ -266,9 +259,13 @@ function togglePanel(panelId) {
 
 function saveSheetUrl() {
     __sheetUrl = document.getElementById('sheetUrl').value;
-    localStorage.setItem('sheetUrl', __sheetUrl);
-    alert('Táblázat URL elmentve!');
-    updateBankrollStatus();
+    if (__sheetUrl && __sheetUrl.startsWith('https://docs.google.com/spreadsheets/d/')) {
+        localStorage.setItem('sheetUrl', __sheetUrl);
+        alert('Táblázat URL elmentve!');
+        loadSheetUrl();
+    } else {
+        alert('Érvénytelen Google Táblázat URL!');
+    }
 }
 
 function loadSheetUrl() {
@@ -276,9 +273,10 @@ function loadSheetUrl() {
     const urlContainer = document.getElementById('sheetUrlContainer');
     const statusContainer = document.getElementById('bankrollStatus');
     if (__sheetUrl) {
-        urlContainer.style.display = 'none'; // URL beviteli mező elrejtése
+        urlContainer.style.display = 'none';
         statusContainer.style.display = 'block';
         updateBankrollStatus();
+        loadHistory(); 
     } else {
         urlContainer.style.display = 'block';
         statusContainer.style.display = 'none';
@@ -300,26 +298,21 @@ async function updateBankrollStatus() {
 }
 
 async function logBet(betData) {
-    if (!__sheetUrl) {
-        alert('Kérlek, add meg a Google Táblázat URL-jét a naplózáshoz!');
-        return;
-    }
+    if (!__sheetUrl) { alert('Kérlek, add meg a Google Táblázat URL-jét a naplózáshoz!'); return; }
     const button = event.target;
     button.disabled = true;
     button.textContent = 'Naplózás...';
     try {
-        const response = await fetch(`${__gasUrl}`, {
+        await fetch(`${__gasUrl}`, {
             method: 'POST',
             mode: 'no-cors',
-            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData })
         });
         button.textContent = 'Sikeresen Naplózva ✅';
         setTimeout(updateBankrollStatus, 1000);
     } catch (e) {
-        alert(`Hiba a naplózás során: ${e.message}. A naplózás valószínűleg sikeres volt ettől függetlenül.`);
-        button.textContent = 'Naplózva (ellenőrizd)';
-        setTimeout(updateBankrollStatus, 1000);
+        alert(`Hiba a naplózás során: ${e.message}.`);
+        button.textContent = 'Naplózás Sikertelen';
     }
 }
 
@@ -379,43 +372,28 @@ async function runAnalysis(forceNew = false) {
     const liveAwayScore = document.getElementById("liveAwayScore").value;
     const liveTimeRemainingMinutes = document.getElementById("liveTimeRemainingMinutes").value;
 
-    if (!home || !away || !__gasUrl) {
-        setProgress(0, "Hiba: Hiányzó adatok.");
-        return;
-    }
+    if (!home || !away || !__gasUrl) { setProgress(0, "Hiba: Hiányzó adatok."); return; }
 
     const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
-    const historyId = `analysis_${__currentSport}_${home}_vs_${away}_w${homeFormWeight}-${awayFormWeight}_live${liveHomeScore}-${liveAwayScore}-${liveTimeRemainingMinutes}`;
-    const isCachedLocally = localStorage.getItem(historyId);
-
-    if (!forceNew && isCachedLocally) {
-        openAnalysisModal(home, away, isCachedLocally);
-        document.getElementById('status').textContent = "Előzmény betöltve a naplóból.";
-        return;
-    }
-
+    
     let progressInterval;
     try {
         setProgress(1, "Elemzés indítása...");
-        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&liveHome=${liveHomeScore}&liveAway=${liveAwayScore}&liveTimeMinutes=${liveTimeRemainingMinutes}`;
+        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&liveHome=${liveHomeScore}&liveAway=${liveAwayScore}&liveTimeMinutes=${liveTimeRemainingMinutes}&sheetUrl=${encodeURIComponent(__sheetUrl)}`;
 
         progressInterval = setInterval(() => {
             const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0;
             setProgress(Math.min(90, c + 3), "Adatok gyűjtése a Piacról és az AI-tól...")
         }, 800);
         
-        // Mivel a `no-cors` módot használjuk a POST-hoz, a válasz nem olvasható.
-        // Ezért a szerveroldalnak a cache-be kell írnia az eredményt, amit aztán egy GET kéréssel olvasunk ki.
-        await fetch(`${analysisUrl}`, {
+        const postResponse = await fetch(`${analysisUrl}`, {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) })
         });
 
-        // Adjunk időt a szervernek, hogy feldolgozza és cache-elje az eredményt
-        await new Promise(resolve => setTimeout(resolve, 8000));
+        await new Promise(resolve => setTimeout(resolve, 9000));
         
-        // Most kérjük le a cache-elt eredményt egy GET kéréssel
         const resultResponse = await fetch(`${analysisUrl}&force=false`);
         clearInterval(progressInterval);
         
@@ -426,7 +404,7 @@ async function runAnalysis(forceNew = false) {
         if (data.error) throw new Error(data.error);
 
         openAnalysisModal(home, away, data.html);
-        saveAnalysis(home, away, data.html, historyId);
+        if(__sheetUrl) loadHistory();
         setProgress(100, "Kész.");
     } catch (e) {
         if (progressInterval) clearInterval(progressInterval);
@@ -434,38 +412,45 @@ async function runAnalysis(forceNew = false) {
     }
 }
 
-function saveAnalysis(home,away,html,id){let history=getHistoryFromLocalStorage();const now=new Date().toLocaleString('hu-HU');const record={id,home,away,date:now,sport:__currentSport};const existingIndex=history.findIndex(item=>item.id===id);if(existingIndex>-1){history.splice(existingIndex,1)}history.unshift(record);localStorage.setItem('sportAnalysisHistory',JSON.stringify(history));localStorage.setItem(id,html);renderHistory()}
-function getHistoryFromLocalStorage(){try{const json=localStorage.getItem('sportAnalysisHistory');return json?JSON.parse(json):[]}catch(e){return[]}}
-
-function filterHistoryBySport(sport, clickedButton) {
-    __historySportFilter = sport;
-    document.querySelectorAll('.sport-filter-btn').forEach(btn => btn.classList.remove('active'));
-    clickedButton.classList.add('active');
-    renderHistory();
+async function loadHistory() {
+    if (!__sheetUrl) {
+        document.getElementById('history').innerHTML = '<p class="muted">A napló megtekintéséhez add meg a Google Táblázat URL-jét.</p>';
+        return;
+    }
+    document.getElementById('history').innerHTML = '<p class="muted">Napló betöltése...</p>';
+    try {
+        const response = await fetch(`${__gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        renderHistory(data.history);
+    } catch(e) {
+        document.getElementById('history').innerHTML = `<p class="muted" style="color:var(--danger)">Hiba a napló betöltésekor: ${e.message}</p>`;
+    }
 }
 
-function renderHistory() {
-    const history = getHistoryFromLocalStorage();
+function filterHistory(allHistory) {
     const query = document.getElementById('historySearch').value.toLowerCase();
+    const filtered = allHistory.filter(item =>
+        (item.sport === __historySportFilter) &&
+        (item.home.toLowerCase().includes(query) || item.away.toLowerCase().includes(query))
+    );
+    renderHistory(filtered, true);
+}
+
+function renderHistory(history, isFiltering = false) {
     const box = document.getElementById('history');
 
+    if (!isFiltering) {
+        sessionStorage.setItem('fullHistory', JSON.stringify(history));
+    }
+    
     if (!history || history.length === 0) {
         box.innerHTML = '<p class="muted">Nincsenek előzmények.</p>';
         return;
     }
 
-    const filtered = history.filter(item =>
-        (item.sport === __historySportFilter) &&
-        (item.home.toLowerCase().includes(query) || item.away.toLowerCase().includes(query))
-    );
-
-    if (filtered.length === 0) {
-        box.innerHTML = '<p class="muted">Nincs a szűrési feltételeknek megfelelő találat.</p>';
-        return;
-    }
-
-    const groupedByDate = filtered.reduce((acc, item) => {
-        const dateKey = new Date(item.date.replace(/\./g, '/')).toISOString().split('T')[0];
+    const groupedByDate = history.reduce((acc, item) => {
+        const dateKey = new Date(item.date).toISOString().split('T')[0];
         if (!acc[dateKey]) acc[dateKey] = [];
         acc[dateKey].push(item);
         return acc;
@@ -475,52 +460,62 @@ function renderHistory() {
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
     for (const date of sortedDates) {
-        finalHtml += `<details class="history-date-group">`;
+        finalHtml += `<details class="history-date-group" open>`;
         finalHtml += `<summary class="history-date-summary">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
         
-        groupedByDate[date].sort((a, b) => new Date(b.date.replace(/\./g, '/')) - new Date(a.date.replace(/\./g, '/'))).forEach(item => {
+        groupedByDate[date].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
             finalHtml += `
                 <div class="fx-item">
                     <div class="fx-item-details" onclick="loadAnalysisFromHistory('${item.id}')" style="cursor:pointer;flex-grow:1">
                         <div>
                             <div class="fx-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div>
-                            <div class="fx-meta">${item.date}</div>
+                            <div class="fx-meta">${new Date(item.date).toLocaleString('hu-HU')}</div>
                         </div>
                     </div>
                     <div class="fx-actions" style="display:flex;gap:5px">
                         <button class="btn-primary btn-sm" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése">👁️</button>
-                        <button class="btn-danger btn-sm" onclick="deleteHistoryItem('${item.id}',event)" title="Törlés">🗑️</button>
+                        <button class="btn-danger btn-sm" onclick="deleteHistoryItem('${item.id}')" title="Törlés">🗑️</button>
                     </div>
                 </div>
             `;
         });
         finalHtml += `</details>`;
     }
-
-    box.innerHTML = finalHtml;
+    box.innerHTML = `<input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory(JSON.parse(sessionStorage.getItem('fullHistory') || '[]'))" style="margin-bottom:0.8rem"/>
+                     <div class="sport-filter-container">
+                       <button class="sport-filter-btn ${__historySportFilter === 'soccer' ? 'active' : ''}" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
+                       <button class="sport-filter-btn ${__historySportFilter === 'hockey' ? 'active' : ''}" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
+                       <button class="sport-filter-btn ${__historySportFilter === 'basketball' ? 'active' : ''}" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
+                     </div>` + finalHtml;
 }
 
-function filterHistory(){renderHistory()}
-
-function loadAnalysisFromHistory(id){
-    const html=localStorage.getItem(id);
-    if(html){
-        const record=getHistoryFromLocalStorage().find(item=>item.id===id);
-        if(record){
-            document.getElementById('home').value=record.home;
-            document.getElementById('away').value=record.away;
-            document.getElementById('sportSelector').value=record.sport;
-            __currentSport=record.sport;
-            openAnalysisModal(record.home,record.away,html);
-        }
-        document.getElementById('status').textContent="Előzmény betöltve.";
-        document.querySelector('.col-center').scrollIntoView({behavior:'smooth'});
-    } else {
-        alert("Hiba: Az elemzés nem található.");
+async function loadAnalysisFromHistory(id){
+    if (!__sheetUrl) return;
+    try {
+        const response = await fetch(`${__gasUrl}?action=getAnalysisDetail&sheetUrl=${encodeURIComponent(__sheetUrl)}&id=${id}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        openAnalysisModal(data.record.home, data.record.away, data.record.html);
+    } catch(e) {
+        alert(`Hiba az elemzés betöltésekor: ${e.message}`);
     }
 }
 
-function deleteHistoryItem(id,event){event.stopPropagation();if(confirm("Biztosan törölni szeretnéd ezt az elemet?")){let history=getHistoryFromLocalStorage();const updatedHistory=history.filter(item=>item.id!==id);localStorage.setItem('sportAnalysisHistory',JSON.stringify(updatedHistory));localStorage.removeItem(id);renderHistory()}}
+async function deleteHistoryItem(id){
+    if (!__sheetUrl || !confirm("Biztosan törölni szeretnéd ezt az elemet a központi naplóból?")) return;
+    try {
+        await fetch(`${__gasUrl}`, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ action: 'deleteHistoryItem', sheetUrl: __sheetUrl, id: id })
+        });
+        alert('Elem sikeresen törölve.');
+        loadHistory();
+    } catch(e) {
+        alert(`Hiba a törlés során: ${e.message}`);
+    }
+}
+
 function openAnalysisModal(home,away,htmlContent){document.getElementById('modalTitle').textContent=`${home} vs ${away}`;document.getElementById('modalBody').innerHTML=htmlContent;document.getElementById('analysisModal').style.display='flex'}
 function closeAnalysisModal(){document.getElementById('analysisModal').style.display='none'}
 function openListModal(title, content) { document.getElementById('listModalTitle').textContent = title; document.getElementById('listModalBody').innerHTML = content; document.getElementById('listModal').style.display = 'flex'; }
