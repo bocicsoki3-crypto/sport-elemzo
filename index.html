@@ -211,7 +211,7 @@ input[type=range]::-moz-range-thumb{border:2px solid var(--card);height:20px;wid
         <div id="out"></div>
     </div>
     <div class="col-right">
-       <details class="card" open>
+       <details class="card">
           <summary><h2>Elemzési Előzmények (Napló)</h2></summary>
           <div id="history">
              <p class="muted">A napló megtekintéséhez add meg a Google Táblázat URL-jét a "Teljesítménykövetés" szekcióban.</p>
@@ -401,7 +401,7 @@ async function runAnalysis(forceNew = false) {
 
         await new Promise(resolve => setTimeout(resolve, 9000));
         
-        const resultResponse = await fetch(`${analysisUrl}&force=false`); // force=false to get cached result
+        const resultResponse = await fetch(`${analysisUrl}&force=false`);
         clearInterval(progressInterval);
         
         if (!resultResponse.ok) throw new Error(`Szerver válasz hiba: ${resultResponse.status}`);
@@ -475,7 +475,8 @@ function renderHistory(history, isFiltering = false) {
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
     for (const date of sortedDates) {
-        finalHtml += `<details class="history-date-group" open>`;
+        // === ITT TÖRTÉNT A JAVÍTÁS: az "open" attribútum eltávolítva ===
+        finalHtml += `<details class="history-date-group">`;
         finalHtml += `<summary class="history-date-summary">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
         
         groupedByDate[date].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
@@ -504,16 +505,10 @@ function renderHistory(history, isFiltering = false) {
                      </div>` + finalHtml;
 }
 
-// === ITT A JAVÍTOTT, BEILLESZTETT RÉSZ ===
 function filterHistoryBySport(sport, btn) {
-    // 1. Beállítja az új, aktív sport szűrőt
     __historySportFilter = sport;
-
-    // 2. Frissíti a gombok kinézetét, hogy a helyes legyen aktív
     document.querySelectorAll('.sport-filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-
-    // 3. Lefuttatja a szűrést a teljes, eredeti listán az új sport szűrővel
     filterHistory(JSON.parse(sessionStorage.getItem('fullHistory') || '[]'));
 }
 
