@@ -179,10 +179,14 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
         </div>
 
         <div class="card" id="performance-center-card">
-             <details open>
+             <details>
                 <summary>Teljesítmény Központ</summary>
                 <div style="margin-top: 1rem;" id="performance-center-content">
-                    <p class="muted">A funkcióhoz add meg a Google Táblázat URL-jét.</p>
+                    <div id="sheetUrlContainer">
+                      <p class="muted" style="font-size: .8rem;">A funkcióhoz add meg a Google Táblázat URL-jét.</p>
+                      <label for="sheetUrl">Google Táblázat URL</label>
+                      <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
+                    </div>
                 </div>
             </details>
         </div>
@@ -269,15 +273,24 @@ function saveSheetUrl() {
 function loadSheetUrl() {
     __sheetUrl = localStorage.getItem('sheetUrl');
     const performanceCard = document.getElementById('performance-center-card');
+    const sheetUrlContainer = document.getElementById('sheetUrlContainer');
     
     if (__sheetUrl) {
         performanceCard.style.display = 'block';
+        if (sheetUrlContainer) sheetUrlContainer.style.display = 'none';
         updatePerformanceCenter();
         if(document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
             loadHistory();
         }
     } else {
-        performanceCard.style.display = 'none';
+        performanceCard.style.display = 'block'; // Mindig látható
+        if (sheetUrlContainer) sheetUrlContainer.style.display = 'block';
+        document.getElementById('performance-center-content').innerHTML = `
+            <div id="sheetUrlContainer">
+              <p class="muted" style="font-size: .8rem;">A funkcióhoz add meg a Google Táblázat URL-jét.</p>
+              <label for="sheetUrl">Google Táblázat URL</label>
+              <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
+            </div>`;
     }
 }
 
