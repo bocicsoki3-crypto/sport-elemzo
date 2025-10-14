@@ -3,242 +3,184 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SportElemző Gemini AI</title>
+<title>SportElemző AI - Műszerfal</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Poppins:wght@600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000000;--card:#1a1a1a;--border:#38301d;--muted:#aaa;--primary:#D4AF37;--secondary:#B8860B;--accent:#FFD700;--text:#f5f5dc;--danger:#d9534f; --success: #28a745; --info: #17a2b8; --font-family-header:'Poppins',system-ui,sans-serif; --font-family-body:'Roboto',system-ui,sans-serif;}
+:root{--bg:#0D0D0D;--card-bg:rgba(26,26,26,0.65);--border-color:rgba(212,175,55,0.2);--muted:#888;--primary:#D4AF37;--secondary:#B8860B;--accent:#00BFFF;--text-primary:#F5F5DC;--text-secondary:#ccc;--danger:#FF4747;--success:#39FF14;--font-family-header:'Poppins',system-ui,sans-serif;--font-family-body:'Inter',system-ui,sans-serif}
 *{box-sizing:border-box}
-body{margin:0;font-family:var(--font-family-header);color:var(--text);background-color:#000;background-image:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2338301d' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");min-height:100vh}
-.app-header h1{font-family: var(--font-family-header);}
-h2, h3, h4, h5, h6 {font-family: var(--font-family-header);}
-p, label, span, div, input, select {font-family: var(--font-family-body);}
-.app-header{background:linear-gradient(90deg,#1a1a1a,#000000);color:var(--primary);padding:1.1rem;text-align:center;border-bottom:1px solid var(--border)}
-.app-header h1{font-weight:800;margin:0}
-.user-info{font-size:.9rem;margin-top:5px;opacity:.8}
-.container{max-width:1800px;margin:1.8rem auto;padding:0 2rem}
-.layout{display:grid;gap:18px;grid-template-columns:340px 1fr 340px;align-items:start}
-@media (max-width:1280px){.layout{grid-template-columns:340px 1fr}.col-right{grid-column:1/-1}}
-@media (max-width:980px){.layout{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.1rem;margin-bottom:1rem;box-shadow:0 20px 40px rgba(0,0,0,.35)}
-h2{margin:0 0 .9rem 0;font-weight:800;color:var(--secondary)}
-h3{font-weight:700;margin-top:0;color:var(--text)}
-label{display:block;font-weight:600;margin-top:.6rem}
-input,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#0c0c0c;color:var(--text);margin-top:.25rem;font-size:14px;font-family:inherit}
-input:focus,select:focus{outline:none;border-color:var(--secondary);box-shadow:0 0 0 3px rgba(184,134,11,.25)}
-.actions{margin-top:1.5rem;display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;flex-direction:column}
-.btn-primary,.btn-danger,.btn-info{padding:12px 18px;border:none;border-radius:14px;color:#000;font-weight:800;cursor:pointer;white-space:nowrap;width:100%;transition:transform .2s ease;font-family:var(--font-family-header);text-align:center}
-.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary))}
-.btn-danger{background:linear-gradient(135deg,var(--danger),#b32b27)}
-.btn-info {background: linear-gradient(135deg, var(--info), #107686);}
-.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(212,175,55,.2)}
-.btn-danger:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(217,83,79,.2)}
-.btn-info:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(23, 162, 184, 0.2);}
-.btn-primary:disabled,.btn-danger:disabled,.btn-info:disabled{background:#555;cursor:not-allowed;opacity:.7}
+::selection{background-color:var(--primary);color:#000}
+body{margin:0;font-family:var(--font-family-body);color:var(--text-primary);background-color:var(--bg);background-image:radial-gradient(circle at 1px 1px,rgba(212,175,55,0.1) 1px,transparent 0);background-size:20px 20px;min-height:100vh;overflow-x:hidden}
+h1,h2,h3,h4,h5,h6{font-family:var(--font-family-header);color:var(--text-primary);margin-top:0}
+p{line-height:1.7;color:var(--text-secondary)}
+.app-header{background:linear-gradient(90deg,rgba(0,0,0,0.3),rgba(0,0,0,0.1));color:var(--primary);padding:1rem 2rem;text-align:center;border-bottom:1px solid var(--border-color);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center}
+.app-header h1{font-weight:600;margin:0;font-size:1.5rem}
+.header-status{font-size:.9rem;opacity:.8;display:flex;align-items:center;gap:1.5rem}
+.bankroll-display span{font-weight:700;color:var(--text-primary)}
+.layout{display:grid;grid-template-columns:360px 1fr;gap:2rem;padding:2rem;max-width:1920px;margin:0 auto;align-items:start}
+@media (max-width:1024px){.layout{grid-template-columns:1fr}}
+.sidebar{position:sticky;top:100px}
+.card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,0.3);backdrop-filter:blur(10px);transition:transform .3s ease,box-shadow .3s ease}
+.card:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,0.4)}
+label{display:block;font-weight:500;margin-bottom:.5rem;font-size:.9rem;color:var(--text-secondary)}
+input,select{width:100%;padding:10px 14px;border:1px solid var(--border-color);border-radius:10px;background:rgba(0,0,0,0.3);color:var(--text-primary);margin-top:.25rem;font-size:.9rem;font-family:inherit;transition:all .2s ease}
+input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(212,175,55,.3)}
+.btn{display:inline-block;padding:12px 24px;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:all .2s ease;font-family:var(--font-family-header);text-align:center;text-decoration:none;position:relative;overflow:hidden}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#000}
+.btn-primary:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 8px 20px rgba(212,175,55,.25)}
+.btn:disabled{background:#555;cursor:not-allowed;opacity:.7}
 .muted{color:var(--muted);font-size:.9rem}
-@keyframes pulse-text { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
-#fxStatus.loading { animation: pulse-text 1.5s infinite; text-align: center; width: 100%; display: block; }
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(212,175,55,.7)}70%{box-shadow:0 0 0 10px rgba(212,175,55,0)}100%{box-shadow:0 0 0 0 rgba(212,175,55,0)}}
-.progress-ring{width:80px;height:80px;border-radius:50%;display:grid;place-items:center;margin:1rem auto;transition:opacity .5s}
-.progress-label{font-size:1.5rem;font-weight:700}
-summary {list-style: none; cursor: pointer;}
-summary::-webkit-details-marker {display: none;}
-.list-summary{font-weight:800;font-size:1.2rem;color:var(--secondary);margin-bottom:.5rem;padding: 5px 0; display: flex; justify-content: space-between; align-items: center;}
-.list-summary > .summary-title::before{content:'>';display:inline-block;margin-right:8px;}
-.count-badge{background-color: var(--primary); color: #000; font-size: 0.9rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; animation: pulse 2s infinite; display: none;}
-.btn-sm{padding:8px 12px;font-size:.9rem;width:auto}
-#out{min-height:20px}
-.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
-.modal-content{background:var(--card);border:1px solid var(--primary);border-radius:16px;width:95%;max-width:1200px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.5)}
-.modal-header{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);z-index:1}
-.modal-title{font-size:1.5rem;font-weight:800;color:var(--primary);margin:0}
-.close-button{background:none;border:none;color:var(--muted);font-size:2rem;cursor:pointer;line-height:1}
-.modal-body{padding:1.5rem}
-.analysis-section{margin-bottom:1.5rem}
-.analysis-section h4{color:var(--secondary);margin:0 0 .8rem 0;font-size:1.2rem;border-bottom:1px solid var(--border);padding-bottom:.5rem}
-.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem}
-@media (max-width:900px){.modal-grid{grid-template-columns:1fr}}
-.market-group{background:rgba(0,0,0,0.2);border-radius:12px;padding:1rem;border:1px solid var(--border)}
-.market-group h5{margin:0 0 1rem 0;font-size:1.1rem;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:.5rem}
-.market-subtitle{color:var(--accent);font-weight:bold;display:block;margin-top:1.2rem;margin-bottom:0.8rem;font-size:1.1em;}
+#main-content .placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;border:2px dashed var(--border-color);border-radius:16px;color:var(--muted);padding:2rem;text-align:center}
+#main-content .placeholder svg{width:64px;height:64px;margin-bottom:1rem;stroke-width:1.5;opacity:.5}
+.tab-nav{display:flex;gap:.5rem;margin-bottom:1rem;border-bottom:1px solid var(--border-color)}
+.tab-btn{padding:10px 15px;background:transparent;border:none;color:var(--muted);cursor:pointer;font-weight:700;position:relative;transition:color .2s ease;font-family:inherit}
+.tab-btn.active{color:var(--primary)}
+.tab-btn.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--primary);box-shadow:0 0 10px var(--primary)}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn .5s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.list-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border-color);cursor:pointer;transition:background-color .2s ease}
+.list-item:hover{background-color:rgba(212,175,55,.1)}
+.list-item-title{font-weight:700}.list-item-meta{font-size:.8rem;color:var(--muted)}
+.list-group-header{font-weight:800;font-size:1.1rem;color:var(--secondary);padding:15px 0 10px 0;border-bottom:1px solid var(--border-color);margin-top:1rem}
+.action-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;transition:background-color .2s ease;background:rgba(255,255,255,0.05)}
+.action-icon:hover{background-color:rgba(255,255,255,0.1)}
+.action-icon svg{width:18px;height:18px;stroke:var(--muted)}
+.action-icon.delete:hover svg{stroke:var(--danger)}
+.sport-filter-container{display:flex;gap:8px;margin-bottom:.8rem}
+.sport-filter-btn{background-color:rgba(0,0,0,0.3);border:1px solid var(--border-color);color:var(--muted);padding:8px 15px;border-radius:10px;cursor:pointer;transition:all .2s ease;flex:1}
+.sport-filter-btn:hover{border-color:var(--secondary);color:var(--text-primary)}
+.sport-filter-btn.active{background-color:var(--primary);color:#000;border-color:var(--primary);font-weight:700}
+.analysis-modal-body{padding:0}
+.analysis-section h4{color:var(--secondary);margin:0 0 .8rem 0;font-size:1.2rem;border-bottom:1px solid var(--border-color);padding-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem}
+@media (max-width:900px){.analysis-grid{grid-template-columns:1fr}}
+.market-group{background:rgba(0,0,0,0.2);border-radius:12px;padding:1rem;border:1px solid var(--border-color)}
 .prob-item{margin-bottom:.8rem}
 .prob-label{display:flex;justify-content:space-between;font-weight:600;margin-bottom:4px}
 .prob-bar-bg{width:100%;background:rgba(0,0,0,.3);border-radius:5px;height:10px;overflow:hidden}
 .prob-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:5px}
 .best-bet-card{background:linear-gradient(135deg,rgba(212,175,55,.05),rgba(184,134,11,.05));border:1px solid var(--primary);border-radius:12px;padding:1rem;margin-top:1.5rem}
-.row{display:flex;gap:12px;flex-wrap:wrap}
-.col{flex:1 1 200px}
-.xg-comparison{padding:1rem;background:rgba(0,0,0,0.2);border-radius:12px;border:1px solid var(--border);margin-top:1rem; margin-bottom:1rem;}
+.xg-comparison{padding:1rem;background:rgba(0,0,0,0.2);border-radius:12px;border:1px solid var(--border-color);margin-top:1rem;margin-bottom:1rem}
 .xg-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .xg-label{flex-basis:120px;font-weight:600}
 .xg-bar-container{flex-grow:1;height:20px;background:rgba(0,0,0,0.3);border-radius:8px;overflow:hidden}
 .xg-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:8px}
 .xg-value{font-weight:700;font-size:1.2rem}
-.modal-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-.league-card, .fixture-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s ease; }
-.league-card:hover, .fixture-card:hover { transform: translateY(-3px); border-color: var(--secondary); box-shadow: 0 8px 20px rgba(0,0,0,.2); }
-.fixture-card { cursor: default; display: flex; flex-direction: column; justify-content: space-between; }
-.fixture-card .fx-title { font-weight: 700; font-size: 1.1rem; }
-.fixture-card .fx-meta { font-size: 0.85rem; color: var(--muted); margin: 0.5rem 0 1rem 0; }
-.fixture-card .btn-primary { width: 100%; }
-.fx-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border);transition:background-color .2s ease}.fx-item:hover{background-color:rgba(255,255,255,.05)}.fx-item-details{flex-grow:1}
-.market-pulse-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; }
-.market-pulse-card h4 { color: var(--secondary); }
-.odds-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 10px;}
-.odds-row:last-child { border-bottom: none; }
-.odds-value { font-weight: 700; font-size: 1.1rem; color: var(--accent); }
-.odds-movement { font-size: 1.2rem; }
-.odds-movement.up { color: var(--danger); }
-.odds-movement.down { color: var(--success); }
-.value-bet-card { border-color: var(--success) !important; background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(40, 167, 69, 0.1)) !important; }
-.value-bet-card h4 { color: var(--success) !important; }
-.value-highlight { color: var(--success); font-weight: 800; font-size: 1.2em; }
-.sport-filter-container {display: flex; gap: 8px; margin-bottom: 0.8rem;}
-.sport-filter-btn {background-color: #0c0c0c; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; flex-grow: 1;}
-.sport-filter-btn:hover {border-color: var(--secondary); color: var(--text);}
-.sport-filter-btn.active {background-color: var(--primary); color: #000; border-color: var(--primary); font-weight: 700;}
-.history-date-group { border-bottom: 1px solid var(--border); }
-.history-date-group:last-of-type { border-bottom: none; }
-.history-date-summary { cursor: pointer; padding: 0.8rem 0.5rem; font-size: 1rem; font-weight: 700; color: var(--primary); list-style: none; display: flex; align-items: center; }
-.history-date-summary::before { content: '▶'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; }
-details[open] > summary::before { transform: rotate(90deg); }
-.form-comparison { margin-bottom: 1rem; padding: 0.8rem; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--border); }
-.form-row { display: flex; align-items: center; gap: 10px; }
-.form-row:first-child { margin-bottom: 8px; }
-.form-label { font-weight: 600; }
-.form-badges { display: flex; gap: 5px; }
-.form-badge { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #000; font-weight: 700; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-.form-w { background-color: var(--success); }
-.form-d { background-color: #f0ad4e; }
-.form-l { background-color: var(--danger); }
-.value-bet-item { border-top: 1px solid rgba(40, 167, 69, 0.3); padding-top: 1rem; margin-top: 1rem; }
-.value-bet-item:first-child { border-top: none; margin-top: 0; padding-top: 0; }
-.value-details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem 1rem; margin: 0.5rem 0; }
-.expert-tuning-toggle { color: var(--secondary); cursor: pointer; font-weight: 600; font-size: 0.9rem; text-align: center; margin-top: 1rem; padding: 5px; }
-.expert-tuning-toggle:hover { text-decoration: underline; }
-#expertTuningPanel { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
-.model-confidence-card { border-color: var(--info) !important; background: linear-gradient(135deg, rgba(23, 162, 184, 0.05), rgba(23, 162, 184, 0.1)) !important; }
-.model-confidence-card h4 { color: var(--info) !important; }
-.confidence-score { font-size: 1.5rem; font-weight: 800; color: var(--info); }
-.btn-log-bet { width: auto; font-size: 0.9rem; padding: 8px 12px; margin-top: 0.5rem; background: linear-gradient(135deg, var(--success), #1e7e34); }
-.btn-log-bet:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(40, 167, 69, 0.2); }
-#liveScenarioPanel { margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
-
-/* SZEMKÍMÉLŐBB SZÖVEG */
-.analysis-section p { font-size: 1.05rem; line-height: 1.75; color: #EAEAEA; margin-bottom: 1.2rem; font-family: var(--font-family-body); font-weight: 400;}
-
-/* DIZÁJNOS CSÚSZKÁK */
-input[type=range]{-webkit-appearance:none;background:0 0;width:100%;margin:6px 0}
-input[type=range]:focus{outline:0}
-input[type=range]::-webkit-slider-runnable-track{width:100%;height:8px;cursor:pointer;background:var(--primary);border-radius:5px;border:.2px solid #010101}
-input[type=range]::-webkit-slider-thumb{border:2px solid var(--card);height:20px;width:20px;border-radius:50%;background:var(--accent);cursor:pointer;-webkit-appearance:none;margin-top:-6px}
-input[type=range]:focus::-webkit-slider-runnable-track{background:var(--secondary)}
-input[type=range]::-moz-range-track{width:100%;height:8px;cursor:pointer;background:var(--primary);border-radius:5px;border:.2px solid #010101}
-input[type=range]::-moz-range-thumb{border:2px solid var(--card);height:20px;width:20px;border-radius:50%;background:var(--accent);cursor:pointer}
+.form-comparison{margin-bottom:1rem;padding:.8rem;background:rgba(0,0,0,0.2);border-radius:12px;border:1px solid var(--border-color)}
+.form-row{display:flex;align-items:center;gap:10px}.form-row:first-child{margin-bottom:8px}
+.form-label{font-weight:600}
+.form-badges{display:flex;gap:5px}
+.form-badge{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#000;font-weight:700;font-size:.8rem}
+.form-w{background-color:var(--success)}
+.form-d{background-color:#f0ad4e}
+.form-l{background-color:var(--danger)}
+.model-confidence-card{border-color:var(--accent)!important;background:linear-gradient(135deg,rgba(0,191,255,.05),rgba(0,191,255,.1))!important}
+.model-confidence-card h4{color:var(--accent)!important}
+.confidence-score{font-size:1.5rem;font-weight:800;color:var(--accent)}
+.value-bet-card{border-color:var(--success)!important;background:linear-gradient(135deg,rgba(57,255,20,.05),rgba(57,255,20,.1))!important}
+.value-bet-card h4{color:var(--success)!important}
+.value-highlight{color:var(--success);font-weight:800}
+.btn-log-bet{font-size:.9rem;padding:8px 12px;margin-top:.5rem;background:linear-gradient(135deg,var(--success),#1e7e34);color:white}
+.btn-log-bet:hover:not(:disabled){box-shadow:0 8px 20px rgba(57,255,20,.2)}
+.progress-bar{width:100%;height:4px;background:var(--border-color);border-radius:2px;margin-top:1rem;overflow:hidden;display:none}
+.progress-bar-inner{width:0;height:100%;background:var(--primary);transition:width .5s ease}
+.status-text{text-align:center;margin-top:.5rem}
+#loading-skeleton{display:none}
+#loading-skeleton .skeleton-card{background:rgba(255,255,255,0.05);padding:1.5rem;border-radius:16px;margin-bottom:1.5rem}
+#loading-skeleton .skeleton-line{background:rgba(255,255,255,0.1);border-radius:4px;margin-bottom:10px;animation:pulse-bg 1.5s infinite}
+@keyframes pulse-bg{0%{background:rgba(255,255,255,0.1)}50%{background:rgba(255,255,255,0.05)}100%{background:rgba(255,255,255,0.1)}}
 </style>
 </head>
 <body>
-<header class="app-header"><h1>SportElemző Gemini AI</h1><div id="userInfo" class="user-info"></div></header>
-<div class="container layout">
-    <div class="col-left">
+
+<header class="app-header">
+    <h1>SportElemző Műszerfal</h1>
+    <div class="header-status">
+        <div id="bankrollDisplay" class="bankroll-display" style="display:none;">
+            Bankroll: <span id="bankrollValue">...</span>
+        </div>
+        <div id="userInfo" class="user-info"></div>
+    </div>
+</header>
+
+<div class="layout">
+    <aside class="sidebar">
         <div class="card">
-            <h2>Beállítások</h2>
-            <label for="sportSelector">Sportág</label>
-            <select id="sportSelector" onchange="handleSportChange()">
-                <option value="soccer" selected>Labdarúgás</option>
-                <option value="hockey">Jégkorong</option>
-                <option value="basketball">Kosárlabda</option>
-            </select>
-            <div class="actions" style="margin-top: 1rem;">
-                <button id="loadFixturesBtn" class="btn-primary" onclick="loadFixtures()">Meccsek Betöltése (2 nap)</button>
-                <span id="fxStatus" class="muted"></span>
+            <nav class="tab-nav">
+                <button class="tab-btn active" data-tab="tab-matches">Mérkőzések</button>
+                <button class="tab-btn" data-tab="tab-manual">Kézi Elemzés</button>
+                <button class="tab-btn" data-tab="tab-history">Előzmények</button>
+            </nav>
+
+            <div id="tab-matches" class="tab-content active">
+                <label for="sportSelector">Sportág</label>
+                <select id="sportSelector" onchange="handleSportChange()">
+                    <option value="soccer" selected>Labdarúgás</option>
+                    <option value="hockey">Jégkorong</option>
+                    <option value="basketball">Kosárlabda</option>
+                </select>
+                <button id="loadFixturesBtn" class="btn btn-primary" onclick="loadFixtures()" style="width:100%; margin-top:1rem;">Meccsek Betöltése (2 nap)</button>
+                <div id="fixtures-list" style="margin-top:1rem; max-height: 50vh; overflow-y:auto;"></div>
+            </div>
+
+            <div id="tab-manual" class="tab-content">
+                <div class="row">
+                    <div class="col"><label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/></div>
+                    <div class="col"><label for="away">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/></div>
+                </div>
+                <button class="btn btn-primary" onclick="runAnalysis(true)" style="width:100%; margin-top:1rem;">Elemzés Futtatása</button>
+            </div>
+
+            <div id="tab-history" class="tab-content">
+                <div id="history">
+                    <p class="muted">Az előzmények betöltéséhez add meg a Google Táblázat URL-jét.</p>
+                </div>
             </div>
         </div>
-        <div class="card">
-             <summary class="list-summary" onclick="showLeaguesInModal()"><span class="summary-title">Bajnokságok</span><span id="leagueCount" class="count-badge"></span></summary>
-             <summary class="list-summary" onclick="showMatchesInModal()"><span class="summary-title">Mérkőzések</span><span id="matchCount" class="count-badge"></span></summary>
-        </div>
-         <details class="card">
-            <summary><h2>Teljesítménykövetés</h2></summary>
+
+        <details class="card" open>
+            <summary><h3>Teljesítménykövetés</h3></summary>
             <div id="sheetUrlContainer">
-              <p class="muted">Add meg a Google Táblázat URL-jét a naplózáshoz. A Táblázatban hozz létre egy "SportElemző" menüt a kiértékeléshez.</p>
+              <p class="muted" style="font-size: .8rem;">A napló és bankroll funkciókhoz add meg a Google Táblázat URL-jét.</p>
               <label for="sheetUrl">Google Táblázat URL</label>
               <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
             </div>
-            <div id="bankrollStatus"><p class="muted">Nincs adat.</p></div>
+            <div id="bankrollStatus" style="display:none;"></div>
         </details>
-    </div>
-    <div class="col-center">
-        <div class="card">
-            <h2>Kézi Meccselemzés</h2>
-            <div class="row">
-                <div class="col"><label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/></div>
-                <div class="col"><label for="away">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/></div>
-            </div>
+    </aside>
 
-            <div class="expert-tuning-toggle" onclick="togglePanel('expertTuningPanel')">Szakértői Finomhangolás ⚙️</div>
-            <div id="expertTuningPanel">
-                <div class="row">
-                    <div class="col">
-                        <label for="homeFormWeight">Hazai Forma Súlyozása (<span id="homeFormWeightLabel">50</span>%)</label>
-                        <input type="range" id="homeFormWeight" min="0" max="100" value="50" oninput="document.getElementById('homeFormWeightLabel').textContent = this.value">
-                    </div>
-                    <div class="col">
-                        <label for="awayFormWeight">Vendég Forma Súlyozása (<span id="awayFormWeightLabel">50</span>%)</label>
-                        <input type="range" id="awayFormWeight" min="0" max="100" value="50" oninput="document.getElementById('awayFormWeightLabel').textContent = this.value">
-                    </div>
-                </div>
-            </div>
-
-            <div class="expert-tuning-toggle" onclick="togglePanel('liveScenarioPanel')">Élő Szcenárió Elemzés ⚡</div>
-             <div id="liveScenarioPanel" style="display:none;">
-                <p class="muted" style="text-align:center;">Add meg a meccs jelenlegi állását és a hátralévő időt a szimulációhoz.</p>
-                <div class="row">
-                    <div class="col"><label for="liveHomeScore">Hazai gólok</label><input id="liveHomeScore" type="number" value="0"/></div>
-                    <div class="col"><label for="liveAwayScore">Vendég gólok</label><input id="liveAwayScore" type="number" value="0"/></div>
-                    <div class="col"><label for="liveTimeRemainingMinutes">Hátralévő percek</label><input id="liveTimeRemainingMinutes" type="number" value="90" min="0" max="120"/></div>
-                </div>
-            </div>
-            
-            <div class="actions">
-                <button id="goBtn" class="btn-primary" onclick="runAnalysis(true)">Elemzés Futtatása</button>
-            </div>
-            <div id="progress" class="progress-ring" style="display:none"><span class="progress-label"></span></div>
-            <p id="status" class="muted" style="text-align:center">Kész.</p>
+    <main id="main-content" class="main-content">
+        <div id="placeholder" class="placeholder">
+             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20v-10M18 20V4"/></svg>
+            <h3>Válassz egy mérkőzést a listából, vagy futtass kézi elemzést.</h3>
+            <p>Az elemzés eredménye itt fog megjelenni.</p>
         </div>
-        <div id="out"></div>
-    </div>
-    <div class="col-right">
-       <details class="card">
-          <summary><h2>Elemzési Előzmények (Napló)</h2></summary>
-          <div id="history">
-             <p class="muted">A napló megtekintéséhez add meg a Google Táblázat URL-jét a "Teljesítménykövetés" szekcióban.</p>
-          </div>
-       </details>
-    </div>
+        <div id="loading-skeleton">
+            <div class="skeleton-card">
+                <div class="skeleton-line" style="height: 2rem; width: 60%;"></div>
+                <div class="skeleton-line" style="height: 1rem; width: 100%;"></div>
+                <div class="skeleton-line" style="height: 1rem; width: 100%;"></div>
+                <div class="skeleton-line" style="height: 1rem; width: 80%;"></div>
+            </div>
+            <div class="skeleton-card">
+                 <div class="skeleton-line" style="height: 1.5rem; width: 40%;"></div>
+                 <div class="skeleton-line" style="height: 1rem; width: 90%;"></div>
+                 <div class="skeleton-line" style="height: 1rem; width: 70%;"></div>
+            </div>
+        </div>
+        <div id="analysis-results"></div>
+        <div id="progress-container" style="display:none;">
+            <div class="progress-bar">
+                <div id="progress-bar-inner" class="progress-bar-inner"></div>
+            </div>
+            <p id="status" class="status-text muted"></p>
+        </div>
+    </main>
 </div>
 
-<div id="analysisModal" class="modal-overlay" onclick="closeAnalysisModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <div class="modal-header">
-            <h3 id="modalTitle" class="modal-title">Elemzés</h3>
-            <button class="close-button" onclick="closeAnalysisModal()">&times;</button>
-        </div>
-        <div id="modalBody" class="modal-body"></div>
-    </div>
-</div>
-
-<div id="listModal" class="modal-overlay" onclick="closeListModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <div class="modal-header">
-            <h3 id="listModalTitle" class="modal-title">Lista</h3>
-            <button class="close-button" onclick="closeListModal()">&times;</button>
-        </div>
-        <div id="listModalBody" class="modal-body"></div>
-    </div>
-</div>
 
 <script>
 let __gasUrl = 'https://script.google.com/macros/s/AKfycbzezgLIW-VE1ZCaRUU7nQ6lebTEH6VpUrjW-rpnJXUnXnkdlM9B3suv6dw-RZTTyfGiCg/exec';
@@ -247,15 +189,36 @@ let __currentSport = 'soccer';
 let __historySportFilter = 'soccer';
 let __sheetUrl = '';
 
-document.addEventListener("DOMContentLoaded", function(){
-    if(!__gasUrl||!__gasUrl.startsWith('https://script.google.com')){document.getElementById('userInfo').textContent='HIBA: Kérlek, add meg a Web App URL-t!'}else{document.getElementById('userInfo').textContent=`Csatlakozva.`}
+// --- ÚJ: Tab vezérlés ---
+document.addEventListener('DOMContentLoaded', () => {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            const tabId = button.getAttribute('data-tab');
+            tabContents.forEach(content => {
+                content.style.display = content.id === tabId ? 'block' : 'none';
+            });
+            if (tabId === 'tab-history') {
+                loadHistory();
+            }
+        });
+    });
+    
+    if(!__gasUrl||!__gasUrl.startsWith('https://script.google.com')){
+        document.getElementById('userInfo').textContent='HIBA: Web App URL nincs beállítva!';
+        document.getElementById('userInfo').style.color = 'var(--danger)';
+    } else {
+        document.getElementById('userInfo').textContent=`Csatlakozva`;
+    }
     loadSheetUrl();
 });
 
-function togglePanel(panelId) {
-    const panel = document.getElementById(panelId);
-    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-}
+// --- Meglévő logika frissítve az új felülethez ---
 
 function saveSheetUrl() {
     __sheetUrl = document.getElementById('sheetUrl').value;
@@ -273,160 +236,176 @@ function loadSheetUrl() {
     const urlInput = document.getElementById('sheetUrl');
     const statusContainer = document.getElementById('bankrollStatus');
     const urlContainer = document.getElementById('sheetUrlContainer');
+    const bankrollHeader = document.getElementById('bankrollDisplay');
     
     if (__sheetUrl) {
         urlInput.value = __sheetUrl;
         urlContainer.style.display = 'none';
         statusContainer.style.display = 'block';
+        bankrollHeader.style.display = 'block';
         updateBankrollStatus();
-        loadHistory(); 
     } else {
         urlContainer.style.display = 'block';
         statusContainer.style.display = 'none';
+        bankrollHeader.style.display = 'none';
     }
 }
 
 async function updateBankrollStatus() {
     if (!__sheetUrl) return;
     const statusEl = document.getElementById('bankrollStatus');
+    const bankrollValueEl = document.getElementById('bankrollValue');
     statusEl.innerHTML = `<p class="muted">Bankroll állapotának lekérése...</p>`;
+    bankrollValueEl.textContent = '...';
     try {
         const response = await fetch(`${__gasUrl}?action=getBankroll&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-        statusEl.innerHTML = `<p><strong>Aktuális Bankroll:</strong> ${data.bankroll.toFixed(2)} e.</p><p><strong>Profit/Veszteség:</strong> <span style="color:${data.pnl >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight:bold;">${data.pnl.toFixed(2)} e.</span></p><p><strong>ROI:</strong> <span style="font-weight:bold;">${data.roi.toFixed(1)}%</span></p>`;
+        statusEl.innerHTML = `<p><strong>Profit/Veszteség:</strong> <span style="color:${data.pnl >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight:bold;">${data.pnl.toFixed(2)} e.</span></p><p><strong>ROI:</strong> <span style="font-weight:bold;">${data.roi.toFixed(1)}%</span></p>`;
+        bankrollValueEl.textContent = `${data.bankroll.toFixed(2)} e.`;
     } catch(e) {
-        statusEl.innerHTML = `<p class="muted" style="color:var(--danger);">Hiba: ${e.message}</p>`;
+        const errorMsg = `Hiba: ${e.message}`;
+        statusEl.innerHTML = `<p class="muted" style="color:var(--danger);">${errorMsg}</p>`;
+        bankrollValueEl.textContent = 'Hiba';
     }
 }
 
-async function logBet(betData) {
-    if (!__sheetUrl) { alert('Kérlek, add meg a Google Táblázat URL-jét a naplózáshoz!'); return; }
-    const button = event.target;
-    button.disabled = true;
-    button.textContent = 'Naplózás...';
-    try {
-        await fetch(`${__gasUrl}`, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData })
-        });
-        button.textContent = 'Sikeresen Naplózva ✅';
-        setTimeout(updateBankrollStatus, 1000);
-    } catch (e) {
-        alert(`Hiba a naplózás során: ${e.message}.`);
-        button.textContent = 'Naplózás Sikertelen';
-    }
-}
-
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m])}
-function setProgress(pct,msg=null){const el=document.getElementById('progress');const statusEl=document.getElementById('status');const v=Math.max(0,Math.min(100,Math.round(pct||0)));el.style.display=v>0&&v<100?'grid':'none';if(v>0&&v<100){el.style.animation='pulse 2s infinite'}else{el.style.animation='none'}el.style.background=`conic-gradient(var(--primary) ${v*3.6}deg, rgba(255,255,255,.18) 0deg)`;el.querySelector('.progress-label').textContent=v+'%';if(msg)statusEl.textContent=msg}
 function handleSportChange(){
     __currentSport=document.getElementById('sportSelector').value;
-    const timeInput = document.getElementById('liveTimeRemainingMinutes');
-    if (__currentSport === 'soccer') timeInput.value = 90;
-    else if (__currentSport === 'hockey') timeInput.value = 60;
-    else if (__currentSport === 'basketball') timeInput.value = 48;
-    ['leagueCount','matchCount'].forEach(id=>document.getElementById(id).style.display='none'); __fixtures = [];
+    document.getElementById('fixtures-list').innerHTML = '';
+    __fixtures = [];
 }
+
 async function loadFixtures(){
-    const statusEl=document.getElementById('fxStatus');
-    const loadBtn=document.getElementById('loadFixturesBtn');
-    statusEl.textContent='Adatok lekérése...';
-    statusEl.classList.add('loading');
-    loadBtn.disabled=true;
-    ['leagueCount','matchCount'].forEach(id=>document.getElementById(id).style.display='none');
-    try{
-        const response=await fetch(`${__gasUrl}?action=getFixtures&sport=${__currentSport}&days=2`);
-        if(!response.ok)throw new Error(`Hálózati hiba: ${response.status}`);
-        const data=await response.json();
-        if(data.error)throw new Error(data.error);
-        __fixtures=data.fixtures||[];
+    const listEl = document.getElementById('fixtures-list');
+    const loadBtn = document.getElementById('loadFixturesBtn');
+    listEl.innerHTML = '<p class="muted" style="text-align:center;">Adatok lekérése...</p>';
+    loadBtn.disabled = true;
+    try {
+        const response = await fetch(`${__gasUrl}?action=getFixtures&sport=${__currentSport}&days=2`);
+        if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        __fixtures = data.fixtures || [];
         sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
-        const leagues=[...new Set(__fixtures.map(f=>f.league))];
-        const leagueCountEl = document.getElementById('leagueCount');
-        const matchCountEl = document.getElementById('matchCount');
-        leagueCountEl.textContent = leagues.length;
-        matchCountEl.textContent = __fixtures.length;
-        if (leagues.length > 0) leagueCountEl.style.display = 'inline-block';
-        if (__fixtures.length > 0) matchCountEl.style.display = 'inline-block';
-        statusEl.textContent=``;
-    }catch(e){
-        statusEl.textContent=`Hiba: ${e.message}`;
-    }finally{
-        statusEl.classList.remove('loading');
-        loadBtn.disabled=false;
+
+        const groupedByLeague = __fixtures.reduce((acc, fx) => {
+            (acc[fx.league] = acc[fx.league] || []).push(fx);
+            return acc;
+        }, {});
+
+        let html = '';
+        for (const league in groupedByLeague) {
+            html += `<div class="list-group-header">${league}</div>`;
+            groupedByLeague[league].forEach(fx => {
+                const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
+                html += `
+                    <div class="list-item" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">
+                        <div>
+                            <div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div>
+                            <div class="list-item-meta">${d}</div>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--muted);"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                `;
+            });
+        }
+        listEl.innerHTML = html || '<p class="muted" style="text-align:center;">Nincs megjeleníthető mérkőzés.</p>';
+
+    } catch (e) {
+        listEl.innerHTML = `<p class="muted" style="color:var(--danger);">${e.message}</p>`;
+    } finally {
+        loadBtn.disabled = false;
     }
 }
-function fillAndAnalyze(home,away){
-    document.getElementById('home').value=home;
-    document.getElementById('away').value=away;
-    closeListModal();
-    document.querySelector('.col-center').scrollIntoView({behavior:'smooth'});
+
+function fillAndAnalyze(home, away) {
+    document.getElementById('home').value = home;
+    document.getElementById('away').value = away;
     runAnalysis(true);
 }
 
 async function runAnalysis(forceNew = false) {
     const home = document.getElementById("home").value.trim();
     const away = document.getElementById("away").value.trim();
-    const homeFormWeight = document.getElementById("homeFormWeight").value;
-    const awayFormWeight = document.getElementById("awayFormWeight").value;
-    const liveHomeScore = document.getElementById("liveHomeScore").value;
-    const liveAwayScore = document.getElementById("liveAwayScore").value;
-    const liveTimeRemainingMinutes = document.getElementById("liveTimeRemainingMinutes").value;
-    const outEl = document.getElementById('out');
-    outEl.innerHTML = '';
-
-
-    if (!home || !away || !__gasUrl) { setProgress(0, "Hiba: Hiányzó adatok."); return; }
-
-    const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
+    const resultsEl = document.getElementById('analysis-results');
+    const placeholderEl = document.getElementById('placeholder');
+    const skeletonEl = document.getElementById('loading-skeleton');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar-inner');
+    const statusEl = document.getElementById('status');
     
-    let progressInterval;
+    resultsEl.innerHTML = '';
+    placeholderEl.style.display = 'none';
+    skeletonEl.style.display = 'block';
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    statusEl.textContent = '';
+
+    if (!home || !away) {
+        resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: Mindkét csapat nevét meg kell adni.</p>`;
+        skeletonEl.style.display = 'none';
+        progressContainer.style.display = 'none';
+        return;
+    }
+    
+    let progress = 0;
+    const updateProgress = (val, text) => {
+        progress = Math.max(progress, val);
+        progressBar.style.width = `${progress}%`;
+        statusEl.textContent = text;
+    };
+
     try {
-        setProgress(1, "Elemzés indítása...");
-        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=${forceNew}&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&liveHome=${liveHomeScore}&liveAway=${liveAwayScore}&liveTimeMinutes=${liveTimeRemainingMinutes}&sheetUrl=${encodeURIComponent(__sheetUrl)}`;
-
-        progressInterval = setInterval(() => {
-            const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0;
-            setProgress(Math.min(90, c + 3), "Adatok gyűjtése a Piacról és az AI-tól...")
-        }, 800);
+        updateProgress(5, "Elemzés indítása...");
+        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=${forceNew}&sheetUrl=${encodeURIComponent(__sheetUrl)}`;
+        const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
         
-        const postResponse = await fetch(`${analysisUrl}`, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) })
-        });
+        // POST hívás az elemzés elindításához
+        fetch(analysisUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) }) });
+        updateProgress(10, "Adatok lekérése a szerverről...");
 
+        // Progress szimuláció, amíg az eredményre várunk
+        const interval = setInterval(() => {
+            if (progress < 85) updateProgress(progress + Math.random() * 5, "AI elemzés és szimuláció futtatása...");
+        }, 800);
+
+        // Várunk 9 másodpercet, majd lekérjük a cache-elt eredményt
         await new Promise(resolve => setTimeout(resolve, 9000));
+        clearInterval(interval);
+        updateProgress(90, "Válasz feldolgozása...");
         
         const resultResponse = await fetch(`${analysisUrl}&force=false`);
-        clearInterval(progressInterval);
-        
         if (!resultResponse.ok) throw new Error(`Szerver válasz hiba: ${resultResponse.status}`);
         
-        setProgress(95, "Válasz feldolgozása...");
         const data = await resultResponse.json();
-        
         if (data.error) throw new Error(data.error);
 
-        openAnalysisModal(home, away, data.html);
-        if(__sheetUrl) loadHistory();
-        setProgress(100, "Kész.");
+        updateProgress(100, "Kész.");
+        resultsEl.innerHTML = `<div class="analysis-modal-body">${data.html}</div>`;
+        if (__sheetUrl) {
+            // Frissítsük az előzmények fület, ha az aktív
+            if(document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
+                loadHistory();
+            }
+        }
+        
     } catch (e) {
-        if (progressInterval) clearInterval(progressInterval);
-        setProgress(0, "Hiba: " + e.message);
-        outEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
+        resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
+    } finally {
+        skeletonEl.style.display = 'none';
+        setTimeout(() => { progressContainer.style.display = 'none'; }, 2000);
     }
 }
 
+
 async function loadHistory() {
     if (!__sheetUrl) {
-        document.getElementById('history').innerHTML = '<p class="muted">A napló megtekintéséhez add meg a Google Táblázat URL-jét.</p>';
+        document.getElementById('history').innerHTML = '<p class="muted">A napló funkcióhoz add meg a Google Táblázat URL-jét.</p>';
         return;
     }
-    document.getElementById('history').innerHTML = '<p class="muted">Napló betöltése...</p>';
+    document.getElementById('history').innerHTML = '<p class="muted">Előzmények betöltése...</p>';
     try {
         const response = await fetch(`${__gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
         const data = await response.json();
@@ -453,14 +432,17 @@ function renderHistory(history, isFiltering = false) {
         sessionStorage.setItem('fullHistory', JSON.stringify(history));
     }
     
+    const searchAndFilterHtml = `
+        <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory(JSON.parse(sessionStorage.getItem('fullHistory') || '[]'))" style="margin-bottom:0.8rem"/>
+        <div class="sport-filter-container">
+            <button class="sport-filter-btn ${__historySportFilter === 'soccer' ? 'active' : ''}" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
+            <button class="sport-filter-btn ${__historySportFilter === 'hockey' ? 'active' : ''}" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
+            <button class="sport-filter-btn ${__historySportFilter === 'basketball' ? 'active' : ''}" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
+        </div>
+    `;
+
     if (!history || history.length === 0) {
-        box.innerHTML = `<input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory(JSON.parse(sessionStorage.getItem('fullHistory') || '[]'))" style="margin-bottom:0.8rem"/>
-                     <div class="sport-filter-container">
-                       <button class="sport-filter-btn ${__historySportFilter === 'soccer' ? 'active' : ''}" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
-                       <button class="sport-filter-btn ${__historySportFilter === 'hockey' ? 'active' : ''}" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
-                       <button class="sport-filter-btn ${__historySportFilter === 'basketball' ? 'active' : ''}" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
-                     </div>
-                     <p class="muted">Nincsenek előzmények ebben a kategóriában.</p>`;
+        box.innerHTML = searchAndFilterHtml + '<p class="muted" style="text-align:center;">Nincsenek előzmények ebben a kategóriában.</p>';
         return;
     }
 
@@ -475,34 +457,26 @@ function renderHistory(history, isFiltering = false) {
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
     for (const date of sortedDates) {
-        // === ITT TÖRTÉNT A JAVÍTÁS: az "open" attribútum eltávolítva ===
-        finalHtml += `<details class="history-date-group">`;
-        finalHtml += `<summary class="history-date-summary">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
+        finalHtml += `<details class="list-group-header" style="border:none; padding: 10px 0; font-size: 0.9rem;">`;
+        finalHtml += `<summary style="color:var(--text-secondary);">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
         
         groupedByDate[date].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
             finalHtml += `
-                <div class="fx-item">
-                    <div class="fx-item-details" onclick="loadAnalysisFromHistory('${item.id}')" style="cursor:pointer;flex-grow:1">
-                        <div>
-                            <div class="fx-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div>
-                            <div class="fx-meta">${new Date(item.date).toLocaleString('hu-HU')}</div>
-                        </div>
+                <div class="list-item">
+                    <div onclick="loadAnalysisFromHistory('${item.id}')" style="flex-grow:1;">
+                        <div class="list-item-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div>
+                        <div class="list-item-meta">${new Date(item.date).toLocaleTimeString('hu-HU', {hour:'2-digit', minute:'2-digit'})}</div>
                     </div>
-                    <div class="fx-actions" style="display:flex;gap:5px">
-                        <button class="btn-primary btn-sm" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése">👁️</button>
-                        <button class="btn-danger btn-sm" onclick="deleteHistoryItem('${item.id}')" title="Törlés">🗑️</button>
+                    <div style="display:flex;gap:5px">
+                        <a href="#" class="action-icon" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>
+                        <a href="#" class="action-icon delete" onclick="deleteHistoryItem('${item.id}')" title="Törlés"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></a>
                     </div>
                 </div>
             `;
         });
         finalHtml += `</details>`;
     }
-    box.innerHTML = `<input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory(JSON.parse(sessionStorage.getItem('fullHistory') || '[]'))" style="margin-bottom:0.8rem"/>
-                     <div class="sport-filter-container">
-                       <button class="sport-filter-btn ${__historySportFilter === 'soccer' ? 'active' : ''}" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
-                       <button class="sport-filter-btn ${__historySportFilter === 'hockey' ? 'active' : ''}" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
-                       <button class="sport-filter-btn ${__historySportFilter === 'basketball' ? 'active' : ''}" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
-                     </div>` + finalHtml;
+    box.innerHTML = searchAndFilterHtml + finalHtml;
 }
 
 function filterHistoryBySport(sport, btn) {
@@ -514,17 +488,26 @@ function filterHistoryBySport(sport, btn) {
 
 async function loadAnalysisFromHistory(id){
     if (!__sheetUrl) return;
+    const resultsEl = document.getElementById('analysis-results');
+    const placeholderEl = document.getElementById('placeholder');
+    const skeletonEl = document.getElementById('loading-skeleton');
+    resultsEl.innerHTML = '';
+    placeholderEl.style.display = 'none';
+    skeletonEl.style.display = 'block';
     try {
         const response = await fetch(`${__gasUrl}?action=getAnalysisDetail&sheetUrl=${encodeURIComponent(__sheetUrl)}&id=${id}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-        openAnalysisModal(data.record.home, data.record.away, data.record.html);
+        resultsEl.innerHTML = `<div class="analysis-modal-body">${data.record.html}</div>`;
     } catch(e) {
-        alert(`Hiba az elemzés betöltésekor: ${e.message}`);
+        resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba az elemzés betöltésekor: ${e.message}</p>`;
+    } finally {
+        skeletonEl.style.display = 'none';
     }
 }
 
 async function deleteHistoryItem(id){
+    event.preventDefault();
     if (!__sheetUrl || !confirm("Biztosan törölni szeretnéd ezt az elemet a központi naplóból?")) return;
     try {
         await fetch(`${__gasUrl}`, {
@@ -538,13 +521,6 @@ async function deleteHistoryItem(id){
         alert(`Hiba a törlés során: ${e.message}`);
     }
 }
-
-function openAnalysisModal(home,away,htmlContent){document.getElementById('modalTitle').textContent=`${home} vs ${away}`;document.getElementById('modalBody').innerHTML=htmlContent;document.getElementById('analysisModal').style.display='flex'}
-function closeAnalysisModal(){document.getElementById('analysisModal').style.display='none'}
-function openListModal(title, content) { document.getElementById('listModalTitle').textContent = title; document.getElementById('listModalBody').innerHTML = content; document.getElementById('listModal').style.display = 'flex'; }
-function closeListModal(){document.getElementById('listModal').style.display='none'}
-function showLeaguesInModal() { if (__fixtures.length === 0) { alert("Először töltsd be a meccseket!"); return; } const leagues = [...new Set(__fixtures.map(f => f.league))]; let content = '<div class="modal-list-grid">'; content += `<div class="league-card" onclick="showMatchesInModal('all')"><h3>Összes Bajnokság</h3></div>`; content += leagues.map(l => `<div class="league-card" onclick="showMatchesInModal('${escapeHtml(l)}')"><h3>${escapeHtml(l)}</h3></div>`).join(''); content += '</div>'; openListModal("Bajnokságok", content); }
-function showMatchesInModal(league = 'all') { if (__fixtures.length === 0) { alert("Először töltsd be a meccseket!"); return; } const filteredFixtures = league === 'all' ? __fixtures : __fixtures.filter(f => f.league === league); if (filteredFixtures.length === 0) { openListModal(league, `<p class="muted" style="text-align:center;">Nincs megjeleníthető mérkőzés ebben a kategóriában.</p>`); return; } let content = '<div class="modal-list-grid">'; content += filteredFixtures.map(fx => { const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' }); return ` <div class="fixture-card"> <div> <div class="fx-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div> <div class="fx-meta">${escapeHtml(fx.league)}<br>${d}</div> </div> <button class="btn-primary btn-sm" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">Elemzés</button> </div> `; }).join(''); content += '</div>'; const title = league === 'all' ? "Összes Mérkőzés" : league; openListModal(title, content); }
 </script>
 </body>
 </html>
