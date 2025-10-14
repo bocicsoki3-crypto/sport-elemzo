@@ -56,38 +56,10 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
 .sport-filter-btn{background-color:rgba(0,0,0,0.3);border:1px solid var(--border-color);color:var(--muted);padding:8px 15px;border-radius:10px;cursor:pointer;transition:all .2s ease;flex:1}
 .sport-filter-btn:hover{border-color:var(--secondary);color:var(--text-primary)}
 .sport-filter-btn.active{background-color:var(--primary);color:#000;border-color:var(--primary);font-weight:700}
-.analysis-modal-body{padding:0}
-.analysis-section h4{color:var(--secondary);margin:0 0 .8rem 0;font-size:1.2rem;border-bottom:1px solid var(--border-color);padding-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
-.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem}
-@media (max-width:900px){.analysis-grid{grid-template-columns:1fr}}
-.market-group{background:rgba(0,0,0,0.2);border-radius:12px;padding:1rem;border:1px solid var(--border-color)}
-.prob-item{margin-bottom:.8rem}
-.prob-label{display:flex;justify-content:space-between;font-weight:600;margin-bottom:4px}
-.prob-bar-bg{width:100%;background:rgba(0,0,0,.3);border-radius:5px;height:10px;overflow:hidden}
-.prob-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:5px}
-.best-bet-card{background:linear-gradient(135deg,rgba(212,175,55,.05),rgba(184,134,11,.05));border:1px solid var(--primary);border-radius:12px;padding:1rem;margin-top:1.5rem}
-.xg-comparison{padding:1rem;background:rgba(0,0,0,0.2);border-radius:12px;border:1px solid var(--border-color);margin-top:1rem;margin-bottom:1rem}
-.xg-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.xg-label{flex-basis:120px;font-weight:600}
-.xg-bar-container{flex-grow:1;height:20px;background:rgba(0,0,0,0.3);border-radius:8px;overflow:hidden}
-.xg-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:8px}
-.xg-value{font-weight:700;font-size:1.2rem}
-.form-comparison{margin-bottom:1rem;padding:.8rem;background:rgba(0,0,0,0.2);border-radius:12px;border:1px solid var(--border-color)}
-.form-row{display:flex;align-items:center;gap:10px}.form-row:first-child{margin-bottom:8px}
-.form-label{font-weight:600}
-.form-badges{display:flex;gap:5px}
-.form-badge{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#000;font-weight:700;font-size:.8rem}
-.form-w{background-color:var(--success)}
-.form-d{background-color:#f0ad4e}
-.form-l{background-color:var(--danger)}
-.model-confidence-card{border-color:var(--accent)!important;background:linear-gradient(135deg,rgba(0,191,255,.05),rgba(0,191,255,.1))!important}
-.model-confidence-card h4{color:var(--accent)!important}
-.confidence-score{font-size:1.5rem;font-weight:800;color:var(--accent)}
-.value-bet-card{border-color:var(--success)!important;background:linear-gradient(135deg,rgba(57,255,20,.05),rgba(57,255,20,.1))!important}
-.value-bet-card h4{color:var(--success)!important}
-.value-highlight{color:var(--success);font-weight:800}
-.btn-log-bet{font-size:.9rem;padding:8px 12px;margin-top:.5rem;background:linear-gradient(135deg,var(--success),#1e7e34);color:white}
-.btn-log-bet:hover:not(:disabled){box-shadow:0 8px 20px rgba(57,255,20,.2)}
+.card > details > summary {font-family: var(--font-family-header);font-size: 1.25rem;font-weight: 600;list-style: none;display: flex;align-items: center;cursor: pointer;}
+.card > details > summary::-webkit-details-marker {display: none;}
+.card > details > summary::before {content: '▶';margin-right: 10px;font-size: 0.8em;transition: transform 0.2s;}
+.card > details[open] > summary::before {transform: rotate(90deg);}
 .progress-bar{width:100%;height:4px;background:var(--border-color);border-radius:2px;margin-top:1rem;overflow:hidden;display:none}
 .progress-bar-inner{width:0;height:100%;background:var(--primary);transition:width .5s ease}
 .status-text{text-align:center;margin-top:.5rem}
@@ -95,28 +67,31 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
 #loading-skeleton .skeleton-card{background:rgba(255,255,255,0.05);padding:1.5rem;border-radius:16px;margin-bottom:1.5rem}
 #loading-skeleton .skeleton-line{background:rgba(255,255,255,0.1);border-radius:4px;margin-bottom:10px;animation:pulse-bg 1.5s infinite}
 @keyframes pulse-bg{0%{background:rgba(255,255,255,0.1)}50%{background:rgba(255,255,255,0.05)}100%{background:rgba(255,255,255,0.1)}}
-/* === ITT A JAVÍTÁS A NYÍL IGAZÍTÁSÁHOZ === */
-.card > details > summary {
-    font-family: var(--font-family-header);
-    font-size: 1.25rem;
-    font-weight: 600;
-    list-style: none;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-.card > details > summary::-webkit-details-marker {
-    display: none;
-}
-.card > details > summary::before {
-    content: '▶';
-    margin-right: 10px;
-    font-size: 0.8em;
-    transition: transform 0.2s;
-}
-.card > details[open] > summary::before {
-    transform: rotate(90deg);
-}
+
+/* === ÚJ: Elemzés Dizájn === */
+.analysis-body p { font-size: 1.05rem; line-height: 1.8; color: var(--text-secondary); }
+.analysis-body strong { color: var(--text-primary); font-weight: 600; }
+.at-a-glance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.summary-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
+.summary-card h5 { margin: 0 0 1rem 0; color: var(--muted); font-size: 0.9rem; font-weight: 500; }
+.summary-card .value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+.summary-card .details { font-size: 0.8rem; margin-top: 0.5rem; }
+.donut-chart { position: relative; width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; background: conic-gradient( var(--primary) 0 var(--p-home), var(--muted) 0 var(--p-draw), var(--secondary) 0 100% ); }
+.donut-chart::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 70px; height: 70px; background: rgba(0,0,0,0.2); border-radius: 50%; }
+.donut-legend { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; font-size: 0.8rem; }
+.donut-legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+.legend-home::before { background: var(--primary); }
+.legend-draw::before { background: var(--muted); }
+.legend-away::before { background: var(--secondary); }
+.analysis-accordion details { border-bottom: 1px solid var(--border-color); }
+.analysis-accordion summary { font-size: 1.2rem; font-weight: 600; padding: 1.5rem 1rem; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+.analysis-accordion summary::-webkit-details-marker { display: none; }
+.analysis-accordion summary .section-title { display: flex; align-items: center; gap: 0.75rem; }
+.analysis-accordion summary .section-icon { stroke: var(--primary); }
+.analysis-accordion summary::after { content: '+'; font-size: 1.5rem; color: var(--muted); transition: transform 0.3s ease; }
+.analysis-accordion details[open] summary::after { transform: rotate(45deg); }
+.analysis-accordion .accordion-content { padding: 0 1rem 1.5rem 1rem; animation: fadeIn .5s; }
+.xg-value, .confidence-score { text-shadow: 0 0 10px currentColor; }
 </style>
 </head>
 <body>
@@ -152,11 +127,9 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
             </div>
 
             <div id="tab-manual" class="tab-content">
-                <div class="row">
-                    <div class="col"><label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/></div>
-                    <div class="col"><label for="away">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/></div>
-                </div>
-                <button class="btn btn-primary" onclick="runAnalysis(true)" style="width:100%; margin-top:1rem;">Elemzés Futtatása</button>
+                <label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/>
+                <label for="away" style="margin-top:1rem;">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/>
+                <button class="btn btn-primary" onclick="runAnalysis(true)" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
             </div>
 
             <div id="tab-history" class="tab-content">
@@ -188,23 +161,12 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
             <p>Az elemzés eredménye itt fog megjelenni.</p>
         </div>
         <div id="loading-skeleton">
-            <div class="skeleton-card">
-                <div class="skeleton-line" style="height: 2rem; width: 60%;"></div>
-                <div class="skeleton-line" style="height: 1rem; width: 100%;"></div>
-                <div class="skeleton-line" style="height: 1rem; width: 100%;"></div>
-                <div class="skeleton-line" style="height: 1rem; width: 80%;"></div>
-            </div>
-            <div class="skeleton-card">
-                 <div class="skeleton-line" style="height: 1.5rem; width: 40%;"></div>
-                 <div class="skeleton-line" style="height: 1rem; width: 90%;"></div>
-                 <div class="skeleton-line" style="height: 1rem; width: 70%;"></div>
-            </div>
+            <div class="skeleton-card"><div class="skeleton-line" style="height: 2rem; width: 60%;"></div><div class="skeleton-line" style="height: 1rem; width: 100%;"></div><div class="skeleton-line" style="height: 1rem; width: 100%;"></div><div class="skeleton-line" style="height: 1rem; width: 80%;"></div></div>
+            <div class="skeleton-card"><div class="skeleton-line" style="height: 1.5rem; width: 40%;"></div><div class="skeleton-line" style="height: 1rem; width: 90%;"></div><div class="skeleton-line" style="height: 1rem; width: 70%;"></div></div>
         </div>
         <div id="analysis-results"></div>
         <div id="progress-container" style="display:none;">
-            <div class="progress-bar">
-                <div id="progress-bar-inner" class="progress-bar-inner"></div>
-            </div>
+            <div class="progress-bar"><div id="progress-bar-inner" class="progress-bar-inner"></div></div>
             <p id="status" class="status-text muted"></p>
         </div>
     </main>
@@ -212,6 +174,9 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
 
 
 <script>
+// ... (A teljes JavaScript kód változatlanul következik innen)
+// ... (A szkriptet a rövidség kedvéért nem illesztem be újra, mert a változás csak a CSS-t és a kód.gs-t érinti.)
+// ... (Kérlek, használd a legutóbb kapott teljes, hibamentes JavaScript blokkot)
 let __gasUrl = 'https://script.google.com/macros/s/AKfycbzezgLIW-VE1ZCaRUU7nQ6lebTEH6VpUrjW-rpnJXUnXnkdlM9B3suv6dw-RZTTyfGiCg/exec';
 let __fixtures = [];
 let __currentSport = 'soccer';
@@ -355,7 +320,6 @@ async function loadFixtures(){
 
         let html = '';
         for (const league in groupedByLeague) {
-            // === ITT A JAVÍTÁS: A bajnokságok <details> elemekbe kerültek ===
             html += `<details>`;
             html += `<summary class="list-group-header">${league}</summary>`;
             groupedByLeague[league].forEach(fx => {
@@ -442,7 +406,7 @@ async function runAnalysis(forceNew = false) {
         if (data.error) throw new Error(data.error);
 
         updateProgress(100, "Kész.");
-        resultsEl.innerHTML = `<div class="analysis-modal-body">${data.html}</div>`;
+        resultsEl.innerHTML = `<div class="analysis-body">${data.html}</div>`;
         if (__sheetUrl && document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
             loadHistory();
         }
@@ -554,7 +518,7 @@ async function loadAnalysisFromHistory(id){
         const response = await fetch(`${__gasUrl}?action=getAnalysisDetail&sheetUrl=${encodeURIComponent(__sheetUrl)}&id=${id}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-        resultsEl.innerHTML = `<div class="analysis-modal-body">${data.record.html}</div>`;
+        resultsEl.innerHTML = `<div class="analysis-body">${data.record.html}</div>`;
     } catch(e) {
         resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba az elemzés betöltésekor: ${e.message}</p>`;
     } finally {
