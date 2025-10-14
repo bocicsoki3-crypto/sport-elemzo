@@ -141,7 +141,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
             </div>
         </div>
 
-        <details class="card" open>
+        <details class="card">
             <summary><h3>Teljesítménykövetés</h3></summary>
             <div id="sheetUrlContainer">
               <p class="muted" style="font-size: .8rem;">A napló és bankroll funkciókhoz add meg a Google Táblázat URL-jét.</p>
@@ -189,6 +189,11 @@ let __currentSport = 'soccer';
 let __historySportFilter = 'soccer';
 let __sheetUrl = '';
 
+// === ITT A JAVÍTÁS: A hiányzó függvény visszahelyezve ===
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
+}
+
 // --- ÚJ: Tab vezérlés ---
 document.addEventListener('DOMContentLoaded', () => {
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -202,6 +207,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const tabId = button.getAttribute('data-tab');
             tabContents.forEach(content => {
                 content.style.display = content.id === tabId ? 'block' : 'none';
+                if(content.id === tabId) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
             });
             if (tabId === 'tab-history') {
                 loadHistory();
@@ -244,6 +254,10 @@ function loadSheetUrl() {
         statusContainer.style.display = 'block';
         bankrollHeader.style.display = 'block';
         updateBankrollStatus();
+        // Automatikusan töltsük be az előzményeket, ha a fül aktív
+        if(document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
+            loadHistory();
+        }
     } else {
         urlContainer.style.display = 'block';
         statusContainer.style.display = 'none';
@@ -267,6 +281,26 @@ async function updateBankrollStatus() {
         const errorMsg = `Hiba: ${e.message}`;
         statusEl.innerHTML = `<p class="muted" style="color:var(--danger);">${errorMsg}</p>`;
         bankrollValueEl.textContent = 'Hiba';
+    }
+}
+
+async function logBet(betData) {
+    if (!__sheetUrl) { alert('Kérlek, add meg a Google Táblázat URL-jét a naplózáshoz!'); return; }
+    const button = event.target;
+    button.disabled = true;
+    button.textContent = 'Naplózás...';
+    try {
+        await fetch(`${__gasUrl}`, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData })
+        });
+        button.textContent = 'Sikeresen Naplózva ✅';
+        setTimeout(updateBankrollStatus, 1000);
+    } catch (e) {
+        alert(`Hiba a naplózás során: ${e.message}.`);
+        button.textContent = 'Naplózás Sikertelen';
     }
 }
 
@@ -347,6 +381,7 @@ async function runAnalysis(forceNew = false) {
         resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: Mindkét csapat nevét meg kell adni.</p>`;
         skeletonEl.style.display = 'none';
         progressContainer.style.display = 'none';
+        placeholderEl.style.display = 'flex';
         return;
     }
     
@@ -362,16 +397,13 @@ async function runAnalysis(forceNew = false) {
         let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=${forceNew}&sheetUrl=${encodeURIComponent(__sheetUrl)}`;
         const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
         
-        // POST hívás az elemzés elindításához
         fetch(analysisUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) }) });
         updateProgress(10, "Adatok lekérése a szerverről...");
 
-        // Progress szimuláció, amíg az eredményre várunk
         const interval = setInterval(() => {
             if (progress < 85) updateProgress(progress + Math.random() * 5, "AI elemzés és szimuláció futtatása...");
         }, 800);
 
-        // Várunk 9 másodpercet, majd lekérjük a cache-elt eredményt
         await new Promise(resolve => setTimeout(resolve, 9000));
         clearInterval(interval);
         updateProgress(90, "Válasz feldolgozása...");
@@ -384,11 +416,8 @@ async function runAnalysis(forceNew = false) {
 
         updateProgress(100, "Kész.");
         resultsEl.innerHTML = `<div class="analysis-modal-body">${data.html}</div>`;
-        if (__sheetUrl) {
-            // Frissítsük az előzmények fület, ha az aktív
-            if(document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
-                loadHistory();
-            }
+        if (__sheetUrl && document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
+            loadHistory();
         }
         
     } catch (e) {
@@ -458,7 +487,7 @@ function renderHistory(history, isFiltering = false) {
 
     for (const date of sortedDates) {
         finalHtml += `<details class="list-group-header" style="border:none; padding: 10px 0; font-size: 0.9rem;">`;
-        finalHtml += `<summary style="color:var(--text-secondary);">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
+        finalHtml += `<summary style="color:var(--text-secondary); cursor:pointer;">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
         
         groupedByDate[date].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
             finalHtml += `
@@ -487,6 +516,7 @@ function filterHistoryBySport(sport, btn) {
 }
 
 async function loadAnalysisFromHistory(id){
+    event.preventDefault();
     if (!__sheetUrl) return;
     const resultsEl = document.getElementById('analysis-results');
     const placeholderEl = document.getElementById('placeholder');
