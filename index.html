@@ -44,7 +44,10 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
 .list-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border-color);cursor:pointer;transition:background-color .2s ease}
 .list-item:hover{background-color:rgba(212,175,55,.1)}
 .list-item-title{font-weight:700}.list-item-meta{font-size:.8rem;color:var(--muted)}
-.list-group-header{font-weight:800;font-size:1.1rem;color:var(--secondary);padding:15px 0 10px 0;border-bottom:1px solid var(--border-color);margin-top:1rem}
+.list-group-header{font-weight:800;font-size:1.1rem;color:var(--secondary);padding:15px 0 10px 0;border-bottom:1px solid var(--border-color);margin-top:1rem; list-style: none; display: flex; align-items: center; cursor: pointer;}
+.list-group-header::-webkit-details-marker { display: none; }
+.list-group-header::before { content: '▶'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; }
+details[open] > .list-group-header::before { transform: rotate(90deg); }
 .action-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;transition:background-color .2s ease;background:rgba(255,255,255,0.05)}
 .action-icon:hover{background-color:rgba(255,255,255,0.1)}
 .action-icon svg{width:18px;height:18px;stroke:var(--muted)}
@@ -92,6 +95,28 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
 #loading-skeleton .skeleton-card{background:rgba(255,255,255,0.05);padding:1.5rem;border-radius:16px;margin-bottom:1.5rem}
 #loading-skeleton .skeleton-line{background:rgba(255,255,255,0.1);border-radius:4px;margin-bottom:10px;animation:pulse-bg 1.5s infinite}
 @keyframes pulse-bg{0%{background:rgba(255,255,255,0.1)}50%{background:rgba(255,255,255,0.05)}100%{background:rgba(255,255,255,0.1)}}
+/* === ITT A JAVÍTÁS A NYÍL IGAZÍTÁSÁHOZ === */
+.card > details > summary {
+    font-family: var(--font-family-header);
+    font-size: 1.25rem;
+    font-weight: 600;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+.card > details > summary::-webkit-details-marker {
+    display: none;
+}
+.card > details > summary::before {
+    content: '▶';
+    margin-right: 10px;
+    font-size: 0.8em;
+    transition: transform 0.2s;
+}
+.card > details[open] > summary::before {
+    transform: rotate(90deg);
+}
 </style>
 </head>
 <body>
@@ -141,15 +166,19 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
             </div>
         </div>
 
-        <details class="card">
-            <summary><h3>Teljesítménykövetés</h3></summary>
-            <div id="sheetUrlContainer">
-              <p class="muted" style="font-size: .8rem;">A napló és bankroll funkciókhoz add meg a Google Táblázat URL-jét.</p>
-              <label for="sheetUrl">Google Táblázat URL</label>
-              <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
-            </div>
-            <div id="bankrollStatus" style="display:none;"></div>
-        </details>
+        <div class="card">
+             <details>
+                <summary>Teljesítménykövetés</summary>
+                <div style="margin-top: 1rem;">
+                    <div id="sheetUrlContainer">
+                      <p class="muted" style="font-size: .8rem;">A napló és bankroll funkciókhoz add meg a Google Táblázat URL-jét.</p>
+                      <label for="sheetUrl">Google Táblázat URL</label>
+                      <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
+                    </div>
+                    <div id="bankrollStatus" style="display:none;"></div>
+                </div>
+            </details>
+        </div>
     </aside>
 
     <main id="main-content" class="main-content">
@@ -189,12 +218,10 @@ let __currentSport = 'soccer';
 let __historySportFilter = 'soccer';
 let __sheetUrl = '';
 
-// === ITT A JAVÍTÁS: A hiányzó függvény visszahelyezve ===
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
 }
 
-// --- ÚJ: Tab vezérlés ---
 document.addEventListener('DOMContentLoaded', () => {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -228,8 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSheetUrl();
 });
 
-// --- Meglévő logika frissítve az új felülethez ---
-
 function saveSheetUrl() {
     __sheetUrl = document.getElementById('sheetUrl').value;
     if (__sheetUrl && __sheetUrl.startsWith('https://docs.google.com/spreadsheets/d/')) {
@@ -254,7 +279,6 @@ function loadSheetUrl() {
         statusContainer.style.display = 'block';
         bankrollHeader.style.display = 'block';
         updateBankrollStatus();
-        // Automatikusan töltsük be az előzményeket, ha a fül aktív
         if(document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
             loadHistory();
         }
@@ -331,7 +355,9 @@ async function loadFixtures(){
 
         let html = '';
         for (const league in groupedByLeague) {
-            html += `<div class="list-group-header">${league}</div>`;
+            // === ITT A JAVÍTÁS: A bajnokságok <details> elemekbe kerültek ===
+            html += `<details>`;
+            html += `<summary class="list-group-header">${league}</summary>`;
             groupedByLeague[league].forEach(fx => {
                 const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
                 html += `
@@ -344,6 +370,7 @@ async function loadFixtures(){
                     </div>
                 `;
             });
+            html += `</details>`;
         }
         listEl.innerHTML = html || '<p class="muted" style="text-align:center;">Nincs megjeleníthető mérkőzés.</p>';
 
@@ -427,7 +454,6 @@ async function runAnalysis(forceNew = false) {
         setTimeout(() => { progressContainer.style.display = 'none'; }, 2000);
     }
 }
-
 
 async function loadHistory() {
     if (!__sheetUrl) {
