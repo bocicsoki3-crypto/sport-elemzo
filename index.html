@@ -6,7 +6,7 @@
 <title>SportElemző Gemini AI</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#000000;--card:#1a1a1a;--border:#38301d;--muted:#aaa;--primary:#D4AF37;--secondary:#B8860B;--accent:#FFD700;--text:#f5f5dc;--danger:#d9534f; --success: #28a745; --info: #17a2b8; --font-family-header:'Poppins',system-ui,sans-serif; --font-family-body:'Roboto',system-ui,sans-serif;}
@@ -211,7 +211,7 @@ input[type=range]::-moz-range-thumb{border:2px solid var(--card);height:20px;wid
         <div id="out"></div>
     </div>
     <div class="col-right">
-       <details class="card">
+       <details class="card" open>
           <summary><h2>Elemzési Előzmények (Napló)</h2></summary>
           <div id="history">
              <p class="muted">A napló megtekintéséhez add meg a Google Táblázat URL-jét a "Teljesítménykövetés" szekcióban.</p>
@@ -270,9 +270,12 @@ function saveSheetUrl() {
 
 function loadSheetUrl() {
     __sheetUrl = localStorage.getItem('sheetUrl');
-    const urlContainer = document.getElementById('sheetUrlContainer');
+    const urlInput = document.getElementById('sheetUrl');
     const statusContainer = document.getElementById('bankrollStatus');
+    const urlContainer = document.getElementById('sheetUrlContainer');
+    
     if (__sheetUrl) {
+        urlInput.value = __sheetUrl;
         urlContainer.style.display = 'none';
         statusContainer.style.display = 'block';
         updateBankrollStatus();
@@ -306,6 +309,7 @@ async function logBet(betData) {
         await fetch(`${__gasUrl}`, {
             method: 'POST',
             mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData })
         });
         button.textContent = 'Sikeresen Naplózva ✅';
@@ -371,6 +375,9 @@ async function runAnalysis(forceNew = false) {
     const liveHomeScore = document.getElementById("liveHomeScore").value;
     const liveAwayScore = document.getElementById("liveAwayScore").value;
     const liveTimeRemainingMinutes = document.getElementById("liveTimeRemainingMinutes").value;
+    const outEl = document.getElementById('out');
+    outEl.innerHTML = '';
+
 
     if (!home || !away || !__gasUrl) { setProgress(0, "Hiba: Hiányzó adatok."); return; }
 
@@ -379,7 +386,7 @@ async function runAnalysis(forceNew = false) {
     let progressInterval;
     try {
         setProgress(1, "Elemzés indítása...");
-        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&liveHome=${liveHomeScore}&liveAway=${liveAwayScore}&liveTimeMinutes=${liveTimeRemainingMinutes}&sheetUrl=${encodeURIComponent(__sheetUrl)}`;
+        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=${forceNew}&homeFormWeight=${homeFormWeight}&awayFormWeight=${awayFormWeight}&liveHome=${liveHomeScore}&liveAway=${liveAwayScore}&liveTimeMinutes=${liveTimeRemainingMinutes}&sheetUrl=${encodeURIComponent(__sheetUrl)}`;
 
         progressInterval = setInterval(() => {
             const c = parseInt(document.querySelector('#progress .progress-label').textContent) || 0;
@@ -394,13 +401,14 @@ async function runAnalysis(forceNew = false) {
 
         await new Promise(resolve => setTimeout(resolve, 9000));
         
-        const resultResponse = await fetch(`${analysisUrl}&force=false`);
+        const resultResponse = await fetch(`${analysisUrl}&force=false`); // force=false to get cached result
         clearInterval(progressInterval);
         
         if (!resultResponse.ok) throw new Error(`Szerver válasz hiba: ${resultResponse.status}`);
         
         setProgress(95, "Válasz feldolgozása...");
         const data = await resultResponse.json();
+        
         if (data.error) throw new Error(data.error);
 
         openAnalysisModal(home, away, data.html);
@@ -409,6 +417,7 @@ async function runAnalysis(forceNew = false) {
     } catch (e) {
         if (progressInterval) clearInterval(progressInterval);
         setProgress(0, "Hiba: " + e.message);
+        outEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
     }
 }
 
@@ -445,7 +454,13 @@ function renderHistory(history, isFiltering = false) {
     }
     
     if (!history || history.length === 0) {
-        box.innerHTML = '<p class="muted">Nincsenek előzmények.</p>';
+        box.innerHTML = `<input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory(JSON.parse(sessionStorage.getItem('fullHistory') || '[]'))" style="margin-bottom:0.8rem"/>
+                     <div class="sport-filter-container">
+                       <button class="sport-filter-btn ${__historySportFilter === 'soccer' ? 'active' : ''}" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
+                       <button class="sport-filter-btn ${__historySportFilter === 'hockey' ? 'active' : ''}" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
+                       <button class="sport-filter-btn ${__historySportFilter === 'basketball' ? 'active' : ''}" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
+                     </div>
+                     <p class="muted">Nincsenek előzmények ebben a kategóriában.</p>`;
         return;
     }
 
@@ -487,6 +502,19 @@ function renderHistory(history, isFiltering = false) {
                        <button class="sport-filter-btn ${__historySportFilter === 'hockey' ? 'active' : ''}" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
                        <button class="sport-filter-btn ${__historySportFilter === 'basketball' ? 'active' : ''}" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
                      </div>` + finalHtml;
+}
+
+// === ITT A JAVÍTOTT, BEILLESZTETT RÉSZ ===
+function filterHistoryBySport(sport, btn) {
+    // 1. Beállítja az új, aktív sport szűrőt
+    __historySportFilter = sport;
+
+    // 2. Frissíti a gombok kinézetét, hogy a helyes legyen aktív
+    document.querySelectorAll('.sport-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // 3. Lefuttatja a szűrést a teljes, eredeti listán az új sport szűrővel
+    filterHistory(JSON.parse(sessionStorage.getItem('fullHistory') || '[]'));
 }
 
 async function loadAnalysisFromHistory(id){
