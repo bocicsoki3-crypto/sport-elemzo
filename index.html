@@ -51,15 +51,11 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
 .tab-content{display:none}
 .tab-content.active{display:block;animation:fadeIn .5s}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.list-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border-color);cursor:pointer;transition:background-color .2s ease;position:relative}
-.list-item:hover{background-color:rgba(212,175,55,.1)}
+.list-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border-color);cursor:pointer;transition:background-color .2s ease, transform 0.2s ease;position:relative}
+.list-item:hover{background-color:rgba(212,175,55,.1); transform: translateX(5px);}
 .list-item-title{font-weight:700}.list-item-meta{font-size:.8rem;color:var(--text-secondary)}
-.list-group-header{font-weight:800;font-size:1.1rem;color:var(--secondary);padding:15px 0 10px 0;border-bottom:1px solid var(--border-color);margin-top:1rem; list-style: none; display: flex; align-items: center; cursor: pointer;}
-.list-group-header::-webkit-details-marker { display: none; }
-.list-group-header::before { content: '▶'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; }
-details[open] > .list-group-header::before { transform: rotate(90deg); }
 .action-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;transition:background-color .2s ease;background:rgba(255,255,255,0.05)}
-.action-icon:hover{background-color:rgba(255,255,255,0.1)}
+.action-icon:hover{background-color:rgba(212, 175, 55, 0.2)}
 .action-icon svg{width:18px;height:18px;stroke:var(--text-secondary)}
 .action-icon.delete:hover svg{stroke:var(--danger)}
 .sport-filter-container{display:flex;gap:8px;margin-bottom:.8rem}
@@ -101,6 +97,7 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .radial-chart .away { stroke: var(--accent); }
 .diagram-legend { display: flex; flex-direction: column; align-items: flex-start; margin: 1rem auto 0; font-size: 0.8rem; gap: 0.4rem; }
 .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+.legend-item .glowing-text { font-weight: 700; }
 .legend-color-box { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 .analysis-accordion details { border-bottom: 1px solid var(--border-color); }
 .analysis-accordion summary { font-size: 1.2rem; font-weight: 600; padding: 1.5rem 1rem; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; }
@@ -131,6 +128,36 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .modal-header h3 { margin: 0; font-size: 1.2rem; color: var(--primary); }
 .modal-close-btn { background: transparent; border: none; color: var(--text-secondary); font-size: 2rem; line-height: 1; cursor: pointer; padding: 0; }
 .modal-body { padding: 1.5rem; overflow-y: auto; }
+
+/* --- ÚJ RÉSZ: ELŐZMÉNYEK DIZÁJN --- */
+.history-group {
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+.history-date-header {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    padding: 1rem 0;
+    cursor: pointer;
+    list-style: none; /* Eltávolítja az alapértelmezett nyilat */
+    display: flex;
+    align-items: center;
+}
+.history-date-header::-webkit-details-marker {
+    display: none; /* Biztos, ami biztos */
+}
+.history-date-header::before {
+    content: '›';
+    font-size: 1.5rem;
+    margin-right: 10px;
+    transition: transform 0.2s ease;
+    transform: rotate(0deg);
+}
+.history-group[open] > .history-date-header::before {
+    transform: rotate(90deg);
+}
+
 </style>
 </head>
 <body>
@@ -138,7 +165,7 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 <header class="app-header">
     <h1>SportElemző Műszerfal</h1>
     <div class="header-status">
-        <svg id="theme-switcher" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg id="theme-switcher" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         <div id="userInfo" class="user-info"></div>
     </div>
 </header>
@@ -188,7 +215,7 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 
     <main id="main-content" class="main-content">
         <div id="placeholder" class="placeholder">
-             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20v-10M18 20V4"/></svg>
+             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20v-10M18 20V4"/></svg>
             <h3>Válassz egy mérkőzést a listából, vagy futtass kézi elemzést.</h3>
             <p>Az elemzés eredménye itt fog megjelenni.</p>
         </div>
@@ -277,7 +304,7 @@ function closeAnalysisModal(event) {
     const modal = document.getElementById('analysis-modal');
     if (!event || event.target === modal || event.target.classList.contains('modal-close-btn')) {
         modal.style.display = 'none';
-        document.getElementById('modal-body').innerHTML = ''; // Kiürítjük a tartalmat bezáráskor
+        document.getElementById('modal-body').innerHTML = '';
     }
 }
 
@@ -362,7 +389,7 @@ async function loadFixtures(){
                             <div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div>
                             <div class="list-item-meta">${d}</div>
                         </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--text-secondary);"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--text-secondary);"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
                 `;
             });
@@ -519,8 +546,9 @@ function renderHistory(history, isFiltering = false) {
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
     for (const date of sortedDates) {
-        finalHtml += `<details class="list-group-header" style="border:none; padding: 10px 0; font-size: 0.9rem;" open>`;
-        finalHtml += `<summary style="color:var(--text-secondary); cursor:pointer;">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
+        // MÓDOSÍTÁS: Az "open" attribútum eltávolítva és új CSS osztályok hozzáadva
+        finalHtml += `<details class="history-group">`;
+        finalHtml += `<summary class="history-date-header">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
 
         groupedByDate[date].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
             finalHtml += `
