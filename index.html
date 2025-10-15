@@ -30,10 +30,10 @@ p{line-height:1.7;color:var(--text-secondary)}
 .layout{display:grid;grid-template-columns:360px 1fr;gap:2rem;padding:2rem;max-width:1920px;margin:0 auto;align-items:start}
 @media (max-width:1024px){
     .layout{grid-template-columns:1fr; padding: 1rem;}
-    .sidebar { position: static; }
+    .sidebar { position: static; top: 80px; } /* Módosítva */
 }
 .sidebar{position:sticky;top:100px}
-.card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,0.3);backdrop-filter:blur(10px);transition:all .3s ease}
+.card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,0.3);backdrop-filter:blur(10px);transition:all .3s ease; margin-bottom: 2rem;} /* ÚJ: margin-bottom */
 label{display:block;font-weight:500;margin-bottom:.5rem;font-size:.9rem;color:var(--text-secondary)}
 input,select{width:100%;padding:10px 14px;border:1px solid var(--border-color);border-radius:10px;background:rgba(0,0,0,0.3);color:var(--text-primary);margin-top:.25rem;font-size:.9rem;font-family:inherit;transition:all .2s ease}
 .light-theme input, .light-theme select { background: rgba(255,255,255,0.5); }
@@ -72,6 +72,35 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
 .card > details > summary::-webkit-details-marker {display: none;}
 .card > details > summary::before {content: '▶';margin-right: 10px;font-size: 0.8em;transition: transform 0.2s;}
 .card > details[open] > summary::before {transform: rotate(90deg);}
+
+/* --- ÚJ CSS SZABÁLYOK A MOBIL VEZÉRLŐPULTHOZ --- */
+.controls-summary {
+    font-family: var(--font-family-header);
+    font-size: 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+.controls-summary::-webkit-details-marker {
+    display: none;
+}
+.controls-summary::before {
+    content: '▶';
+    margin-right: 10px;
+    font-size: 0.8em;
+    transition: transform 0.2s;
+}
+details[open] > .controls-summary::before {
+    transform: rotate(90deg);
+}
+.controls-content {
+    margin-top: 1.5rem;
+}
+/* --- VÉGE AZ ÚJ CSS SZABÁLYOKNAK --- */
+
 .progress-bar{width:100%;height:4px;background:var(--border-color);border-radius:2px;margin-top:1rem;overflow:hidden;display:none}
 .progress-bar-inner{width:0;height:100%;background:var(--primary);transition:width .5s ease}
 .status-text{text-align:center;margin-top:.5rem}
@@ -152,36 +181,42 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
 <div class="layout">
     <aside class="sidebar">
         <div class="card">
-            <nav class="tab-nav">
-                <button class="tab-btn active" data-tab="tab-matches">Mérkőzések</button>
-                <button class="tab-btn" data-tab="tab-manual">Kézi Elemzés</button>
-                <button class="tab-btn" data-tab="tab-history">Előzmények</button>
-            </nav>
-
-            <div id="tab-matches" class="tab-content active">
-                <label for="sportSelector">Sportág</label>
-                <select id="sportSelector" onchange="handleSportChange()">
-                    <option value="soccer" selected>Labdarúgás</option>
-                    <option value="hockey">Jégkorong</option>
-                    <option value="basketball">Kosárlabda</option>
-                </select>
-                <button id="loadFixturesBtn" class="btn btn-primary" onclick="loadFixtures()" style="width:100%; margin-top:1rem;">Meccsek Betöltése (2 nap)</button>
-                <div id="fixtures-list" style="margin-top:1rem; max-height: 50vh; overflow-y:auto;"></div>
-            </div>
-
-            <div id="tab-manual" class="tab-content">
-                <label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/>
-                <label for="away" style="margin-top:1rem;">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/>
-                <button class="btn btn-primary" onclick="runAnalysis(true)" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
-            </div>
-
-            <div id="tab-history" class="tab-content">
-                <div id="history">
-                    <p class="muted">Az előzmények betöltéséhez add meg a Google Táblázat URL-jét.</p>
+            <details id="controls-accordion" open>
+                <summary class="controls-summary">
+                    Vezérlőpult
+                </summary>
+                <div class="controls-content">
+                    <nav class="tab-nav">
+                        <button class="tab-btn active" data-tab="tab-matches">Mérkőzések</button>
+                        <button class="tab-btn" data-tab="tab-manual">Kézi Elemzés</button>
+                        <button class="tab-btn" data-tab="tab-history">Előzmények</button>
+                    </nav>
+        
+                    <div id="tab-matches" class="tab-content active">
+                        <label for="sportSelector">Sportág</label>
+                        <select id="sportSelector" onchange="handleSportChange()">
+                            <option value="soccer" selected>Labdarúgás</option>
+                            <option value="hockey">Jégkorong</option>
+                            <option value="basketball">Kosárlabda</option>
+                        </select>
+                        <button id="loadFixturesBtn" class="btn btn-primary" onclick="loadFixtures()" style="width:100%; margin-top:1rem;">Meccsek Betöltése (2 nap)</button>
+                        <div id="fixtures-list" style="margin-top:1rem; max-height: 50vh; overflow-y:auto;"></div>
+                    </div>
+        
+                    <div id="tab-manual" class="tab-content">
+                        <label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/>
+                        <label for="away" style="margin-top:1rem;">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/>
+                        <button class="btn btn-primary" onclick="runAnalysis(true)" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
+                    </div>
+        
+                    <div id="tab-history" class="tab-content">
+                        <div id="history">
+                            <p class="muted">Az előzmények betöltéséhez add meg a Google Táblázat URL-jét.</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </details>
         </div>
-
         <div class="card" id="performance-center-card">
              <details>
                 <summary>Teljesítmény Központ</summary>
@@ -247,6 +282,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.className = `${newTheme}-theme`;
         localStorage.setItem('theme', newTheme);
     });
+
+    // === ÚJ RÉSZ: MOBIL VEZÉRLŐPULT KEZELÉSE ===
+    const controlsAccordion = document.getElementById('controls-accordion');
+    // Ha az ablak szélessége 1024px vagy kevesebb (mobil/tablet), csukja be a vezérlőpultot.
+    if (window.innerWidth <= 1024 && controlsAccordion) {
+        controlsAccordion.removeAttribute('open');
+    }
+    // === VÉGE AZ ÚJ RÉSZNEK ===
     
     // Alap inicializálás
     if(!__gasUrl||!__gasUrl.startsWith('https://script.google.com')){
@@ -426,7 +469,7 @@ async function loadFixtures(){
 
         let html = '';
         for (const league in groupedByLeague) {
-            html += `<details>`;
+            html += `<details open>`; // Legyen nyitva alapból
             html += `<summary class="list-group-header">${league}</summary>`;
             groupedByLeague[league].forEach(fx => {
                 const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
@@ -466,6 +509,12 @@ async function runAnalysis(forceNew = false) {
     const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress-bar-inner');
     const statusEl = document.getElementById('status');
+
+    // Mobil nézetben csukja be a vezérlőpultot az elemzés indításakor
+    const controlsAccordion = document.getElementById('controls-accordion');
+    if (window.innerWidth <= 1024 && controlsAccordion) {
+        controlsAccordion.removeAttribute('open');
+    }
     
     resultsEl.innerHTML = '';
     placeholderEl.style.display = 'none';
@@ -582,7 +631,7 @@ function renderHistory(history, isFiltering = false) {
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
     for (const date of sortedDates) {
-        finalHtml += `<details class="list-group-header" style="border:none; padding: 10px 0; font-size: 0.9rem;">`;
+        finalHtml += `<details class="list-group-header" style="border:none; padding: 10px 0; font-size: 0.9rem;" open>`;
         finalHtml += `<summary style="color:var(--text-secondary); cursor:pointer;">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
         
         groupedByDate[date].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
@@ -617,6 +666,13 @@ async function loadAnalysisFromHistory(id){
     const resultsEl = document.getElementById('analysis-results');
     const placeholderEl = document.getElementById('placeholder');
     const skeletonEl = document.getElementById('loading-skeleton');
+    
+    // Mobil nézetben csukja be a vezérlőpultot
+    const controlsAccordion = document.getElementById('controls-accordion');
+    if (window.innerWidth <= 1024 && controlsAccordion) {
+        controlsAccordion.removeAttribute('open');
+    }
+
     resultsEl.innerHTML = '';
     placeholderEl.style.display = 'none';
     skeletonEl.style.display = 'block';
