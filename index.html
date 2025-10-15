@@ -30,10 +30,10 @@ p{line-height:1.7;color:var(--text-secondary)}
 .layout{display:grid;grid-template-columns:360px 1fr;gap:2rem;padding:2rem;max-width:1920px;margin:0 auto;align-items:start}
 @media (max-width:1024px){
     .layout{grid-template-columns:1fr; padding: 1rem;}
-    .sidebar { position: static; top: 80px; } /* Módosítva */
+    .sidebar { position: static; top: 80px; }
 }
 .sidebar{position:sticky;top:100px}
-.card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,0.3);backdrop-filter:blur(10px);transition:all .3s ease; margin-bottom: 2rem;} /* ÚJ: margin-bottom */
+.card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,0.3);backdrop-filter:blur(10px);transition:all .3s ease; margin-bottom: 2rem;}
 label{display:block;font-weight:500;margin-bottom:.5rem;font-size:.9rem;color:var(--text-secondary)}
 input,select{width:100%;padding:10px 14px;border:1px solid var(--border-color);border-radius:10px;background:rgba(0,0,0,0.3);color:var(--text-primary);margin-top:.25rem;font-size:.9rem;font-family:inherit;transition:all .2s ease}
 .light-theme input, .light-theme select { background: rgba(255,255,255,0.5); }
@@ -72,35 +72,11 @@ details[open] > .list-group-header::before { transform: rotate(90deg); }
 .card > details > summary::-webkit-details-marker {display: none;}
 .card > details > summary::before {content: '▶';margin-right: 10px;font-size: 0.8em;transition: transform 0.2s;}
 .card > details[open] > summary::before {transform: rotate(90deg);}
-
-/* --- ÚJ CSS SZABÁLYOK A MOBIL VEZÉRLŐPULTHOZ --- */
-.controls-summary {
-    font-family: var(--font-family-header);
-    font-size: 1.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    list-style: none;
-    padding: 0;
-    display: flex;
-    align-items: center;
-}
-.controls-summary::-webkit-details-marker {
-    display: none;
-}
-.controls-summary::before {
-    content: '▶';
-    margin-right: 10px;
-    font-size: 0.8em;
-    transition: transform 0.2s;
-}
-details[open] > .controls-summary::before {
-    transform: rotate(90deg);
-}
-.controls-content {
-    margin-top: 1.5rem;
-}
-/* --- VÉGE AZ ÚJ CSS SZABÁLYOKNAK --- */
-
+.controls-summary {font-family: var(--font-family-header);font-size: 1.5rem;font-weight: 600;cursor: pointer;list-style: none;padding: 0;display: flex;align-items: center;}
+.controls-summary::-webkit-details-marker {display: none;}
+.controls-summary::before {content: '▼'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; display: inline-block;}
+details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
+.controls-content {margin-top: 1.5rem;}
 .progress-bar{width:100%;height:4px;background:var(--border-color);border-radius:2px;margin-top:1rem;overflow:hidden;display:none}
 .progress-bar-inner{width:0;height:100%;background:var(--primary);transition:width .5s ease}
 .status-text{text-align:center;margin-top:.5rem}
@@ -108,7 +84,6 @@ details[open] > .controls-summary::before {
 #loading-skeleton .skeleton-card{background:rgba(255,255,255,0.05);padding:1.5rem;border-radius:16px;margin-bottom:1.5rem}
 #loading-skeleton .skeleton-line{background:rgba(255,255,255,0.1);border-radius:4px;margin-bottom:10px;animation:pulse-bg 1.5s infinite}
 @keyframes pulse-bg{0%{background:rgba(255,255,255,0.1)}50%{background:rgba(255,255,255,0.05)}100%{background:rgba(255,255,255,0.1)}}
-
 .analysis-body p { font-size: 1.05rem; line-height: 1.8; color: var(--text-secondary); }
 .analysis-body strong { color: var(--text-primary); font-weight: 600; }
 .at-a-glance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
@@ -217,6 +192,7 @@ details[open] > .controls-summary::before {
                 </div>
             </details>
         </div>
+
         <div class="card" id="performance-center-card">
              <details>
                 <summary>Teljesítmény Központ</summary>
@@ -283,13 +259,10 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('theme', newTheme);
     });
 
-    // === ÚJ RÉSZ: MOBIL VEZÉRLŐPULT KEZELÉSE ===
     const controlsAccordion = document.getElementById('controls-accordion');
-    // Ha az ablak szélessége 1024px vagy kevesebb (mobil/tablet), csukja be a vezérlőpultot.
     if (window.innerWidth <= 1024 && controlsAccordion) {
         controlsAccordion.removeAttribute('open');
     }
-    // === VÉGE AZ ÚJ RÉSZNEK ===
     
     // Alap inicializálás
     if(!__gasUrl||!__gasUrl.startsWith('https://script.google.com')){
@@ -469,7 +442,7 @@ async function loadFixtures(){
 
         let html = '';
         for (const league in groupedByLeague) {
-            html += `<details open>`; // Legyen nyitva alapból
+            html += `<details open>`;
             html += `<summary class="list-group-header">${league}</summary>`;
             groupedByLeague[league].forEach(fx => {
                 const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
@@ -510,7 +483,6 @@ async function runAnalysis(forceNew = false) {
     const progressBar = document.getElementById('progress-bar-inner');
     const statusEl = document.getElementById('status');
 
-    // Mobil nézetben csukja be a vezérlőpultot az elemzés indításakor
     const controlsAccordion = document.getElementById('controls-accordion');
     if (window.innerWidth <= 1024 && controlsAccordion) {
         controlsAccordion.removeAttribute('open');
@@ -667,7 +639,6 @@ async function loadAnalysisFromHistory(id){
     const placeholderEl = document.getElementById('placeholder');
     const skeletonEl = document.getElementById('loading-skeleton');
     
-    // Mobil nézetben csukja be a vezérlőpultot
     const controlsAccordion = document.getElementById('controls-accordion');
     if (window.innerWidth <= 1024 && controlsAccordion) {
         controlsAccordion.removeAttribute('open');
