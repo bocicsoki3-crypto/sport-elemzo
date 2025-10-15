@@ -26,7 +26,6 @@ p{line-height:1.7;color:var(--text-secondary)}
 .app-header{background:var(--card-bg);backdrop-filter:blur(10px);color:var(--primary);padding:1rem 2rem;text-align:center;border-bottom:1px solid var(--border-color);position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center}
 .app-header h1{font-weight:600;margin:0;font-size:1.5rem}
 .header-status{font-size:.9rem;opacity:.8;display:flex;align-items:center;gap:1.5rem}
-.bankroll-display span{font-weight:700;color:var(--text-primary)}
 .layout{display:grid;grid-template-columns:360px 1fr;gap:2rem;padding:2rem;max-width:1920px;margin:0 auto;align-items:start}
 @media (max-width:1024px){
     .layout{grid-template-columns:1fr; padding: 1rem;}
@@ -115,26 +114,6 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .market-data-grid-container { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem; }
 .market-data-section h4 { font-size: 1.1rem; color: var(--secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
 #theme-switcher { cursor: pointer; stroke: var(--text-secondary); } #theme-switcher:hover { stroke: var(--primary); }
-.performance-center .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-.performance-center .kpi-card { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px; text-align: center; }
-.performance-center .kpi-card h5 { margin: 0 0 0.5rem 0; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 500;}
-.performance-center .kpi-card .value { font-size: 1.4rem; font-weight: 700; }
-.performance-center .pnl-value.positive { color: var(--success); }
-.performance-center .pnl-value.negative { color: var(--danger); }
-.performance-center .view-switcher { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-.performance-center .view-btn { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 8px; cursor: pointer; color: var(--text-secondary); font-size: 0.8rem;}
-.performance-center .view-btn.active { background: var(--primary); color: #000; font-weight: 700; }
-.performance-center .chart-view { display: none; }
-.performance-center .chart-view.active { display: block; }
-.performance-center .bar-chart-item { display: flex; align-items: center; margin-bottom: 0.5rem; font-size: 0.9rem; }
-.performance-center .bar-label { width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.performance-center .bar-bg { flex-grow: 1; height: 12px; background: rgba(0,0,0,0.2); border-radius: 6px; }
-.performance-center .bar-fill { height: 100%; border-radius: 6px; }
-.performance-center .bar-fill.positive { background: var(--success); }
-.performance-center .bar-fill.negative { background: var(--danger); margin-left: auto; }
-.performance-center .bar-value { width: 60px; text-align: right; font-weight: 700; }
-.light-theme .performance-center .kpi-card { background: rgba(0,0,0,0.05); }
-.light-theme .performance-center .view-btn { background: rgba(0,0,0,0.05); }
 .market-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; }
 .market-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 0.5rem; text-align: center; transition: all 0.2s ease; }
 .market-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 0 15px rgba(212, 175, 55, 0.2); }
@@ -146,57 +125,12 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .total-label { color: var(--text-secondary); margin-right: 0.5rem; }
 .total-value { font-weight: 700; color: var(--text-primary); }
 
-/* --- ÚJ RÉSZ: MOBIL FELUGRÓ ABLAK (MODAL) --- */
-.analysis-modal {
-    display: none; /* Alapból rejtett */
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.7);
-    backdrop-filter: blur(5px);
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s;
-}
-.modal-content {
-    background: var(--bg);
-    border-radius: 16px;
-    border: 1px solid var(--border-color);
-    width: 95%;
-    max-width: 600px;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-}
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
-.modal-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: var(--primary);
-}
-.modal-close-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 2rem;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0;
-}
-.modal-body {
-    padding: 1.5rem;
-    overflow-y: auto;
-}
+.analysis-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); justify-content: center; align-items: center; animation: fadeIn 0.3s; }
+.modal-content { background: var(--bg); border-radius: 16px; border: 1px solid var(--border-color); width: 95%; max-width: 600px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); }
+.modal-header h3 { margin: 0; font-size: 1.2rem; color: var(--primary); }
+.modal-close-btn { background: transparent; border: none; color: var(--text-secondary); font-size: 2rem; line-height: 1; cursor: pointer; padding: 0; }
+.modal-body { padding: 1.5rem; overflow-y: auto; }
 </style>
 </head>
 <body>
@@ -204,9 +138,6 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 <header class="app-header">
     <h1>SportElemző Műszerfal</h1>
     <div class="header-status">
-        <div id="bankrollDisplay" class="bankroll-display" style="display:none;">
-            Bankroll: <span id="bankrollValue">...</span>
-        </div>
         <svg id="theme-switcher" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         <div id="userInfo" class="user-info"></div>
     </div>
@@ -245,18 +176,12 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 
                     <div id="tab-history" class="tab-content">
                         <div id="history">
-                            <p class="muted">Az előzmények betöltéséhez add meg a Google Táblázat URL-jét.</p>
+                             <p class="muted">A funkcióhoz add meg a Google Táblázat URL-jét.</p>
+                             <label for="sheetUrl">Google Táblázat URL</label>
+                             <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
                         </div>
                     </div>
                 </div>
-            </details>
-        </div>
-
-        <div class="card" id="performance-center-card">
-             <details>
-                <summary>Teljesítmény Központ</summary>
-                <div style="margin-top: 1rem;" id="performance-center-content">
-                    </div>
             </details>
         </div>
     </aside>
@@ -286,7 +211,7 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
             <button class="modal-close-btn" onclick="closeAnalysisModal()">&times;</button>
         </div>
         <div id="modal-body" class="modal-body">
-            </div>
+        </div>
     </div>
 </div>
 
@@ -303,7 +228,6 @@ function escapeHtml(s) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Tab vezérlés
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
     tabButtons.forEach(button => {
@@ -315,11 +239,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 content.style.display = content.id === tabId ? 'block' : 'none';
                 content.classList.toggle('active', content.id === tabId);
             });
-            if (tabId === 'tab-history') loadHistory();
+            if (tabId === 'tab-history') loadSheetUrl();
         });
     });
 
-    // Téma váltó
     const themeSwitcher = document.getElementById('theme-switcher');
     const currentTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.className = `${currentTheme}-theme`;
@@ -343,7 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSheetUrl();
 });
 
-// --- ÚJ RÉSZ: FELUGRÓ ABLAK KEZELÉSE ---
 function openAnalysisModal(htmlContent) {
     const modal = document.getElementById('analysis-modal');
     const modalBody = document.getElementById('modal-body');
@@ -353,12 +275,11 @@ function openAnalysisModal(htmlContent) {
 
 function closeAnalysisModal(event) {
     const modal = document.getElementById('analysis-modal');
-    // Csak akkor zárja be, ha a háttérre kattintunk, nem a tartalomra
     if (!event || event.target === modal || event.target.classList.contains('modal-close-btn')) {
         modal.style.display = 'none';
+        document.getElementById('modal-body').innerHTML = ''; // Kiürítjük a tartalmat bezáráskor
     }
 }
-
 
 function saveSheetUrl() {
     __sheetUrl = document.getElementById('sheetUrl').value;
@@ -373,112 +294,16 @@ function saveSheetUrl() {
 
 function loadSheetUrl() {
     __sheetUrl = localStorage.getItem('sheetUrl');
-    const performanceCard = document.getElementById('performance-center-card');
-
     if (__sheetUrl) {
-        performanceCard.style.display = 'block';
-        updatePerformanceCenter();
         if(document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
             loadHistory();
         }
     } else {
-        performanceCard.style.display = 'block';
-        document.getElementById('performance-center-content').innerHTML = `
-            <div id="sheetUrlContainer">
-              <p class="muted" style="font-size: .8rem;">A funkcióhoz add meg a Google Táblázat URL-jét.</p>
-              <label for="sheetUrl">Google Táblázat URL</label>
-              <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
-            </div>`;
+        document.getElementById('history').innerHTML = `
+            <p class="muted">A funkcióhoz add meg a Google Táblázat URL-jét.</p>
+            <label for="sheetUrl">Google Táblázat URL</label>
+            <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">`;
     }
-}
-
-async function updatePerformanceCenter() {
-    if (!__sheetUrl) return;
-    const contentEl = document.getElementById('performance-center-content');
-    const bankrollValueEl = document.getElementById('bankrollValue');
-    contentEl.innerHTML = `<p class="muted">Teljesítmény adatok lekérése...</p>`;
-    bankrollValueEl.textContent = '...';
-    document.getElementById('bankrollDisplay').style.display = 'block';
-
-    try {
-        const response = await fetch(`${__gasUrl}?action=getPerformanceData&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-
-        bankrollValueEl.textContent = `${data.mainKPIs.bankroll.toFixed(2)} e.`;
-
-        let html = `
-            <div class="performance-center">
-                <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <h5>Profit/Veszteség</h5>
-                        <div class="value pnl-value ${data.mainKPIs.pnl >= 0 ? 'positive' : 'negative'}">${data.mainKPIs.pnl >= 0 ? '+' : ''}${data.mainKPIs.pnl.toFixed(2)} e.</div>
-                    </div>
-                    <div class="kpi-card">
-                        <h5>ROI</h5>
-                        <div class="value">${data.mainKPIs.roi.toFixed(1)}%</div>
-                    </div>
-                    <div class="kpi-card">
-                        <h5>Találati Arány</h5>
-                        <div class="value">${data.mainKPIs.winRate.toFixed(1)}%</div>
-                    </div>
-                     <div class="kpi-card">
-                        <h5>Összes Fogadás</h5>
-                        <div class="value">${data.mainKPIs.totalBets}</div>
-                    </div>
-                </div>
-                <div class="view-switcher">
-                    <button class="view-btn active" onclick="switchPcView('sport')">Sportágak</button>
-                    <button class="view-btn" onclick="switchPcView('strategy')">Stratégiák</button>
-                </div>
-                <div id="pc-view-sport" class="chart-view active"></div>
-                <div id="pc-view-strategy" class="chart-view"></div>
-            </div>
-        `;
-        contentEl.innerHTML = html;
-
-        renderBarChart('pc-view-sport', data.bySport);
-        renderBarChart('pc-view-strategy', data.byStrategy);
-
-    } catch(e) {
-        contentEl.innerHTML = `<p class="muted" style="color:var(--danger);">${e.message}</p>`;
-        bankrollValueEl.textContent = 'Hiba';
-    }
-}
-
-function renderBarChart(containerId, data) {
-    const container = document.getElementById(containerId);
-    let chartHtml = '';
-    const values = Object.values(data);
-    if(values.length === 0) {
-        container.innerHTML = '<p class="muted" style="text-align:center;">Nincs megjeleníthető adat.</p>';
-        return;
-    }
-    const maxVal = Math.max(...values.map(Math.abs));
-
-    for(const key in data) {
-        const value = data[key];
-        const width = maxVal > 0 ? (Math.abs(value) / maxVal) * 100 : 0;
-        const isPositive = value >= 0;
-
-        chartHtml += `
-            <div class="bar-chart-item">
-                <div class="bar-label" title="${key}">${key}</div>
-                <div class="bar-bg">
-                    <div class="bar-fill ${isPositive ? 'positive' : 'negative'}" style="width: ${width}%;"></div>
-                </div>
-                <div class="bar-value" style="color: ${isPositive ? 'var(--success)' : 'var(--danger)'};">${value.toFixed(2)}</div>
-            </div>
-        `;
-    }
-    container.innerHTML = chartHtml;
-}
-
-function switchPcView(view) {
-    document.querySelectorAll('.chart-view').forEach(el => el.classList.remove('active'));
-    document.getElementById(`pc-view-${view}`).classList.add('active');
-    document.querySelectorAll('.view-btn').forEach(el => el.classList.remove('active'));
-    document.querySelector(`.view-btn[onclick="switchPcView('${view}')"]`).classList.add('active');
 }
 
 async function logBet(betData) {
@@ -494,7 +319,6 @@ async function logBet(betData) {
             body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData })
         });
         button.textContent = 'Sikeresen Naplózva ✅';
-        setTimeout(updatePerformanceCenter, 1000);
     } catch (e) {
         alert(`Hiba a naplózás során: ${e.message}.`);
         button.textContent = 'Naplózás Sikertelen';
@@ -584,14 +408,12 @@ async function runAnalysis(forceNew = false) {
         return;
     }
     
-    // MÓDOSÍTÁS: Analízis indításakor mobilon bezárja a panelt, ÉS a fő tartalmi részt kiüríti.
     if (window.innerWidth <= 1024) {
         const controlsAccordion = document.getElementById('controls-accordion');
         if (controlsAccordion) controlsAccordion.removeAttribute('open');
-        resultsEl.innerHTML = ''; // Kiürítjük a régi tartalmat, ha volt
-        placeholderEl.style.display = 'flex'; // Visszaállítjuk a placeholdert
+        resultsEl.innerHTML = ''; 
+        placeholderEl.style.display = 'flex';
     }
-
 
     let progress = 0;
     const updateProgress = (val, text) => {
@@ -624,7 +446,6 @@ async function runAnalysis(forceNew = false) {
 
         updateProgress(100, "Kész.");
         
-        // MÓDOSÍTÁS: A tartalom megjelenítése a képernyőméret alapján
         const analysisHtml = `<div class="analysis-body">${data.html}</div>`;
         if (window.innerWidth <= 1024) {
             openAnalysisModal(analysisHtml);
@@ -645,10 +466,7 @@ async function runAnalysis(forceNew = false) {
 }
 
 async function loadHistory() {
-    if (!__sheetUrl) {
-        document.getElementById('history').innerHTML = '<p class="muted">A napló funkcióhoz add meg a Google Táblázat URL-jét.</p>';
-        return;
-    }
+    if (!__sheetUrl) return;
     document.getElementById('history').innerHTML = '<p class="muted">Előzmények betöltése...</p>';
     try {
         const response = await fetch(`${__gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
@@ -746,7 +564,6 @@ async function loadAnalysisFromHistory(id){
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         
-        // MÓDOSÍTÁS: A tartalom megjelenítése a képernyőméret alapján
         const analysisHtml = `<div class="analysis-body">${data.record.html}</div>`;
         if (window.innerWidth <= 1024) {
             openAnalysisModal(analysisHtml);
