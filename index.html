@@ -192,7 +192,62 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
                 </div>
             </details>
         </div>
+<div class="card">
+            <details open>
+                <summary>Egyéni Szelvény Naplózása</summary>
+                <div style="margin-top: 1rem;">
+                    <label for="customBetDescription">Piac / Leírás</label>
+                    <input id="customBetDescription" placeholder="Pl. Kombinált: Montreal + Rangers győz">
 
+                    <label for="customBetOdds" style="margin-top:1rem;">Összes Odds</label>
+                    <input id="customBetOdds" type="number" step="0.01" placeholder="Pl. 3.58">
+
+                    <label for="customBetStake" style="margin-top:1rem;">Tét (Bankroll %)</label>
+                    <input id="customBetStake" type="number" step="0.5" placeholder="Pl. 2.5">
+
+                    <button class="btn btn-primary" onclick="logCustomBet()" style="width:100%; margin-top:1.5rem;">Egyéni Szelvény Naplózása</button>
+                </div>
+            </details>
+        </div>
+        ```
+
+#### 2. Lépés: Az Új JavaScript Függvény Hozzáadása
+
+Menj az `index.html` fájl aljára, a `<script>` blokkon belülre, és másold be a többi függvény mellé (például a legvégére, a `deleteHistoryItem` függvény után) ezt az új JavaScript funkciót:
+
+```javascript
+function logCustomBet() {
+    const description = document.getElementById('customBetDescription').value.trim();
+    const odds = parseFloat(document.getElementById('customBetOdds').value);
+    const stake = parseFloat(document.getElementById('customBetStake').value);
+
+    if (!description || !odds || !stake) {
+        alert('Kérlek, tölts ki minden mezőt a naplózáshoz!');
+        return;
+    }
+    if (odds <= 1 || stake <= 0) {
+        alert('Az odds vagy a tét értéke érvénytelen!');
+        return;
+    }
+
+    const betData = {
+        date: new Date().toISOString(),
+        sport: "Kombinált", // Mivel több meccsből áll, ezt a kategóriát használjuk
+        home: description,  // A leírást használjuk a meccs azonosítására
+        away: "",
+        market: description,
+        odd: odds,
+        stake: stake 
+    };
+
+    // A már meglévő logBet funkciót hívjuk meg a háttérben
+    logBet(betData);
+
+    // Ürítjük a mezőket a sikeres mentés után
+    document.getElementById('customBetDescription').value = '';
+    document.getElementById('customBetOdds').value = '';
+    document.getElementById('customBetStake').value = '';
+}
         <div class="card" id="performance-center-card">
              <details>
                 <summary>Teljesítmény Központ</summary>
@@ -677,3 +732,4 @@ async function deleteHistoryItem(id){
 </script>
 </body>
 </html>
+
