@@ -190,42 +190,7 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
             <details id="strategy-manager-details" open>
                 <summary>Stratégia Menedzser</summary>
                 <div id="strategy-manager-content" style="margin-top: 1rem;">
-                    <div class="strategy-display">
-                        <label>Jelenlegi Bankroll</label>
-                        <div id="strategyBankrollDisplay" class="value" style="color: var(--text-primary); text-shadow: none;">Betöltés...</div>
                     </div>
-
-                    <div class="strategy-display">
-                        <label>Mai Tét Javaslat</label>
-                        <div id="strategyStakeDisplay" class="value">Számítás...</div>
-                    </div>
-
-                    <label for="strategyActualOdds">Mai Szelvény Valós Oddsa</label>
-                    <input id="strategyActualOdds" type="number" step="0.01" placeholder="Add meg a valós oddsot">
-
-                    <button class="btn btn-primary" onclick="logStrategyBet()" style="width:100%; margin-top:1.5rem;">Mai Fogadás Naplózása</button>
-
-                    <div id="strategyPendingBets"></div>
-
-                    <details style="margin-top: 2rem;">
-                        <summary style="font-size: 1rem; font-weight: 500;">Stratégia Beállításai</summary>
-                        <div style="margin-top: 1rem;">
-                            <label for="strategyGoal">Cél Profit (Ft)</label>
-                            <input id="strategyGoal" type="number" value="250000">
-                            <label for="strategyDays" style="margin-top:1rem;">Napok Száma</label>
-                            <input id="strategyDays" type="number" value="15">
-                             <label for="startBankroll" style="margin-top:1rem;">Bankroll Indítása (Ft)</label>
-                            <input id="startBankroll" type="number" value="10070" placeholder="Kezdőtőke">
-                            <label for="strategyTargetOdds" style="margin-top:1rem;">Stratégia Cél Oddsa</label>
-                            <input id="strategyTargetOdds" type="number" step="0.1" value="2.5">
-
-                            <button class="btn" onclick="calculateStrategyPlan()" style="width:100%; margin-top:1rem; background: var(--border-color); color: var(--text-primary);">Stratégia Indítása / Újraszámolás</button>
-                            <div id="strategyPlanResult" style="text-align: center; margin-top: 1rem; display: none;">
-                                <p class="muted" style="margin-bottom: 0.5rem;">Terv: <span id="planDailyProfit"></span> Ft/nap profit</p>
-                            </div>
-                        </div>
-                    </details>
-                </div>
             </details>
         </div>
 
@@ -251,27 +216,27 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 
 
 <script>
-let __gasUrl = 'https://script.google.com/macros/s/AKfycbzezgLIW-VE1ZCaRUU7nQ6lebTEH6VpUrjW-rpnJXUnXnkdlM9B3suv6dw-RZTTyfGiCg/exec'; // Ide add meg a saját Web App URL-ed!
+let __gasUrl = 'https://script.google.com/macros/s/AKfycbx-vCDzIbOREVByLUHS_p_fV7hBWfwTse2QTXzz49H7ISui_KWhPdCUVSC-FrjIBWutaQ/exec';
 let __fixtures = [];
 let __currentSport = 'soccer';
 let __sheetUrl = '';
 
+// Segédfüggvény a HTML "escape"-elésére
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
 }
 
+// Az oldal betöltődésekor lefutó fő függvény
 document.addEventListener('DOMContentLoaded', () => {
     // Tab váltó logika
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    tabButtons.forEach(button => {
+    document.querySelectorAll('.tab-btn').forEach(button => {
         button.addEventListener('click', () => {
-            tabButtons.forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
-            const tabId = button.getAttribute('data-tab');
             document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.toggle('active', content.id === tabId);
+                content.classList.toggle('active', content.id === button.dataset.tab);
             });
-            if (tabId === 'tab-history') loadHistory();
+            if (button.dataset.tab === 'tab-history') loadHistory();
         });
     });
 
@@ -285,6 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('theme', newTheme);
     });
 
+    // URL ellenőrzés
     if(!__gasUrl || !__gasUrl.startsWith('https://script.google.com')){
         document.getElementById('userInfo').textContent='HIBA: Web App URL nincs beállítva!';
         document.getElementById('userInfo').style.color = 'var(--danger)';
@@ -293,9 +259,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Fő inicializáló függvény
-    loadSheetUrl();
+    initializeApp();
 });
 
+// URL mentése a böngésző tárolójába
 function saveSheetUrl() {
     const urlInput = document.getElementById('sheetUrl');
     if (urlInput) {
@@ -305,45 +272,84 @@ function saveSheetUrl() {
             alert('Táblázat URL elmentve! Az oldal újratöltődik a beállítások érvényesítéséhez.');
             location.reload();
         } else {
-            alert('Érvénytelen Google Táblázat URL! Kérlek, ellenőrizd a linket.');
+            alert('Érvénytelen Google Táblázat URL! Kérlek, ellenőrizd a linket. A teljes "sharing" link kell.');
         }
     }
 }
 
-async function loadSheetUrl() {
+// Alkalmazás indítása: Ellenőrzi van-e mentett URL
+async function initializeApp() {
     __sheetUrl = localStorage.getItem('sheetUrl');
-    const historyDiv = document.getElementById('history');
+    const controlsContent = document.querySelector('#controls-accordion .controls-content');
     const strategyManagerContent = document.getElementById('strategy-manager-content');
 
     if (__sheetUrl) {
-        // Ha van URL, mindent betöltünk
-        strategyManagerContent.style.display = 'block';
+        // --- HA VAN MENTETT URL ---
+        controlsContent.style.display = 'block'; // Vezérlőpult mutatása
+        strategyManagerContent.innerHTML = `
+            <div class="strategy-display">
+                <label>Jelenlegi Bankroll</label>
+                <div id="strategyBankrollDisplay" class="value" style="color: var(--text-primary); text-shadow: none;">Betöltés...</div>
+            </div>
+            <div class="strategy-display">
+                <label>Mai Tét Javaslat</label>
+                <div id="strategyStakeDisplay" class="value">Számítás...</div>
+            </div>
+            <label for="strategyActualOdds">Mai Szelvény Valós Oddsa</label>
+            <input id="strategyActualOdds" type="number" step="0.01" placeholder="Add meg a valós oddsot">
+            <button class="btn btn-primary" onclick="logStrategyBet()" style="width:100%; margin-top:1.5rem;">Mai Fogadás Naplózása</button>
+            <div id="strategyPendingBets"></div>
+            <details style="margin-top: 2rem;">
+                <summary style="font-size: 1rem; font-weight: 500;">Stratégia Beállításai</summary>
+                <div style="margin-top: 1rem;">
+                    <label for="strategyGoal">Cél Profit (Ft)</label>
+                    <input id="strategyGoal" type="number" value="250000">
+                    <label for="strategyDays" style="margin-top:1rem;">Napok Száma</label>
+                    <input id="strategyDays" type="number" value="15">
+                     <label for="startBankroll" style="margin-top:1rem;">Bankroll Indítása (Ft)</label>
+                    <input id="startBankroll" type="number" value="10070" placeholder="Kezdőtőke">
+                    <label for="strategyTargetOdds" style="margin-top:1rem;">Stratégia Cél Oddsa</label>
+                    <input id="strategyTargetOdds" type="number" step="0.1" value="2.5">
+                    <button class="btn" onclick="calculateStrategyPlan()" style="width:100%; margin-top:1rem; background: var(--border-color); color: var(--text-primary);">Stratégia Indítása / Újraszámolás</button>
+                    <div id="strategyPlanResult" style="text-align: center; margin-top: 1rem; display: none;">
+                        <p class="muted" style="margin-bottom: 0.5rem;">Terv: <span id="planDailyProfit"></span> Ft/nap profit</p>
+                    </div>
+                </div>
+            </details>`;
+        
         loadStrategySettings();
         await updateStrategyPanel();
         
+        // Ellenőrizzük, melyik fül aktív
         const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
         if (activeTab === 'tab-history') {
             loadHistory();
-        } else {
-             historyDiv.innerHTML = '<p class="muted">Válts ide az előzmények megtekintéséhez.</p>';
         }
     } else {
-        // Ha nincs URL, bekérjük
-        const inputHtml = `
+        // --- HA NINCS MENTETT URL ---
+        controlsContent.style.display = 'none'; // Vezérlőpult elrejtése
+        const historyDiv = document.getElementById('history');
+        historyDiv.innerHTML = `
             <div id="sheetUrlContainer">
-              <p class="muted" style="font-size: .9rem; color: var(--primary);">A funkciók használatához add meg a Google Táblázatod megosztási URL-jét.</p>
+              <p class="muted" style="font-size: .9rem; color: var(--primary);">Az alkalmazás használatához add meg a Google Táblázatod **megosztási** URL-jét.</p>
               <label for="sheetUrl">Google Táblázat URL</label>
               <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/...">
-              <button class="btn" onclick="saveSheetUrl()" style="width:100%; margin-top:1rem;">URL Mentése</button>
+              <button class="btn" onclick="saveSheetUrl()" style="width:100%; margin-top:1rem;">URL Mentése és Indítás</button>
             </div>`;
         
-        historyDiv.innerHTML = inputHtml;
-        // A stratégia menedzser tartalmát elrejtjük, amíg nincs URL
-        strategyManagerContent.style.display = 'none';
+        // Tabok átállítása és letiltása
+        document.querySelector('.tab-btn[data-tab="tab-matches"]').classList.remove('active');
+        document.querySelector('.tab-btn[data-tab="tab-manual"]').classList.remove('active');
+        document.querySelector('.tab-btn[data-tab="tab-history"]').classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-history').classList.add('active');
+
+        // Stratégia menedzser elrejtése
+        document.getElementById('strategy-manager-details').style.display = 'none';
     }
 }
 
-
+// ... a többi JS függvény (logBet, loadFixtures, stb.) változatlan marad a korábbi verzióhoz képest ...
 async function logBet(betData) {
     if (!__sheetUrl) { alert('Hiba: Nincs beállítva Google Táblázat URL.'); return; }
     const button = event.target.closest('button');
@@ -374,9 +380,7 @@ async function logBet(betData) {
         }
     }
 }
-
 function handleSportChange(){ __currentSport=document.getElementById('sportSelector').value; document.getElementById('fixtures-list').innerHTML = ''; __fixtures = []; }
-
 async function loadFixtures(){ 
     const listEl = document.getElementById('fixtures-list'); 
     const loadBtn = document.getElementById('loadFixturesBtn'); 
@@ -406,29 +410,21 @@ async function loadFixtures(){
         loadBtn.disabled = false; 
     } 
 }
-
 function fillAndAnalyze(home, away) { document.getElementById('home').value = home; document.getElementById('away').value = away; document.querySelector('button[data-tab="tab-manual"]').click(); runAnalysis(false); }
-
-// --- STRATÉGIAI TÉTKEZELŐ FÜGGVÉNYEK ---
-
 function calculateStrategyPlan() {
     const goal = parseFloat(document.getElementById('strategyGoal').value);
     const days = parseInt(document.getElementById('strategyDays').value);
     const startBankroll = parseFloat(document.getElementById('startBankroll').value);
     const targetOdds = parseFloat(document.getElementById('strategyTargetOdds').value);
-
     if (!goal || !days || isNaN(startBankroll) || !targetOdds) {
         alert('Kérlek, adj meg minden stratégiai adatot (Cél, Napok, Bankroll, Cél Odds)!');
         return;
     }
-
     const dailyProfitTarget = goal / days;
     const plan = { goal, days, startBankroll, dailyProfitTarget, targetOdds };
     localStorage.setItem('strategyPlan', JSON.stringify(plan));
-
     document.getElementById('planDailyProfit').textContent = Math.round(dailyProfitTarget).toLocaleString('hu-HU');
     document.getElementById('strategyPlanResult').style.display = 'block';
-
     if (__sheetUrl) {
       fetch(__gasUrl, {
           method: 'POST',
@@ -450,7 +446,6 @@ function calculateStrategyPlan() {
       });
     }
 }
-
 function loadStrategySettings() {
     const plan = JSON.parse(localStorage.getItem('strategyPlan'));
     if (plan) {
@@ -462,13 +457,11 @@ function loadStrategySettings() {
         document.getElementById('strategyPlanResult').style.display = 'block';
     }
 }
-
 async function updateStrategyPanel(performanceDataFromInit = null) {
     if (!__sheetUrl) return;
     const plan = JSON.parse(localStorage.getItem('strategyPlan'));
     const bankrollDisplay = document.getElementById('strategyBankrollDisplay');
     const stakeDisplay = document.getElementById('strategyStakeDisplay');
-    
     try {
         let performanceData = performanceDataFromInit;
         if (!performanceData) {
@@ -477,14 +470,11 @@ async function updateStrategyPanel(performanceDataFromInit = null) {
             performanceData = await response.json();
             if (performanceData.error) throw new Error(performanceData.error);
         }
-
         const currentBankroll = performanceData.mainKPIs.bankroll;
         bankrollDisplay.textContent = `${Math.round(currentBankroll).toLocaleString('hu-HU')} Ft`;
-
         if (plan && plan.targetOdds > 1) {
             const lastLosses = performanceData.mainKPIs.lastLossesInUnits || 0;
             const requiredStake = (plan.dailyProfitTarget + lastLosses) / (plan.targetOdds - 1);
-
             if (currentBankroll <= 0) {
                  stakeDisplay.textContent = "Bankroll feltöltése szükséges!";
                  stakeDisplay.style.color = 'var(--danger)';
@@ -507,31 +497,24 @@ async function updateStrategyPanel(performanceDataFromInit = null) {
         alert(`Hiba a panel frissítésekor: ${e.message}`);
     }
 }
-
 async function logStrategyBet() {
     const plan = JSON.parse(localStorage.getItem('strategyPlan'));
     if (!plan) { alert('Mielőtt naplózol, indítsd el a stratégiát a beállításoknál!'); return; }
-
     const actualOdds = parseFloat(document.getElementById('strategyActualOdds').value);
     if (!actualOdds || actualOdds <= 1) { alert('Kérlek, add meg a szelvény valós oddsát!'); return; }
-
     const stakeText = document.getElementById('strategyStakeDisplay').textContent;
     const requiredStake = parseFloat(stakeText.replace(/[^\d.-]/g, ''));
-    
     const bankrollText = document.getElementById('strategyBankrollDisplay').textContent;
     const currentBankroll = parseFloat(bankrollText.replace(/[^\d.-]/g, ''));
-
     if (isNaN(requiredStake) || isNaN(currentBankroll) || currentBankroll <= 0) {
         alert('A tét nem számítható ki. Ellenőrizd a bankrollt és a beállításokat.');
         return;
     }
     const stakePercent = (requiredStake / currentBankroll) * 100;
     const betData = { date: new Date().toISOString(), sport: "Stratégia", home: `Napi Cél Szelvény`, away: "", market: `Napi Cél @ ${actualOdds}`, odd: actualOdds, stake: stakePercent };
-    
     await logBet(betData);
     document.getElementById('strategyActualOdds').value = '';
 }
-
 async function fetchAndDisplayPendingBets() {
     if (!__sheetUrl) return;
     const container = document.getElementById('strategyPendingBets');
@@ -541,7 +524,6 @@ async function fetchAndDisplayPendingBets() {
         if (!response.ok) throw new Error(`Hálózati hiba: ${response.statusText}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-
         if (data.pendingBets && data.pendingBets.length > 0) {
             let html = '<h5 style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">Függő Fogadások</h5>';
             data.pendingBets.forEach(bet => {
@@ -561,7 +543,6 @@ async function fetchAndDisplayPendingBets() {
         container.innerHTML = `<p class="muted" style="color:var(--danger);">${e.message}</p>`;
     }
 }
-
 async function settleStrategyBet(betId, outcome) {
     const button = event.target.closest('button');
     button.disabled = true;
@@ -581,6 +562,81 @@ async function settleStrategyBet(betId, outcome) {
         alert(`Hiba a fogadás kiértékelése során: ${e.message}`);
         button.disabled = false;
         button.textContent = outcome === 'Won' ? 'Nyert' : 'Vesztes';
+    }
+}
+async function loadHistory() {
+    if (!__sheetUrl) return;
+    const historyDiv = document.getElementById('history');
+    historyDiv.innerHTML = '<p class="muted">Előzmények betöltése...</p>';
+    try {
+        const response = await fetch(`${__gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
+        if (!response.ok) throw new Error(`Hálózati hiba: ${response.statusText}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        let html = '<div style="max-height: 60vh; overflow-y:auto;">';
+        if (data.history && data.history.length > 0) {
+            data.history.forEach(item => {
+                html += `<div class="list-item" onclick="loadAnalysisFromHistory('${item.id}')">
+                           <div>
+                               <div class="list-item-title">${escapeHtml(item.home)} vs ${escapeHtml(item.away)}</div>
+                               <div class="list-item-meta">${new Date(item.date).toLocaleString('hu-HU')}</div>
+                           </div>
+                           <button onclick="event.stopPropagation(); deleteHistoryItem('${item.id}', this)" class="btn" style="background:var(--danger); padding: 5px 10px; font-size: 0.8rem;">Törlés</button>
+                         </div>`;
+            });
+        } else {
+            html += '<p class="muted">Nincsenek korábbi elemzések.</p>';
+        }
+        html += '</div>';
+        historyDiv.innerHTML = html;
+
+    } catch(e) {
+        historyDiv.innerHTML = `<p class="muted" style="color:var(--danger);">${e.message}</p>`;
+    }
+}
+async function loadAnalysisFromHistory(id) {
+    const resultsDiv = document.getElementById('analysis-results');
+    resultsDiv.innerHTML = '';
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('loading-skeleton').style.display = 'block';
+    try {
+        const response = await fetch(`${__gasUrl}?action=getAnalysisDetail&sheetUrl=${encodeURIComponent(__sheetUrl)}&id=${id}`);
+        if (!response.ok) throw new Error(`Hálózati hiba: ${response.statusText}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        resultsDiv.innerHTML = data.record.html;
+    } catch(e) {
+        resultsDiv.innerHTML = `<p class="muted" style="color:var(--danger);">${e.message}</p>`;
+    } finally {
+        document.getElementById('loading-skeleton').style.display = 'none';
+    }
+}
+async function deleteHistoryItem(id, btn) {
+    if (!confirm('Biztosan törölni szeretnéd ezt az elemet?')) return;
+    btn.disabled = true;
+    btn.textContent = 'Törlés...';
+    try {
+        const response = await fetch(__gasUrl, {
+            method: 'POST',
+            mode: 'cors',
+            body: JSON.stringify({ action: 'deleteHistoryItem', sheetUrl: __sheetUrl, id: id }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) throw new Error(`Hálózati hiba: ${response.statusText}`);
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+        
+        // Elem eltávolítása a listából animációval
+        const itemDiv = btn.closest('.list-item');
+        itemDiv.style.transition = 'opacity 0.5s';
+        itemDiv.style.opacity = '0';
+        setTimeout(() => itemDiv.remove(), 500);
+
+    } catch(e) {
+        alert(`Hiba a törlés során: ${e.message}`);
+        btn.disabled = false;
+        btn.textContent = 'Törlés';
     }
 }
 </script>
