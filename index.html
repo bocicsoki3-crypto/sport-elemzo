@@ -496,30 +496,49 @@ function loadStrategySettings() {
     }
 }
 
-async function updateStrategyPanel(bankrollFromPerformanceCenter) {
+async function updateStrategyPanel(performanceDataFromInit = null, isInitializing = false) {
     if (!__sheetUrl) return;
     const plan = JSON.parse(localStorage.getItem('strategyPlan'));
     const bankrollDisplay = document.getElementById('strategyBankrollDisplay');
     const stakeDisplay = document.getElementById('strategyStakeDisplay');
-    let performanceData;
+    let performanceData = performanceDataFromInit;
     
     try {
-        const response = await fetch(`${__gasUrl}?action=getPerformanceData&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
-        performanceData = await response.json();
-        if (performanceData.error) throw new Error(performanceData.error);
+        // Ha nem inicializáláskor hívtuk meg, akkor kérjük le frissen az adatokat
+        if (!performanceData) {
+            const response = await fetch(`${__gasUrl}?action=getPerformanceData&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
+            performanceData = await response.json();
+            if (performanceData.error) throw new Error(performanceData.error);
+        }
 
         const currentBankroll = performanceData.mainKPIs.bankroll;
         bankrollDisplay.textContent = `${Math.round(currentBankroll).toLocaleString('hu-HU')} Ft`;
         
         if (plan) {
             const lastLosses = performanceData.mainKPIs.lastLossesInUnits || 0;
-            const requiredStake = (plan.dailyProfitTarget + lastLosses) / (plan.recommendedOdds - 1);
-            stakeDisplay.textContent = `${Math.round(requiredStake).toLocaleString('hu-HU')} Ft`;
+            // Ha a bankroll 0 (pl. tiszta induláskor), a tét is 0, amíg be nem írjuk a kezdőtőkét
+            const requiredStake = currentBankroll > 0 ? (plan.dailyProfitTarget + lastLosses) / (plan.recommendedOdds - 1) : 0;
+            
+            // Ha ez az első indítás, és a tét 0, jelenítsük meg a tervet. Különben a számított tétet.
+            if(isInitializing && requiredStake === 0) {
+                 const initialStake = (plan.dailyProfitTarget) / (plan.recommendedOdds - 1);
+                 stakeDisplay.textContent = `${Math.round(initialStake).toLocaleString('hu-HU')} Ft`;
+            } else if (currentBankroll <= 0 && !isInitializing) {
+                 stakeDisplay.textContent = "Bankroll feltöltése szükséges!";
+            }
+            else {
+                 stakeDisplay.textContent = `${Math.round(requiredStake).toLocaleString('hu-HU')} Ft`;
+            }
         } else {
             stakeDisplay.textContent = "Indítsd a stratégiát!";
         }
-        fetchAndDisplayPendingBets();
-        updatePerformanceCenter(performanceData); // Frissítjük a másik panelt is
+        
+        // Csak akkor frissítsük a többi panelt, ha nem inicializálásról van szó,
+        // hogy elkerüljük a felesleges dupla hívásokat.
+        if (!isInitializing) {
+            fetchAndDisplayPendingBets();
+            updatePerformanceCenter(performanceData);
+        }
 
     } catch (e) {
         bankrollDisplay.textContent = "Hiba";
@@ -604,3 +623,4 @@ async function settleStrategyBet(betId, outcome) {
 </script>
 </body>
 </html>
+
