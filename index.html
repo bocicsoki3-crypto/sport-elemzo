@@ -175,7 +175,7 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
                     <div id="tab-manual" class="tab-content">
                         <label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/>
                         <label for="away" style="margin-top:1rem;">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/>
-                        <button class="btn btn-primary" onclick="runAnalysis(true)" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
+                        <button id="runAnalysisBtn" class="btn btn-primary" onclick="runAnalysis(true)" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
                     </div>
 
                     <div id="tab-history" class="tab-content">
@@ -216,7 +216,10 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 
 
 <script>
-let __gasUrl = 'https://script.google.com/macros/s/AKfycbx-vCDzIbOREVByLUHS_p_fV7hBWfwTse2QTXzz49H7ISui_KWhPdCUVSC-FrjIBWutaQ/exec';
+// ===== FONTOS: Cseréld le a saját, legfrissebb Google Apps Script URL-edre! =====
+let __gasUrl = 'https://script.google.com/macros/s/AKfycbwR_2WEM9-qYMS_nY0mmyfke-CDRS-policy/exec';
+// ==============================================================================
+
 let __fixtures = [];
 let __currentSport = 'soccer';
 let __sheetUrl = '';
@@ -349,7 +352,6 @@ async function initializeApp() {
     }
 }
 
-// ... a többi JS függvény (logBet, loadFixtures, stb.) változatlan marad a korábbi verzióhoz képest ...
 async function logBet(betData) {
     if (!__sheetUrl) { alert('Hiba: Nincs beállítva Google Táblázat URL.'); return; }
     const button = event.target.closest('button');
@@ -396,7 +398,7 @@ async function loadFixtures(){
         const groupedByLeague = __fixtures.reduce((acc, fx) => { (acc[fx.league] = acc[fx.league] || []).push(fx); return acc; }, {}); 
         let html = ''; 
         for (const league in groupedByLeague) { 
-            html += `<details open><summary class="list-group-header">${league}</summary>`; 
+            html += `<details open><summary class="list-group-header">${escapeHtml(league)}</summary>`; 
             groupedByLeague[league].forEach(fx => { 
                 const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' }); 
                 html += `<div class="list-item" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')"><div><div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div><div class="list-item-meta">${d}</div></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--muted);"><polyline points="9 18 15 12 9 6"></polyline></svg></div>`; 
@@ -627,7 +629,6 @@ async function deleteHistoryItem(id, btn) {
         const result = await response.json();
         if (result.error) throw new Error(result.error);
         
-        // Elem eltávolítása a listából animációval
         const itemDiv = btn.closest('.list-item');
         itemDiv.style.transition = 'opacity 0.5s';
         itemDiv.style.opacity = '0';
@@ -639,7 +640,99 @@ async function deleteHistoryItem(id, btn) {
         btn.textContent = 'Törlés';
     }
 }
+
+// =================================================================
+// =====> JAVÍTOTT ÉS KIEGÉSZÍTETT FÜGGVÉNY <=====
+// =================================================================
+async function runAnalysis(forceNew) {
+    const home = document.getElementById('home').value.trim();
+    const away = document.getElementById('away').value.trim();
+    if (!home || !away) {
+        alert('Mindkét csapat nevét meg kell adni!');
+        return;
+    }
+
+    const runBtn = document.getElementById('runAnalysisBtn');
+    const placeholder = document.getElementById('placeholder');
+    const loadingSkeleton = document.getElementById('loading-skeleton');
+    const resultsDiv = document.getElementById('analysis-results');
+    const progressContainer = document.getElementById('progress-container');
+    const statusEl = document.getElementById('status');
+    const progressBar = document.getElementById('progress-bar-inner');
+
+    // UI előkészítése az elemzésre
+    runBtn.disabled = true;
+    runBtn.textContent = 'Elemzés folyamatban...';
+    placeholder.style.display = 'none';
+    loadingSkeleton.style.display = 'block';
+    resultsDiv.innerHTML = '';
+    progressContainer.style.display = 'block';
+    statusEl.textContent = 'Adatok gyűjtése...';
+    progressBar.style.width = '10%';
+
+    try {
+        const allOpeningOdds = JSON.parse(sessionStorage.getItem('openingOdds') || '{}');
+        const oddsKey = `${home.toLowerCase()}_vs_${away.toLowerCase()}`;
+        
+        statusEl.textContent = 'AI modellek futtatása...';
+        progressBar.style.width = '40%';
+        
+        // JAVÍTÁS: A kérés egyértelműen POST metódussal történik.
+        const response = await fetch(__gasUrl, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'runAnalysis',
+                sport: __currentSport,
+                home: home,
+                away: away,
+                force: forceNew,
+                sheetUrl: __sheetUrl || '',
+                openingOdds: { [oddsKey]: allOpeningOdds[oddsKey] }
+            }),
+        });
+        
+        progressBar.style.width = '80%';
+        statusEl.textContent = 'Eredmények feldolgozása...';
+
+        if (!response.ok) {
+            // Próbáljuk meg kiolvasni a szerver által küldött konkrét hibaüzenetet
+            const errorData = await response.json().catch(() => null);
+            if (errorData && errorData.error) {
+                throw new Error(`Szerver hiba: ${errorData.error}`);
+            }
+            throw new Error(`Szerver hiba: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        progressBar.style.width = '100%';
+        statusEl.textContent = 'Kész!';
+        resultsDiv.innerHTML = data.html;
+
+    } catch (e) {
+        statusEl.textContent = `Hiba történt: ${e.message}`;
+        statusEl.style.color = 'var(--danger)';
+        resultsDiv.innerHTML = `<p class="muted" style="color:var(--danger); text-align:center;">${e.message}</p>`;
+    } finally {
+        runBtn.disabled = false;
+        runBtn.textContent = 'Elemzés Futtatása';
+        loadingSkeleton.style.display = 'none';
+        setTimeout(() => {
+            progressContainer.style.display = 'none';
+            statusEl.textContent = '';
+            statusEl.style.color = 'var(--muted)';
+            progressBar.style.width = '0%';
+        }, 3000);
+    }
+}
 </script>
 </body>
 </html>
-
