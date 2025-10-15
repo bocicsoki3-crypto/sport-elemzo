@@ -145,6 +145,58 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .total-line { font-size: 1.05rem; }
 .total-label { color: var(--text-secondary); margin-right: 0.5rem; }
 .total-value { font-weight: 700; color: var(--text-primary); }
+
+/* --- ÚJ RÉSZ: MOBIL FELUGRÓ ABLAK (MODAL) --- */
+.analysis-modal {
+    display: none; /* Alapból rejtett */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    backdrop-filter: blur(5px);
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s;
+}
+.modal-content {
+    background: var(--bg);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    width: 95%;
+    max-width: 600px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--primary);
+}
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+}
 </style>
 </head>
 <body>
@@ -227,6 +279,17 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
     </main>
 </div>
 
+<div id="analysis-modal" class="analysis-modal" onclick="closeAnalysisModal(event)">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Elemzés</h3>
+            <button class="modal-close-btn" onclick="closeAnalysisModal()">&times;</button>
+        </div>
+        <div id="modal-body" class="modal-body">
+            </div>
+    </div>
+</div>
+
 
 <script>
 let __gasUrl = 'https://script.google.com/macros/s/AKfycbyN99ot1yzv4Na9nq0rTIsCSQ2DUlMMCzSKQmtM8fg7qDMAaFzHW8n_2Y8eNxnsFdabvg/exec';
@@ -279,6 +342,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     loadSheetUrl();
 });
+
+// --- ÚJ RÉSZ: FELUGRÓ ABLAK KEZELÉSE ---
+function openAnalysisModal(htmlContent) {
+    const modal = document.getElementById('analysis-modal');
+    const modalBody = document.getElementById('modal-body');
+    modalBody.innerHTML = htmlContent;
+    modal.style.display = 'flex';
+}
+
+function closeAnalysisModal(event) {
+    const modal = document.getElementById('analysis-modal');
+    // Csak akkor zárja be, ha a háttérre kattintunk, nem a tartalomra
+    if (!event || event.target === modal || event.target.classList.contains('modal-close-btn')) {
+        modal.style.display = 'none';
+    }
+}
+
 
 function saveSheetUrl() {
     __sheetUrl = document.getElementById('sheetUrl').value;
@@ -489,11 +569,6 @@ async function runAnalysis(forceNew = false) {
     const progressBar = document.getElementById('progress-bar-inner');
     const statusEl = document.getElementById('status');
 
-    const controlsAccordion = document.getElementById('controls-accordion');
-    if (window.innerWidth <= 1024 && controlsAccordion) {
-        controlsAccordion.removeAttribute('open');
-    }
-
     resultsEl.innerHTML = '';
     placeholderEl.style.display = 'none';
     skeletonEl.style.display = 'block';
@@ -508,6 +583,15 @@ async function runAnalysis(forceNew = false) {
         placeholderEl.style.display = 'flex';
         return;
     }
+    
+    // MÓDOSÍTÁS: Analízis indításakor mobilon bezárja a panelt, ÉS a fő tartalmi részt kiüríti.
+    if (window.innerWidth <= 1024) {
+        const controlsAccordion = document.getElementById('controls-accordion');
+        if (controlsAccordion) controlsAccordion.removeAttribute('open');
+        resultsEl.innerHTML = ''; // Kiürítjük a régi tartalmat, ha volt
+        placeholderEl.style.display = 'flex'; // Visszaállítjuk a placeholdert
+    }
+
 
     let progress = 0;
     const updateProgress = (val, text) => {
@@ -539,7 +623,15 @@ async function runAnalysis(forceNew = false) {
         if (data.error) throw new Error(data.error);
 
         updateProgress(100, "Kész.");
-        resultsEl.innerHTML = `<div class="analysis-body">${data.html}</div>`;
+        
+        // MÓDOSÍTÁS: A tartalom megjelenítése a képernyőméret alapján
+        const analysisHtml = `<div class="analysis-body">${data.html}</div>`;
+        if (window.innerWidth <= 1024) {
+            openAnalysisModal(analysisHtml);
+        } else {
+            resultsEl.innerHTML = analysisHtml;
+        }
+
         if (__sheetUrl && document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
             loadHistory();
         }
@@ -645,23 +737,32 @@ async function loadAnalysisFromHistory(id){
     const placeholderEl = document.getElementById('placeholder');
     const skeletonEl = document.getElementById('loading-skeleton');
 
-    const controlsAccordion = document.getElementById('controls-accordion');
-    if (window.innerWidth <= 1024 && controlsAccordion) {
-        controlsAccordion.removeAttribute('open');
-    }
-
     resultsEl.innerHTML = '';
     placeholderEl.style.display = 'none';
     skeletonEl.style.display = 'block';
+
     try {
         const response = await fetch(`${__gasUrl}?action=getAnalysisDetail&sheetUrl=${encodeURIComponent(__sheetUrl)}&id=${id}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-        resultsEl.innerHTML = `<div class="analysis-body">${data.record.html}</div>`;
+        
+        // MÓDOSÍTÁS: A tartalom megjelenítése a képernyőméret alapján
+        const analysisHtml = `<div class="analysis-body">${data.record.html}</div>`;
+        if (window.innerWidth <= 1024) {
+            openAnalysisModal(analysisHtml);
+        } else {
+            resultsEl.innerHTML = analysisHtml;
+        }
+
     } catch(e) {
         resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba az elemzés betöltésekor: ${e.message}</p>`;
     } finally {
         skeletonEl.style.display = 'none';
+        if (window.innerWidth > 1024) {
+             placeholderEl.style.display = 'none';
+        } else {
+             placeholderEl.style.display = 'flex';
+        }
     }
 }
 
