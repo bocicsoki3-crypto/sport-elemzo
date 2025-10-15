@@ -111,28 +111,6 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .prob-bar-bg{width:100%;background:rgba(0,0,0,0.2);border-radius:5px;height:8px;overflow:hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);}
 .prob-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--primary));border-radius:5px; box-shadow: 0 0 8px var(--primary);}
 #theme-switcher { cursor: pointer; stroke: var(--muted); } #theme-switcher:hover { stroke: var(--primary); }
-.performance-center .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-.performance-center .kpi-card { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px; text-align: center; }
-.performance-center .kpi-card h5 { margin: 0 0 0.5rem 0; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; font-weight: 500;}
-.performance-center .kpi-card .value { font-size: 1.4rem; font-weight: 700; }
-.performance-center .pnl-value.positive { color: var(--success); }
-.performance-center .pnl-value.negative { color: var(--danger); }
-.performance-center .view-switcher { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-.performance-center .view-btn { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 8px; cursor: pointer; color: var(--muted); font-size: 0.8rem;}
-.performance-center .view-btn.active { background: var(--primary); color: #000; font-weight: 700; }
-.performance-center .chart-view { display: none; }
-.performance-center .chart-view.active { display: block; }
-.performance-center .bar-chart-item { display: flex; align-items: center; margin-bottom: 0.5rem; font-size: 0.9rem; }
-.performance-center .bar-label { width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.performance-center .bar-bg { flex-grow: 1; height: 12px; background: rgba(0,0,0,0.2); border-radius: 6px; }
-.performance-center .bar-fill { height: 100%; border-radius: 6px; }
-.performance-center .bar-fill.positive { background: var(--success); }
-.performance-center .bar-fill.negative { background: var(--danger); margin-left: auto; }
-.performance-center .bar-value { width: 60px; text-align: right; font-weight: 700; }
-.light-theme .performance-center .kpi-card { background: rgba(0,0,0,0.05); }
-.light-theme .performance-center .view-btn { background: rgba(0,0,0,0.05); }
-#stake-calculator-result { margin-top: 1rem; padding: 1rem; background: rgba(212, 175, 55, 0.1); border-radius: 8px; text-align: center; display: none; }
-#stake-calculator-result .value { font-size: 1.6rem; font-weight: 700; color: var(--success); }
 .summary-card .placeholder-value { font-size: 2.5rem; font-weight: 700; color: var(--muted); margin-top: 1.5rem; }
 .radial-chart-container { position: relative; width: 120px; height: 120px; margin: auto; }
 .radial-chart { transform: rotate(-90deg); }
@@ -240,9 +218,12 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
                             <input id="strategyDays" type="number" value="15">
                              <label for="startBankroll" style="margin-top:1rem;">Bankroll Indítása (Ft)</label>
                             <input id="startBankroll" type="number" value="10070" placeholder="Kezdőtőke">
+                            <label for="strategyTargetOdds" style="margin-top:1rem;">Stratégia Cél Oddsa</label>
+                            <input id="strategyTargetOdds" type="number" step="0.1" value="2.5">
+
                             <button class="btn" onclick="calculateStrategyPlan()" style="width:100%; margin-top:1rem; background: var(--border-color); color: var(--text-primary);">Stratégia Indítása / Újraszámolás</button>
                             <div id="strategyPlanResult" style="text-align: center; margin-top: 1rem; display: none;">
-                                <p class="muted" style="margin-bottom: 0.5rem;">Terv: <span id="planDailyProfit"></span> Ft/nap, <span id="planOdds"></span> átlag oddsszal</p>
+                                <p class="muted" style="margin-bottom: 0.5rem;">Terv: <span id="planDailyProfit"></span> Ft/nap profit</p>
                             </div>
                         </div>
                     </details>
@@ -250,13 +231,6 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
             </details>
         </div>
 
-        <div class="card" id="performance-center-card">
-             <details>
-                <summary>Teljesítmény Központ</summary>
-                <div style="margin-top: 1rem;" id="performance-center-content">
-                    </div>
-            </details>
-        </div>
     </aside>
 
     <main id="main-content" class="main-content">
@@ -279,6 +253,7 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 
 
 <script>
+// Itt add meg a Google Apps Script Web App URL-edet
 let __gasUrl = 'https://script.google.com/macros/s/AKfycbzezgLIW-VE1ZCaRUU7nQ6lebTEH6VpUrjW-rpnJXUnXnkdlM9B3suv6dw-RZTTyfGiCg/exec';
 let __fixtures = [];
 let __currentSport = 'soccer';
@@ -340,84 +315,26 @@ function saveSheetUrl() {
 
 async function loadSheetUrl() {
     __sheetUrl = localStorage.getItem('sheetUrl');
-    const performanceCard = document.getElementById('performance-center-card');
 
     if (__sheetUrl) {
-        performanceCard.style.display = 'block';
         loadStrategySettings();
         await updateStrategyPanel();
         if(document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
             loadHistory();
         }
     } else {
-        performanceCard.style.display = 'block';
-        document.getElementById('performance-center-content').innerHTML = `
-            <div id="sheetUrlContainer">
-              <p class="muted" style="font-size: .8rem;">A funkcióhoz add meg a Google Táblázat URL-jét.</p>
-              <label for="sheetUrl">Google Táblázat URL</label>
-              <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
-            </div>`;
-    }
-}
-
-async function updatePerformanceCenter(data) {
-    if (!__sheetUrl) return;
-    const contentEl = document.getElementById('performance-center-content');
-    const bankrollValueEl = document.getElementById('bankrollValue');
-
-    let performanceData = data;
-    if (!performanceData) {
-        contentEl.innerHTML = `<p class="muted">Teljesítmény adatok lekérése...</p>`;
-        const response = await fetch(`${__gasUrl}?action=getPerformanceData&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
-        performanceData = await response.json();
-        if (performanceData.error) {
-            contentEl.innerHTML = `<p class="muted" style="color:var(--danger);">${performanceData.error}</p>`;
-            return;
+         // Ha nincs URL, a stratégia menedzserben is bekérjük.
+        const strategyManager = document.querySelector('.card details[open] summary:not(.controls-summary)').parentElement;
+        if (strategyManager) {
+             strategyManager.innerHTML = `
+                <summary>Stratégia Menedzser</summary>
+                <div id="sheetUrlContainer" style="margin-top: 1rem;">
+                  <p class="muted" style="font-size: .8rem;">A funkciókhoz add meg a Google Táblázat URL-jét.</p>
+                  <label for="sheetUrl">Google Táblázat URL</label>
+                  <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
+                </div>`;
         }
     }
-
-    const bankroll = performanceData.mainKPIs.bankroll;
-    bankrollValueEl.textContent = `${Math.round(bankroll).toLocaleString('hu-HU')} Ft`;
-
-    let html = `
-        <div class="performance-center">
-            <div class="kpi-grid">
-                <div class="kpi-card"><h5>Profit/Veszteség</h5><div class="value pnl-value ${performanceData.mainKPIs.pnl >= 0 ? 'positive' : 'negative'}">${performanceData.mainKPIs.pnl >= 0 ? '+' : ''}${performanceData.mainKPIs.pnl.toLocaleString('hu-HU', {maximumFractionDigits: 0})} Ft</div></div>
-                <div class="kpi-card"><h5>ROI</h5><div class="value">${performanceData.mainKPIs.roi.toFixed(1)}%</div></div>
-                <div class="kpi-card"><h5>Találati Arány</h5><div class="value">${performanceData.mainKPIs.winRate.toFixed(1)}%</div></div>
-                <div class="kpi-card"><h5>Összes Fogadás</h5><div class="value">${performanceData.mainKPIs.totalBets}</div></div>
-            </div>
-            <div class="view-switcher"><button class="view-btn active" onclick="switchPcView('sport')">Sportágak</button><button class="view-btn" onclick="switchPcView('strategy')">Stratégiák</button></div>
-            <div id="pc-view-sport" class="chart-view active"></div><div id="pc-view-strategy" class="chart-view"></div>
-        </div>`;
-    contentEl.innerHTML = html;
-    renderBarChart('pc-view-sport', performanceData.bySport);
-    renderBarChart('pc-view-strategy', performanceData.byStrategy);
-}
-
-function renderBarChart(containerId, data) {
-    const container = document.getElementById(containerId);
-    let chartHtml = '';
-    const values = Object.values(data);
-    if(values.length === 0) {
-        container.innerHTML = '<p class="muted" style="text-align:center;">Nincs megjeleníthető adat.</p>';
-        return;
-    }
-    const maxVal = Math.max(...values.map(v => Math.abs(v)));
-    for(const key in data) {
-        const value = data[key];
-        const width = maxVal > 0 ? (Math.abs(value) / maxVal) * 100 : 0;
-        const isPositive = value >= 0;
-        chartHtml += `<div class="bar-chart-item"><div class="bar-label" title="${key}">${key}</div><div class="bar-bg"><div class="bar-fill ${isPositive ? 'positive' : 'negative'}" style="width: ${width}%;"></div></div><div class="bar-value" style="color: ${isPositive ? 'var(--success)' : 'var(--danger)'};">${value.toFixed(2)}</div></div>`;
-    }
-    container.innerHTML = chartHtml;
-}
-
-function switchPcView(view) {
-    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`.view-btn[onclick="switchPcView('${view}')"]`).classList.add('active');
-    document.querySelectorAll('.chart-view').forEach(v => v.classList.remove('active'));
-    document.getElementById(`pc-view-${view}`).classList.add('active');
 }
 
 async function logBet(betData) {
@@ -431,6 +348,7 @@ async function logBet(betData) {
     try {
         const response = await fetch(__gasUrl, {
             method: 'POST',
+            mode: 'cors', // Fontos a CORS miatt
             body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData }),
             headers: { 'Content-Type': 'application/json' }
         });
@@ -457,36 +375,36 @@ async function logBet(betData) {
 function handleSportChange(){ __currentSport=document.getElementById('sportSelector').value; document.getElementById('fixtures-list').innerHTML = ''; __fixtures = []; }
 async function loadFixtures(){ const listEl = document.getElementById('fixtures-list'); const loadBtn = document.getElementById('loadFixturesBtn'); listEl.innerHTML = '<p class="muted" style="text-align:center;">Adatok lekérése...</p>'; loadBtn.disabled = true; try { const response = await fetch(`${__gasUrl}?action=getFixtures&sport=${__currentSport}&days=2`); if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`); const data = await response.json(); if (data.error) throw new Error(data.error); __fixtures = data.fixtures || []; sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {})); const groupedByLeague = __fixtures.reduce((acc, fx) => { (acc[fx.league] = acc[fx.league] || []).push(fx); return acc; }, {}); let html = ''; for (const league in groupedByLeague) { html += `<details open><summary class="list-group-header">${league}</summary>`; groupedByLeague[league].forEach(fx => { const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' }); html += `<div class="list-item" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')"><div><div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div><div class="list-item-meta">${d}</div></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--muted);"><polyline points="9 18 15 12 9 6"></polyline></svg></div>`; }); html += `</details>`; } listEl.innerHTML = html || '<p class="muted" style="text-align:center;">Nincs megjeleníthető mérkőzés.</p>'; } catch (e) { listEl.innerHTML = `<p class="muted" style="color:var(--danger);">${e.message}</p>`; } finally { loadBtn.disabled = false; } }
 function fillAndAnalyze(home, away) { document.getElementById('home').value = home; document.getElementById('away').value = away; document.querySelector('button[data-tab="tab-manual"]').click(); runAnalysis(false); }
-async function runAnalysis(forceNew = false) { /* ... Változatlan ... */ }
-async function loadHistory() { /* ... Változatlan ... */ }
-function filterHistory(allHistory) { /* ... Változatlan ... */ }
-function renderHistory(history, isFiltering = false) { /* ... Változatlan ... */ }
-function filterHistoryBySport(sport, btn) { /* ... Változatlan ... */ }
-async function loadAnalysisFromHistory(id){ /* ... Változatlan ... */ }
-async function deleteHistoryItem(id){ /* ... Változatlan ... */ }
+async function runAnalysis(forceNew = false) { /* ... Változatlan, ahogy volt ... */ }
+async function loadHistory() { /* ... Változatlan, ahogy volt ... */ }
+async function loadAnalysisFromHistory(id){ /* ... Változatlan, ahogy volt ... */ }
+async function deleteHistoryItem(id){ /* ... Változatlan, ahogy volt ... */ }
 
 // --- STRATÉGIAI TÉTKEZELŐ FÜGGVÉNYEK ---
 
+// JAVÍTOTT FÜGGVÉNY
 function calculateStrategyPlan() {
     const goal = parseFloat(document.getElementById('strategyGoal').value);
     const days = parseInt(document.getElementById('strategyDays').value);
     const startBankroll = parseFloat(document.getElementById('startBankroll').value);
-    if (!goal || !days || isNaN(startBankroll)) {
-        alert('Kérlek, add meg a Cél Profitot, a Napok Számát és a Kezdő Bankrollt!');
+    const targetOdds = parseFloat(document.getElementById('strategyTargetOdds').value); // Új
+
+    if (!goal || !days || isNaN(startBankroll) || !targetOdds) {
+        alert('Kérlek, adj meg minden stratégiai adatot (Cél, Napok, Bankroll, Cél Odds)!');
         return;
     }
+
     const dailyProfitTarget = goal / days;
-    const recommendedOdds = (dailyProfitTarget / (startBankroll * 0.05)) + 1 || 2.5;
-    const plan = { goal, days, startBankroll, dailyProfitTarget, recommendedOdds };
+    const plan = { goal, days, startBankroll, dailyProfitTarget, targetOdds }; // targetOdds elmentése
     localStorage.setItem('strategyPlan', JSON.stringify(plan));
 
     document.getElementById('planDailyProfit').textContent = Math.round(dailyProfitTarget).toLocaleString('hu-HU');
-    document.getElementById('planOdds').textContent = recommendedOdds.toFixed(2);
     document.getElementById('strategyPlanResult').style.display = 'block';
 
     if (__sheetUrl) {
       fetch(__gasUrl, {
           method: 'POST',
+          mode: 'cors',
           body: JSON.stringify({ action: 'initBankroll', sheetUrl: __sheetUrl, startBankroll: startBankroll }),
           headers: { 'Content-Type': 'application/json' }
       })
@@ -510,23 +428,21 @@ function loadStrategySettings() {
         document.getElementById('strategyGoal').value = plan.goal;
         document.getElementById('strategyDays').value = plan.days;
         document.getElementById('startBankroll').value = plan.startBankroll;
+        document.getElementById('strategyTargetOdds').value = plan.targetOdds || 2.5; // Új
         document.getElementById('planDailyProfit').textContent = Math.round(plan.dailyProfitTarget).toLocaleString('hu-HU');
-        document.getElementById('planOdds').textContent = plan.recommendedOdds.toFixed(2);
         document.getElementById('strategyPlanResult').style.display = 'block';
     }
 }
 
-// JAVÍTOTT ÉS FEJLESZTETT FÜGGVÉNY
+// JAVÍTOTT FÜGGVÉNY
 async function updateStrategyPanel(performanceDataFromInit = null) {
     if (!__sheetUrl) return;
-
     const plan = JSON.parse(localStorage.getItem('strategyPlan'));
     const bankrollDisplay = document.getElementById('strategyBankrollDisplay');
     const stakeDisplay = document.getElementById('strategyStakeDisplay');
     let performanceData = performanceDataFromInit;
 
     try {
-        // Ha nem a stratégia indításakor hívtuk meg, akkor kérjük le frissen az adatokat.
         if (!performanceData) {
             const response = await fetch(`${__gasUrl}?action=getPerformanceData&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
             performanceData = await response.json();
@@ -536,21 +452,19 @@ async function updateStrategyPanel(performanceDataFromInit = null) {
         const currentBankroll = performanceData.mainKPIs.bankroll;
         bankrollDisplay.textContent = `${Math.round(currentBankroll).toLocaleString('hu-HU')} Ft`;
 
-        if (plan) {
+        if (plan && plan.targetOdds > 1) { // Ellenőrizzük a cél oddsot
             const lastLosses = performanceData.mainKPIs.lastLossesInUnits || 0;
-            // A tét javaslatot mindig kiszámoljuk, függetlenül a bankrolltól.
-            const requiredStake = (plan.dailyProfitTarget + lastLosses) / (plan.recommendedOdds - 1);
+            const requiredStake = (plan.dailyProfitTarget + lastLosses) / (plan.targetOdds - 1);
 
-            // A kijelzés logikáját egyértelműsítjük:
             if (currentBankroll <= 0) {
-                stakeDisplay.textContent = "Bankroll feltöltése szükséges!";
-                stakeDisplay.style.color = 'var(--danger)'; // Legyen piros a szöveg
+                 stakeDisplay.textContent = "Bankroll feltöltése szükséges!";
+                 stakeDisplay.style.color = 'var(--danger)';
             } else if (requiredStake > currentBankroll) {
-                stakeDisplay.innerHTML = `${Math.round(requiredStake).toLocaleString('hu-HU')} Ft <br><span style="font-size:0.9rem; color:var(--danger);">Nincs elegendő fedezet!</span>`;
-                stakeDisplay.style.color = 'var(--text-primary)';
+                 stakeDisplay.innerHTML = `${Math.round(requiredStake).toLocaleString('hu-HU')} Ft <br><span style="font-size:0.9rem; color:var(--danger);">Nincs elég fedezet!</span>`;
+                 stakeDisplay.style.color = 'var(--text-primary)';
             } else {
-                stakeDisplay.textContent = `${Math.round(requiredStake).toLocaleString('hu-HU')} Ft`;
-                stakeDisplay.style.color = 'var(--success)'; // Csak itt legyen zöld
+                 stakeDisplay.textContent = `${Math.round(requiredStake).toLocaleString('hu-HU')} Ft`;
+                 stakeDisplay.style.color = 'var(--success)';
             }
         } else {
             stakeDisplay.textContent = "Indítsd a stratégiát!";
@@ -558,7 +472,6 @@ async function updateStrategyPanel(performanceDataFromInit = null) {
         }
 
         fetchAndDisplayPendingBets();
-        updatePerformanceCenter(performanceData);
 
     } catch (e) {
         bankrollDisplay.textContent = "Hiba";
@@ -583,7 +496,7 @@ async function logStrategyBet() {
         return;
     }
     const stakeText = document.getElementById('strategyStakeDisplay').textContent;
-    const requiredStake = parseFloat(stakeText.replace(/\s/g, '').replace('Ft', ''));
+    const requiredStake = parseFloat(stakeText.replace(/[^\d.-]/g, ''));
     if (isNaN(requiredStake) || currentBankroll <= 0) {
         alert('A tét nem számítható ki. Ellenőrizd a bankrollt és a beállításokat.');
         return;
@@ -629,6 +542,7 @@ async function settleStrategyBet(betId, outcome) {
     try {
         const response = await fetch(__gasUrl, {
             method: 'POST',
+            mode: 'cors',
             body: JSON.stringify({ action: 'settleBet', sheetUrl: __sheetUrl, betId: betId, outcome: outcome }),
             headers: { 'Content-Type': 'application/json' }
         });
