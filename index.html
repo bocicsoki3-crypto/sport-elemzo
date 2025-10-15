@@ -466,7 +466,7 @@ async function loadAnalysisFromHistory(id){ /* ... Változatlan ... */ }
 async function deleteHistoryItem(id){ /* ... Változatlan ... */ }
 
 // --- STRATÉGIAI TÉTKEZELŐ FÜGGVÉNYEK ---
-// JAVÍTOTT KÓD
+
 function calculateStrategyPlan() {
     const goal = parseFloat(document.getElementById('strategyGoal').value);
     const days = parseInt(document.getElementById('strategyDays').value);
@@ -495,8 +495,7 @@ function calculateStrategyPlan() {
           if(performanceData.error) {
               throw new Error(performanceData.error);
           }
-          // A backend már elküldte a friss adatokat, ezeket közvetlenül használjuk.
-          updateStrategyPanel(performanceData, true);
+          updateStrategyPanel(performanceData);
       })
       .catch(e => {
           alert(`Hiba a stratégia indításakor: ${e.message}`);
@@ -517,15 +516,17 @@ function loadStrategySettings() {
     }
 }
 
-// JAVÍTOTT KÓD
-async function updateStrategyPanel(performanceDataFromInit = null, isInitializing = false) {
+// JAVÍTOTT ÉS FEJLESZTETT FÜGGVÉNY
+async function updateStrategyPanel(performanceDataFromInit = null) {
     if (!__sheetUrl) return;
+
     const plan = JSON.parse(localStorage.getItem('strategyPlan'));
     const bankrollDisplay = document.getElementById('strategyBankrollDisplay');
     const stakeDisplay = document.getElementById('strategyStakeDisplay');
     let performanceData = performanceDataFromInit;
 
     try {
+        // Ha nem a stratégia indításakor hívtuk meg, akkor kérjük le frissen az adatokat.
         if (!performanceData) {
             const response = await fetch(`${__gasUrl}?action=getPerformanceData&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
             performanceData = await response.json();
@@ -537,16 +538,23 @@ async function updateStrategyPanel(performanceDataFromInit = null, isInitializin
 
         if (plan) {
             const lastLosses = performanceData.mainKPIs.lastLossesInUnits || 0;
-            const requiredStake = currentBankroll > 0 ? (plan.dailyProfitTarget + lastLosses) / (plan.recommendedOdds - 1) : 0;
+            // A tét javaslatot mindig kiszámoljuk, függetlenül a bankrolltól.
+            const requiredStake = (plan.dailyProfitTarget + lastLosses) / (plan.recommendedOdds - 1);
 
-            if (currentBankroll <= 0 && !isInitializing) {
-                 stakeDisplay.textContent = "Bankroll feltöltése szükséges!";
-            }
-            else {
-                 stakeDisplay.textContent = `${Math.round(requiredStake).toLocaleString('hu-HU')} Ft`;
+            // A kijelzés logikáját egyértelműsítjük:
+            if (currentBankroll <= 0) {
+                stakeDisplay.textContent = "Bankroll feltöltése szükséges!";
+                stakeDisplay.style.color = 'var(--danger)'; // Legyen piros a szöveg
+            } else if (requiredStake > currentBankroll) {
+                stakeDisplay.innerHTML = `${Math.round(requiredStake).toLocaleString('hu-HU')} Ft <br><span style="font-size:0.9rem; color:var(--danger);">Nincs elegendő fedezet!</span>`;
+                stakeDisplay.style.color = 'var(--text-primary)';
+            } else {
+                stakeDisplay.textContent = `${Math.round(requiredStake).toLocaleString('hu-HU')} Ft`;
+                stakeDisplay.style.color = 'var(--success)'; // Csak itt legyen zöld
             }
         } else {
             stakeDisplay.textContent = "Indítsd a stratégiát!";
+            stakeDisplay.style.color = 'var(--muted)';
         }
 
         fetchAndDisplayPendingBets();
