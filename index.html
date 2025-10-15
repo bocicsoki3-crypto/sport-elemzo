@@ -42,7 +42,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
 .btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#000}
 .btn-primary:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 8px 20px rgba(212,175,55,.25)}
 .btn:disabled{background:#555;cursor:not-allowed;opacity:.7}
-.muted{color:var(--muted);font-size:.9rem}
+.muted{color:var(--text-secondary);font-size:.9rem}
 #main-content .placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;border:2px dashed var(--border-color);border-radius:16px;color:var(--muted);padding:2rem;text-align:center}
 #main-content .placeholder svg{width:64px;height:64px;margin-bottom:1rem;stroke-width:1.5;opacity:.5}
 .tab-nav{display:flex;gap:.5rem;margin-bottom:1rem;border-bottom:1px solid var(--border-color)}
@@ -138,6 +138,8 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .performance-center .bar-value { width: 60px; text-align: right; font-weight: 700; }
 .light-theme .performance-center .kpi-card { background: rgba(0,0,0,0.05); }
 .light-theme .performance-center .view-btn { background: rgba(0,0,0,0.05); }
+#stake-calculator-result { margin-top: 1rem; padding: 1rem; background: rgba(212, 175, 55, 0.1); border-radius: 8px; text-align: center; display: none; }
+#stake-calculator-result .value { font-size: 1.6rem; font-weight: 700; color: var(--success); }
 </style>
 </head>
 <body>
@@ -194,7 +196,38 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
         </div>
 
         <div class="card">
-            <details open>
+            <details>
+                <summary>Napi Tét Kalkulátor (Cél-alapú)</summary>
+                <div style="margin-top: 1rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label for="targetProfit">Cél Profit (Ft)</label>
+                            <input id="targetProfit" type="number" value="250000">
+                        </div>
+                        <div>
+                            <label for="targetDays">Napok Száma</label>
+                            <input id="targetDays" type="number" value="15">
+                        </div>
+                        <div>
+                            <label for="targetOdds">Cél Odds</label>
+                            <input id="targetOdds" type="number" step="0.1" value="2.5">
+                        </div>
+                        <div>
+                             <label for="currentBankroll">Jelenlegi Bankroll (Ft)</label>
+                            <input id="currentBankroll" type="number" placeholder="Add meg a bankrollod">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="calculateTargetStake()" style="width:100%; margin-top:1.5rem;">Napi Tét Számítása</button>
+                    <div id="stake-calculator-result">
+                        <h5>Javasolt Napi Tét</h5>
+                        <div id="stake-calculator-value" class="value">...</div>
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <div class="card">
+            <details>
                 <summary>Egyéni Szelvény Naplózása</summary>
                 <div style="margin-top: 1rem;">
                     <label for="customBetDescription">Piac / Leírás</label>
@@ -290,6 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('userInfo').textContent=`Csatlakozva`;
     }
     loadSheetUrl();
+    loadCalculatorSettings();
 });
 
 function saveSheetUrl() {
@@ -328,6 +362,7 @@ async function updatePerformanceCenter() {
     if (!__sheetUrl) return;
     const contentEl = document.getElementById('performance-center-content');
     const bankrollValueEl = document.getElementById('bankrollValue');
+    const currentBankrollInput = document.getElementById('currentBankroll');
     contentEl.innerHTML = `<p class="muted">Teljesítmény adatok lekérése...</p>`;
     bankrollValueEl.textContent = '...';
     document.getElementById('bankrollDisplay').style.display = 'block';
@@ -337,41 +372,26 @@ async function updatePerformanceCenter() {
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
-        bankrollValueEl.textContent = `${data.mainKPIs.bankroll.toFixed(2)} e.`;
+        const bankroll = data.mainKPIs.bankroll;
+        bankrollValueEl.textContent = `${bankroll.toFixed(2)} e.`;
+        if (currentBankrollInput) {
+            currentBankrollInput.value = Math.round(bankroll);
+        }
 
         let html = `
             <div class="performance-center">
                 <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <h5>Profit/Veszteség</h5>
-                        <div class="value pnl-value ${data.mainKPIs.pnl >= 0 ? 'positive' : 'negative'}">${data.mainKPIs.pnl >= 0 ? '+' : ''}${data.mainKPIs.pnl.toFixed(2)} e.</div>
-                    </div>
-                    <div class="kpi-card">
-                        <h5>ROI</h5>
-                        <div class="value">${data.mainKPIs.roi.toFixed(1)}%</div>
-                    </div>
-                    <div class="kpi-card">
-                        <h5>Találati Arány</h5>
-                        <div class="value">${data.mainKPIs.winRate.toFixed(1)}%</div>
-                    </div>
-                     <div class="kpi-card">
-                        <h5>Összes Fogadás</h5>
-                        <div class="value">${data.mainKPIs.totalBets}</div>
-                    </div>
+                    <div class="kpi-card"><h5>Profit/Veszteség</h5><div class="value pnl-value ${data.mainKPIs.pnl >= 0 ? 'positive' : 'negative'}">${data.mainKPIs.pnl >= 0 ? '+' : ''}${data.mainKPIs.pnl.toFixed(2)} e.</div></div>
+                    <div class="kpi-card"><h5>ROI</h5><div class="value">${data.mainKPIs.roi.toFixed(1)}%</div></div>
+                    <div class="kpi-card"><h5>Találati Arány</h5><div class="value">${data.mainKPIs.winRate.toFixed(1)}%</div></div>
+                    <div class="kpi-card"><h5>Összes Fogadás</h5><div class="value">${data.mainKPIs.totalBets}</div></div>
                 </div>
-                <div class="view-switcher">
-                    <button class="view-btn active" onclick="switchPcView('sport')">Sportágak</button>
-                    <button class="view-btn" onclick="switchPcView('strategy')">Stratégiák</button>
-                </div>
-                <div id="pc-view-sport" class="chart-view active"></div>
-                <div id="pc-view-strategy" class="chart-view"></div>
-            </div>
-        `;
+                <div class="view-switcher"><button class="view-btn active" onclick="switchPcView('sport')">Sportágak</button><button class="view-btn" onclick="switchPcView('strategy')">Stratégiák</button></div>
+                <div id="pc-view-sport" class="chart-view active"></div><div id="pc-view-strategy" class="chart-view"></div>
+            </div>`;
         contentEl.innerHTML = html;
-
         renderBarChart('pc-view-sport', data.bySport);
         renderBarChart('pc-view-strategy', data.byStrategy);
-
     } catch(e) {
         contentEl.innerHTML = `<p class="muted" style="color:var(--danger);">${e.message}</p>`;
         bankrollValueEl.textContent = 'Hiba';
@@ -387,21 +407,11 @@ function renderBarChart(containerId, data) {
         return;
     }
     const maxVal = Math.max(...values.map(Math.abs));
-
     for(const key in data) {
         const value = data[key];
         const width = maxVal > 0 ? (Math.abs(value) / maxVal) * 100 : 0;
         const isPositive = value >= 0;
-        
-        chartHtml += `
-            <div class="bar-chart-item">
-                <div class="bar-label" title="${key}">${key}">${key}</div>
-                <div class="bar-bg">
-                    <div class="bar-fill ${isPositive ? 'positive' : 'negative'}" style="width: ${width}%;"></div>
-                </div>
-                <div class="bar-value" style="color: ${isPositive ? 'var(--success)' : 'var(--danger)'};">${value.toFixed(2)}</div>
-            </div>
-        `;
+        chartHtml += `<div class="bar-chart-item"><div class="bar-label" title="${key}">${key}</div><div class="bar-bg"><div class="bar-fill ${isPositive ? 'positive' : 'negative'}" style="width: ${width}%;"></div></div><div class="bar-value" style="color: ${isPositive ? 'var(--success)' : 'var(--danger)'};">${value.toFixed(2)}</div></div>`;
     }
     container.innerHTML = chartHtml;
 }
@@ -415,14 +425,12 @@ function switchPcView(view) {
 
 async function logBet(betData) {
     if (!__sheetUrl) { alert('Kérlek, add meg a Google Táblázat URL-jét a naplózáshoz!'); return; }
-    
     let button;
-    if (event) { // A 'logBet' hívás gomb eventet is tartalmazhat
+    if (typeof event !== 'undefined' && event.target.tagName === 'BUTTON') {
         button = event.target;
         button.disabled = true;
         button.textContent = 'Naplózás...';
     }
-
     try {
         await fetch(`${__gasUrl}`, {
             method: 'POST',
@@ -430,13 +438,11 @@ async function logBet(betData) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData })
         });
-        
         if (button) {
             button.textContent = 'Sikeresen Naplózva ✅';
         } else {
             alert('Egyéni szelvény sikeresen naplózva!');
         }
-
         setTimeout(updatePerformanceCenter, 1000);
     } catch (e) {
         alert(`Hiba a naplózás során: ${e.message}.`);
@@ -463,35 +469,19 @@ async function loadFixtures(){
         if (!response.ok) throw new Error(`Hálózati hiba: ${response.status}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-        
         __fixtures = data.fixtures || [];
         sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
-
-        const groupedByLeague = __fixtures.reduce((acc, fx) => {
-            (acc[fx.league] = acc[fx.league] || []).push(fx);
-            return acc;
-        }, {});
-
+        const groupedByLeague = __fixtures.reduce((acc, fx) => { (acc[fx.league] = acc[fx.league] || []).push(fx); return acc; }, {});
         let html = '';
         for (const league in groupedByLeague) {
-            html += `<details open>`;
-            html += `<summary class="list-group-header">${league}</summary>`;
+            html += `<details open><summary class="list-group-header">${league}</summary>`;
             groupedByLeague[league].forEach(fx => {
                 const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
-                html += `
-                    <div class="list-item" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">
-                        <div>
-                            <div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div>
-                            <div class="list-item-meta">${d}</div>
-                        </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--muted);"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </div>
-                `;
+                html += `<div class="list-item" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')"><div><div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div><div class="list-item-meta">${d}</div></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--muted);"><polyline points="9 18 15 12 9 6"></polyline></svg></div>`;
             });
             html += `</details>`;
         }
         listEl.innerHTML = html || '<p class="muted" style="text-align:center;">Nincs megjeleníthető mérkőzés.</p>';
-
     } catch (e) {
         listEl.innerHTML = `<p class="muted" style="color:var(--danger);">${e.message}</p>`;
     } finally {
@@ -514,19 +504,16 @@ async function runAnalysis(forceNew = false) {
     const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress-bar-inner');
     const statusEl = document.getElementById('status');
-
     const controlsAccordion = document.getElementById('controls-accordion');
     if (window.innerWidth <= 1024 && controlsAccordion) {
         controlsAccordion.removeAttribute('open');
     }
-    
     resultsEl.innerHTML = '';
     placeholderEl.style.display = 'none';
     skeletonEl.style.display = 'block';
     progressContainer.style.display = 'block';
     progressBar.style.width = '0%';
     statusEl.textContent = '';
-
     if (!home || !away) {
         resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: Mindkét csapat nevét meg kell adni.</p>`;
         skeletonEl.style.display = 'none';
@@ -534,42 +521,29 @@ async function runAnalysis(forceNew = false) {
         placeholderEl.style.display = 'flex';
         return;
     }
-    
     let progress = 0;
     const updateProgress = (val, text) => {
         progress = Math.max(progress, val);
         progressBar.style.width = `${progress}%`;
         statusEl.textContent = text;
     };
-
     try {
         updateProgress(5, "Elemzés indítása...");
         let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=${forceNew}&sheetUrl=${encodeURIComponent(__sheetUrl)}`;
         const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
-        
         fetch(analysisUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) }) });
         updateProgress(10, "Adatok lekérése a szerverről...");
-
-        const interval = setInterval(() => {
-            if (progress < 85) updateProgress(progress + Math.random() * 5, "AI elemzés és szimuláció futtatása...");
-        }, 800);
-
+        const interval = setInterval(() => { if (progress < 85) updateProgress(progress + Math.random() * 5, "AI elemzés és szimuláció futtatása..."); }, 800);
         await new Promise(resolve => setTimeout(resolve, 9000));
         clearInterval(interval);
         updateProgress(90, "Válasz feldolgozása...");
-        
         const resultResponse = await fetch(`${analysisUrl}&force=false`);
         if (!resultResponse.ok) throw new Error(`Szerver válasz hiba: ${resultResponse.status}`);
-        
         const data = await resultResponse.json();
         if (data.error) throw new Error(data.error);
-
         updateProgress(100, "Kész.");
         resultsEl.innerHTML = `<div class="analysis-body">${data.html}</div>`;
-        if (__sheetUrl && document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
-            loadHistory();
-        }
-        
+        if (__sheetUrl && document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) { loadHistory(); }
     } catch (e) {
         resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
     } finally {
@@ -596,61 +570,36 @@ async function loadHistory() {
 
 function filterHistory(allHistory) {
     const query = document.getElementById('historySearch').value.toLowerCase();
-    const filtered = allHistory.filter(item =>
-        (item.sport === __historySportFilter) &&
-        (item.home.toLowerCase().includes(query) || item.away.toLowerCase().includes(query))
-    );
+    const filtered = allHistory.filter(item => (item.sport === __historySportFilter) && (item.home.toLowerCase().includes(query) || item.away.toLowerCase().includes(query)));
     renderHistory(filtered, true);
 }
 
 function renderHistory(history, isFiltering = false) {
     const box = document.getElementById('history');
-
-    if (!isFiltering) {
-        sessionStorage.setItem('fullHistory', JSON.stringify(history));
-    }
-    
+    if (!isFiltering) { sessionStorage.setItem('fullHistory', JSON.stringify(history)); }
     const searchAndFilterHtml = `
         <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory(JSON.parse(sessionStorage.getItem('fullHistory') || '[]'))" style="margin-bottom:0.8rem"/>
         <div class="sport-filter-container">
             <button class="sport-filter-btn ${__historySportFilter === 'soccer' ? 'active' : ''}" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
             <button class="sport-filter-btn ${__historySportFilter === 'hockey' ? 'active' : ''}" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
             <button class="sport-filter-btn ${__historySportFilter === 'basketball' ? 'active' : ''}" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
-        </div>
-    `;
-
+        </div>`;
     if (!history || history.length === 0) {
         box.innerHTML = searchAndFilterHtml + '<p class="muted" style="text-align:center;">Nincsenek előzmények ebben a kategóriában.</p>';
         return;
     }
-
     const groupedByDate = history.reduce((acc, item) => {
         const dateKey = new Date(item.date).toISOString().split('T')[0];
         if (!acc[dateKey]) acc[dateKey] = [];
         acc[dateKey].push(item);
         return acc;
     }, {});
-
     let finalHtml = '';
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
-
     for (const date of sortedDates) {
-        finalHtml += `<details class="list-group-header" style="border:none; padding: 10px 0; font-size: 0.9rem;" open>`;
-        finalHtml += `<summary style="color:var(--text-secondary); cursor:pointer;">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
-        
+        finalHtml += `<details class="list-group-header" style="border:none; padding: 10px 0; font-size: 0.9rem;" open><summary style="color:var(--text-secondary); cursor:pointer;">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
         groupedByDate[date].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-            finalHtml += `
-                <div class="list-item">
-                    <div onclick="loadAnalysisFromHistory('${item.id}')" style="flex-grow:1;">
-                        <div class="list-item-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div>
-                        <div class="list-item-meta">${new Date(item.date).toLocaleTimeString('hu-HU', {hour:'2-digit', minute:'2-digit'})}</div>
-                    </div>
-                    <div style="display:flex;gap:5px">
-                        <a href="#" class="action-icon" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>
-                        <a href="#" class="action-icon delete" onclick="deleteHistoryItem('${item.id}')" title="Törlés"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></a>
-                    </div>
-                </div>
-            `;
+            finalHtml += `<div class="list-item"><div onclick="loadAnalysisFromHistory('${item.id}')" style="flex-grow:1;"><div class="list-item-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div><div class="list-item-meta">${new Date(item.date).toLocaleTimeString('hu-HU', {hour:'2-digit', minute:'2-digit'})}</div></div><div style="display:flex;gap:5px"><a href="#" class="action-icon" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a><a href="#" class="action-icon delete" onclick="deleteHistoryItem('${item.id}')" title="Törlés"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></a></div></div>`;
         });
         finalHtml += `</details>`;
     }
@@ -670,12 +619,10 @@ async function loadAnalysisFromHistory(id){
     const resultsEl = document.getElementById('analysis-results');
     const placeholderEl = document.getElementById('placeholder');
     const skeletonEl = document.getElementById('loading-skeleton');
-    
     const controlsAccordion = document.getElementById('controls-accordion');
     if (window.innerWidth <= 1024 && controlsAccordion) {
         controlsAccordion.removeAttribute('open');
     }
-
     resultsEl.innerHTML = '';
     placeholderEl.style.display = 'none';
     skeletonEl.style.display = 'block';
@@ -710,32 +657,60 @@ async function deleteHistoryItem(id){
 function logCustomBet() {
     const description = document.getElementById('customBetDescription').value.trim();
     const odds = parseFloat(document.getElementById('customBetOdds').value);
-    const stake = parseFloat(document.getElementById('customBetStake').value);
-
-    if (!description || !odds || !stake) {
+    const stakePercent = parseFloat(document.getElementById('customBetStake').value);
+    if (!description || !odds || !stakePercent) {
         alert('Kérlek, tölts ki minden mezőt a naplózáshoz!');
         return;
     }
-    if (odds <= 1 || stake <= 0) {
+    if (odds <= 1 || stakePercent <= 0) {
         alert('Az odds vagy a tét értéke érvénytelen!');
         return;
     }
-
     const betData = {
-        date: new Date().toISOString(),
-        sport: "Kombinált", 
-        home: description,  
-        away: "",
-        market: description,
-        odd: odds,
-        stake: stake 
+        date: new Date().toISOString(), sport: "Kombinált", home: description, away: "",
+        market: description, odd: odds, stake: stakePercent 
     };
-
     logBet(betData);
-
     document.getElementById('customBetDescription').value = '';
     document.getElementById('customBetOdds').value = '';
     document.getElementById('customBetStake').value = '';
+}
+
+function calculateTargetStake() {
+    const targetProfit = parseFloat(document.getElementById('targetProfit').value);
+    const targetDays = parseInt(document.getElementById('targetDays').value);
+    const targetOdds = parseFloat(document.getElementById('targetOdds').value);
+    const currentBankroll = parseFloat(document.getElementById('currentBankroll').value);
+
+    if (!targetProfit || !targetDays || !targetOdds || !currentBankroll) {
+        alert('Kérlek, tölts ki minden mezőt a számításhoz!');
+        return;
+    }
+
+    const dailyProfitTarget = targetProfit / targetDays;
+    const requiredStake = dailyProfitTarget / (targetOdds - 1);
+
+    const resultEl = document.getElementById('stake-calculator-result');
+    const valueEl = document.getElementById('stake-calculator-value');
+    
+    valueEl.textContent = `${Math.round(requiredStake).toLocaleString('hu-HU')} Ft`;
+    resultEl.style.display = 'block';
+
+    // A kiszámolt tétet átmásoljuk a naplózóba, százalékos formában
+    const stakePercent = (requiredStake / currentBankroll) * 100;
+    document.getElementById('customBetStake').value = stakePercent.toFixed(2);
+    
+    // Elmentjük a beállításokat a böngészőbe
+    localStorage.setItem('calculatorSettings', JSON.stringify({targetProfit, targetDays, targetOdds}));
+}
+
+function loadCalculatorSettings() {
+    const settings = JSON.parse(localStorage.getItem('calculatorSettings'));
+    if (settings) {
+        document.getElementById('targetProfit').value = settings.targetProfit;
+        document.getElementById('targetDays').value = settings.targetDays;
+        document.getElementById('targetOdds').value = settings.targetOdds;
+    }
 }
 </script>
 </body>
