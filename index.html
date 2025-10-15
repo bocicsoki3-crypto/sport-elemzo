@@ -19,54 +19,121 @@
 .dark-theme { --bg: var(--bg-dark); --card-bg: var(--card-bg-dark); --text-primary: var(--text-primary-dark); --text-secondary: var(--text-secondary-dark); --border-color: var(--border-color-dark); }
 .light-theme { --bg: var(--bg-light); --card-bg: var(--card-bg-light); --text-primary: var(--text-primary-light); --text-secondary: var(--text-secondary-light); --border-color: var(--border-color-light); }
 *{box-sizing:border-box}
+::selection{background-color:var(--primary);color:#000}
 body{margin:0;font-family:var(--font-family-body);color:var(--text-primary);background-color:var(--bg);background-image:radial-gradient(circle at 1px 1px,rgba(212,175,55,0.1) 1px,transparent 0);background-size:20px 20px;min-height:100vh;overflow-x:hidden;transition: background-color 0.3s, color 0.3s;}
 h1,h2,h3,h4,h5,h6{font-family:var(--font-family-header);color:var(--text-primary);margin-top:0}
+p{line-height:1.7;color:var(--text-secondary)}
 .app-header{background:var(--card-bg);backdrop-filter:blur(10px);color:var(--primary);padding:1rem 2rem;text-align:center;border-bottom:1px solid var(--border-color);position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center}
-.app-header h1{margin:0;font-size:1.5rem}
+.app-header h1{font-weight:600;margin:0;font-size:1.5rem}
 .header-status{font-size:.9rem;opacity:.8;display:flex;align-items:center;gap:1.5rem}
+.bankroll-display span{font-weight:700;color:var(--text-primary)}
 .layout{display:grid;grid-template-columns:360px 1fr;gap:2rem;padding:2rem;max-width:1920px;margin:0 auto;align-items:start}
-@media (max-width:1024px){.layout{grid-template-columns:1fr; padding: 1rem;}}
+@media (max-width:1024px){
+    .layout{grid-template-columns:1fr; padding: 1rem;}
+    .sidebar { position: static; top: 80px; } /* Módosítva */
+    .sidebar { position: static; top: 80px; }
+}
 .sidebar{position:sticky;top:100px}
-.card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,0.3);backdrop-filter:blur(10px);margin-bottom: 2rem;}
+.card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,0.3);backdrop-filter:blur(10px);transition:all .3s ease; margin-bottom: 2rem;} /* ÚJ: margin-bottom */
+.card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,0.3);backdrop-filter:blur(10px);transition:all .3s ease; margin-bottom: 2rem;}
 label{display:block;font-weight:500;margin-bottom:.5rem;font-size:.9rem;color:var(--text-secondary)}
-input,select{width:100%;padding:10px 14px;border:1px solid var(--border-color);border-radius:10px;background:rgba(0,0,0,0.3);color:var(--text-primary);margin-top:.25rem;font-size:.9rem;font-family:inherit}
+input,select{width:100%;padding:10px 14px;border:1px solid var(--border-color);border-radius:10px;background:rgba(0,0,0,0.3);color:var(--text-primary);margin-top:.25rem;font-size:.9rem;font-family:inherit;transition:all .2s ease}
 .light-theme input, .light-theme select { background: rgba(255,255,255,0.5); }
 input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(212,175,55,.3)}
-.btn{display:inline-block;padding:12px 24px;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:all .2s ease;font-family:var(--font-family-header);text-align:center;}
+.btn{display:inline-block;padding:12px 24px;border:none;border-radius:12px;font-weight:700;cursor:pointer;transition:all .2s ease;font-family:var(--font-family-header);text-align:center;text-decoration:none;position:relative;overflow:hidden}
 .btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#000}
 .btn-primary:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 8px 20px rgba(212,175,55,.25)}
 .btn:disabled{background:#555;cursor:not-allowed;opacity:.7}
-.muted{color:var(--text-secondary);font-size:.9rem}
+.muted{color:var(--muted);font-size:.9rem}
 #main-content .placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;border:2px dashed var(--border-color);border-radius:16px;color:var(--muted);padding:2rem;text-align:center}
 #main-content .placeholder svg{width:64px;height:64px;margin-bottom:1rem;stroke-width:1.5;opacity:.5}
 .tab-nav{display:flex;gap:.5rem;margin-bottom:1rem;border-bottom:1px solid var(--border-color)}
 .tab-btn{padding:10px 15px;background:transparent;border:none;color:var(--muted);cursor:pointer;font-weight:700;position:relative;transition:color .2s ease;font-family:inherit}
 .tab-btn.active{color:var(--primary)}
-.tab-btn.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--primary);}
+.tab-btn.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--primary);box-shadow:0 0 10px var(--primary)}
 .tab-content{display:none}
 .tab-content.active{display:block;animation:fadeIn .5s}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.list-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border-color);cursor:pointer;transition:background-color .2s ease;}
+.list-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border-color);cursor:pointer;transition:background-color .2s ease;position:relative}
 .list-item:hover{background-color:rgba(212,175,55,.1)}
 .list-item-title{font-weight:700}.list-item-meta{font-size:.8rem;color:var(--muted)}
 .list-group-header{font-weight:800;font-size:1.1rem;color:var(--secondary);padding:15px 0 10px 0;border-bottom:1px solid var(--border-color);margin-top:1rem; list-style: none; display: flex; align-items: center; cursor: pointer;}
 .list-group-header::-webkit-details-marker { display: none; }
 .list-group-header::before { content: '▶'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; }
 details[open] > .list-group-header::before { transform: rotate(90deg); }
+.action-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;transition:background-color .2s ease;background:rgba(255,255,255,0.05)}
+.action-icon:hover{background-color:rgba(255,255,255,0.1)}
+.action-icon svg{width:18px;height:18px;stroke:var(--muted)}
+.action-icon.delete:hover svg{stroke:var(--danger)}
+.sport-filter-container{display:flex;gap:8px;margin-bottom:.8rem}
+.sport-filter-btn{background-color:rgba(0,0,0,0.3);border:1px solid var(--border-color);color:var(--muted);padding:8px 15px;border-radius:10px;cursor:pointer;transition:all .2s ease;flex:1}
+.light-theme .sport-filter-btn { background: rgba(255,255,255,0.5); }
+.sport-filter-btn:hover{border-color:var(--secondary);color:var(--text-primary)}
+.sport-filter-btn.active{background-color:var(--primary);color:#000;border-color:var(--primary);font-weight:700}
+.card > details > summary {font-family: var(--font-family-header);font-size: 1.25rem;font-weight: 600;list-style: none;display: flex;align-items: center;cursor: pointer;}
+.card > details > summary::-webkit-details-marker {display: none;}
+.card > details > summary::before {content: '▶';margin-right: 10px;font-size: 0.8em;transition: transform 0.2s;}
+.card > details[open] > summary::before {transform: rotate(90deg);}
+
+/* --- ÚJ CSS SZABÁLYOK A MOBIL VEZÉRLŐPULTHOZ --- */
+.controls-summary {
+    font-family: var(--font-family-header);
+    font-size: 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+.controls-summary::-webkit-details-marker {
+    display: none;
+}
+.controls-summary::before {
+    content: '▶';
+    margin-right: 10px;
+    font-size: 0.8em;
+    transition: transform 0.2s;
+}
+details[open] > .controls-summary::before {
+    transform: rotate(90deg);
+}
+.controls-content {
+    margin-top: 1.5rem;
+}
+/* --- VÉGE AZ ÚJ CSS SZABÁLYOKNAK --- */
+
 .controls-summary {font-family: var(--font-family-header);font-size: 1.5rem;font-weight: 600;cursor: pointer;list-style: none;padding: 0;display: flex;align-items: center;}
 .controls-summary::-webkit-details-marker {display: none;}
 .controls-summary::before {content: '▼'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; display: inline-block;}
 details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .controls-content {margin-top: 1.5rem;}
+.progress-bar{width:100%;height:4px;background:var(--border-color);border-radius:2px;margin-top:1rem;overflow:hidden;display:none}
+.progress-bar-inner{width:0;height:100%;background:var(--primary);transition:width .5s ease}
+.status-text{text-align:center;margin-top:.5rem}
 #loading-skeleton{display:none}
 #loading-skeleton .skeleton-card{background:rgba(255,255,255,0.05);padding:1.5rem;border-radius:16px;margin-bottom:1.5rem}
 #loading-skeleton .skeleton-line{background:rgba(255,255,255,0.1);border-radius:4px;margin-bottom:10px;animation:pulse-bg 1.5s infinite}
 @keyframes pulse-bg{0%{background:rgba(255,255,255,0.1)}50%{background:rgba(255,255,255,0.05)}100%{background:rgba(255,255,255,0.1)}}
+
+.analysis-body p { font-size: 1.05rem; line-height: 1.8; color: var(--text-secondary); }
+.analysis-body strong { color: var(--text-primary); font-weight: 600; }
 .at-a-glance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
 .summary-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
 .summary-card h5 { margin: 0 0 1rem 0; color: var(--muted); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; }
 .summary-card .value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
 .summary-card .details { font-size: 0.8rem; margin-top: 0.5rem; }
+.donut-chart { position: relative; width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; background: conic-gradient( var(--primary) 0 var(--p-home), var(--muted) 0 var(--p-draw), var(--secondary) 0 100% ); }
+.donut-chart::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 70px; height: 70px; background: var(--card-bg); border-radius: 50%; transition: background-color 0.3s;}
+.donut-legend { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; font-size: 0.8rem; }
+.donut-legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+.legend-home::before { background: var(--primary); }
+.legend-draw::before { background: var(--muted); }
+.legend-away::before { background: var(--secondary); }
+.tug-of-war-bar { display: flex; flex-direction: column; justify-content: center; height: 100%; }
+.tug-of-war-bar .labels { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; }
+.tug-of-war-bar .bar-container { height: 10px; width: 100%; background: var(--danger); border-radius: 5px; overflow: hidden; }
+.tug-of-war-bar .bar { height: 100%; background: var(--success); }
 .analysis-accordion details { border-bottom: 1px solid var(--border-color); }
 .analysis-accordion summary { font-size: 1.2rem; font-weight: 600; padding: 1.5rem 1rem; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; }
 .analysis-accordion summary::-webkit-details-marker { display: none; }
@@ -75,10 +142,34 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .analysis-accordion summary::after { content: '+'; font-size: 1.5rem; color: var(--muted); transition: transform 0.3s ease; }
 .analysis-accordion details[open] summary::after { transform: rotate(45deg); }
 .analysis-accordion .accordion-content { padding: 0 1rem 1.5rem 1rem; animation: fadeIn .5s; }
+.xg-value, .confidence-score { text-shadow: 0 0 10px currentColor; }
 .market-data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
 @media (max-width: 768px) { .market-data-grid { grid-template-columns: 1fr; } }
-#theme-switcher { cursor: pointer; stroke: var(--muted); }
-#theme-switcher:hover { stroke: var(--primary); }
+.market-data-section h4 { font-size: 1.1rem; color: var(--secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+.prob-item{margin-bottom:.8rem} .prob-label{display:flex;justify-content:space-between;font-weight:500;font-size: .9rem;margin-bottom:4px} .prob-bar-bg{width:100%;background:rgba(0,0,0,0.1);border-radius:5px;height:8px;overflow:hidden} .prob-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--primary));border-radius:5px}
+.quick-view-popup { position: absolute; left: 105%; top: 50%; transform: translateY(-50%); width: 280px; z-index: 10; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.5); backdrop-filter: blur(10px); display: none; animation: fadeIn .3s; pointer-events: none; }
+.list-item:hover .quick-view-popup { display: block; }
+#theme-switcher { cursor: pointer; stroke: var(--muted); } #theme-switcher:hover { stroke: var(--primary); }
+.performance-center .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.performance-center .kpi-card { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px; text-align: center; }
+.performance-center .kpi-card h5 { margin: 0 0 0.5rem 0; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; font-weight: 500;}
+.performance-center .kpi-card .value { font-size: 1.4rem; font-weight: 700; }
+.performance-center .pnl-value.positive { color: var(--success); }
+.performance-center .pnl-value.negative { color: var(--danger); }
+.performance-center .view-switcher { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.performance-center .view-btn { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 8px; cursor: pointer; color: var(--muted); font-size: 0.8rem;}
+.performance-center .view-btn.active { background: var(--primary); color: #000; font-weight: 700; }
+.performance-center .chart-view { display: none; }
+.performance-center .chart-view.active { display: block; }
+.performance-center .bar-chart-item { display: flex; align-items: center; margin-bottom: 0.5rem; font-size: 0.9rem; }
+.performance-center .bar-label { width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.performance-center .bar-bg { flex-grow: 1; height: 12px; background: rgba(0,0,0,0.2); border-radius: 6px; }
+.performance-center .bar-fill { height: 100%; border-radius: 6px; }
+.performance-center .bar-fill.positive { background: var(--success); }
+.performance-center .bar-fill.negative { background: var(--danger); margin-left: auto; }
+.performance-center .bar-value { width: 60px; text-align: right; font-weight: 700; }
+.light-theme .performance-center .kpi-card { background: rgba(0,0,0,0.05); }
+.light-theme .performance-center .view-btn { background: rgba(0,0,0,0.05); }
 </style>
 </head>
 <body>
@@ -86,6 +177,9 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 <header class="app-header">
     <h1>SportElemző Műszerfal</h1>
     <div class="header-status">
+        <div id="bankrollDisplay" class="bankroll-display" style="display:none;">
+            Bankroll: <span id="bankrollValue">...</span>
+        </div>
         <svg id="theme-switcher" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         <div id="userInfo" class="user-info"></div>
     </div>
@@ -102,6 +196,7 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
                     <nav class="tab-nav">
                         <button class="tab-btn active" data-tab="tab-matches">Mérkőzések</button>
                         <button class="tab-btn" data-tab="tab-manual">Kézi Elemzés</button>
+                        <button class="tab-btn" data-tab="tab-history">Előzmények</button>
                     </nav>
 
                     <div id="tab-matches" class="tab-content active">
@@ -112,15 +207,29 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
                             <option value="basketball">Kosárlabda</option>
                         </select>
                         <button id="loadFixturesBtn" class="btn btn-primary" onclick="loadFixtures()" style="width:100%; margin-top:1rem;">Meccsek Betöltése (2 nap)</button>
-                        <div id="fixtures-list" style="margin-top:1rem; max-height: 60vh; overflow-y:auto;"></div>
+                        <div id="fixtures-list" style="margin-top:1rem; max-height: 50vh; overflow-y:auto;"></div>
                     </div>
 
                     <div id="tab-manual" class="tab-content">
                         <label for="home">Hazai csapat</label><input id="home" placeholder="Pl. Liverpool"/>
                         <label for="away" style="margin-top:1rem;">Vendég csapat</label><input id="away" placeholder="Pl. Manchester City"/>
-                        <button id="runAnalysisBtn" class="btn btn-primary" onclick="runAnalysis(true)" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
+                        <button class="btn btn-primary" onclick="runAnalysis(true)" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
+                    </div>
+
+                    <div id="tab-history" class="tab-content">
+                        <div id="history">
+                            <p class="muted">Az előzmények betöltéséhez add meg a Google Táblázat URL-jét.</p>
+                        </div>
                     </div>
                 </div>
+            </details>
+        </div>
+
+        <div class="card" id="performance-center-card">
+             <details>
+                <summary>Teljesítmény Központ</summary>
+                <div style="margin-top: 1rem;" id="performance-center-content">
+                    </div>
             </details>
         </div>
     </aside>
@@ -132,34 +241,47 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
             <p>Az elemzés eredménye itt fog megjelenni.</p>
         </div>
         <div id="loading-skeleton">
-            <div class="skeleton-card"><div class="skeleton-line" style="height: 2rem; width: 60%;"></div><div class="skeleton-line" style="height: 1rem; width: 100%;"></div><div class="skeleton-line" style="height: 1rem; width: 80%;"></div></div>
-            <div class="skeleton-card"><div class="skeleton-line" style="height: 1.5rem; width: 40%;"></div><div class="skeleton-line" style="height: 1rem; width: 90%;"></div></div>
+            <div class="skeleton-card"><div class="skeleton-line" style="height: 2rem; width: 60%;"></div><div class="skeleton-line" style="height: 1rem; width: 100%;"></div><div class="skeleton-line" style="height: 1rem; width: 100%;"></div><div class="skeleton-line" style="height: 1rem; width: 80%;"></div></div>
+            <div class="skeleton-card"><div class="skeleton-line" style="height: 1.5rem; width: 40%;"></div><div class="skeleton-line" style="height: 1rem; width: 90%;"></div><div class="skeleton-line" style="height: 1rem; width: 70%;"></div></div>
         </div>
         <div id="analysis-results"></div>
+        <div id="progress-container" style="display:none;">
+            <div class="progress-bar"><div id="progress-bar-inner" class="progress-bar-inner"></div></div>
+            <p id="status" class="status-text muted"></p>
+        </div>
     </main>
 </div>
+
 
 <script>
 let __gasUrl = 'https://script.google.com/macros/s/AKfycbyN99ot1yzv4Na9nq0rTIsCSQ2DUlMMCzSKQmtM8fg7qDMAaFzHW8n_2Y8eNxnsFdabvg/exec';
 let __fixtures = [];
 let __currentSport = 'soccer';
+let __historySportFilter = 'soccer';
+let __sheetUrl = '';
 
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.tab-btn').forEach(button => {
+    // Tab vezérlés
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabButtons.forEach(button => {
         button.addEventListener('click', () => {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            tabButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
             const tabId = button.getAttribute('data-tab');
-            document.querySelectorAll('.tab-content').forEach(content => {
+            tabContents.forEach(content => {
+                content.style.display = content.id === tabId ? 'block' : 'none';
                 content.classList.toggle('active', content.id === tabId);
             });
+            if (tabId === 'tab-history') loadHistory();
         });
     });
 
+    // Téma váltó
     const themeSwitcher = document.getElementById('theme-switcher');
     const currentTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.className = `${currentTheme}-theme`;
@@ -169,16 +291,167 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('theme', newTheme);
     });
 
-    if(!__gasUrl || !__gasUrl.startsWith('https://script.google.com')){
+    // === ÚJ RÉSZ: MOBIL VEZÉRLŐPULT KEZELÉSE ===
+    const controlsAccordion = document.getElementById('controls-accordion');
+    // Ha az ablak szélessége 1024px vagy kevesebb (mobil/tablet), csukja be a vezérlőpultot.
+    if (window.innerWidth <= 1024 && controlsAccordion) {
+        controlsAccordion.removeAttribute('open');
+    }
+    // === VÉGE AZ ÚJ RÉSZNEK ===
+
+    // Alap inicializálás
+    if(!__gasUrl||!__gasUrl.startsWith('https://script.google.com')){
         document.getElementById('userInfo').textContent='HIBA: Web App URL nincs beállítva!';
         document.getElementById('userInfo').style.color = 'var(--danger)';
     } else {
         document.getElementById('userInfo').textContent=`Csatlakozva`;
     }
+    loadSheetUrl();
 });
 
+function saveSheetUrl() {
+    __sheetUrl = document.getElementById('sheetUrl').value;
+    if (__sheetUrl && __sheetUrl.startsWith('https://docs.google.com/spreadsheets/d/')) {
+        localStorage.setItem('sheetUrl', __sheetUrl);
+        alert('Táblázat URL elmentve!');
+        loadSheetUrl();
+    } else {
+        alert('Érvénytelen Google Táblázat URL!');
+    }
+}
+
+function loadSheetUrl() {
+    __sheetUrl = localStorage.getItem('sheetUrl');
+    const performanceCard = document.getElementById('performance-center-card');
+
+    if (__sheetUrl) {
+        performanceCard.style.display = 'block';
+        updatePerformanceCenter();
+        if(document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
+            loadHistory();
+        }
+    } else {
+        performanceCard.style.display = 'block';
+        document.getElementById('performance-center-content').innerHTML = `
+            <div id="sheetUrlContainer">
+              <p class="muted" style="font-size: .8rem;">A funkcióhoz add meg a Google Táblázat URL-jét.</p>
+              <label for="sheetUrl">Google Táblázat URL</label>
+              <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">
+            </div>`;
+    }
+}
+
+async function updatePerformanceCenter() {
+    if (!__sheetUrl) return;
+    const contentEl = document.getElementById('performance-center-content');
+    const bankrollValueEl = document.getElementById('bankrollValue');
+    contentEl.innerHTML = `<p class="muted">Teljesítmény adatok lekérése...</p>`;
+    bankrollValueEl.textContent = '...';
+    document.getElementById('bankrollDisplay').style.display = 'block';
+
+    try {
+        const response = await fetch(`${__gasUrl}?action=getPerformanceData&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        bankrollValueEl.textContent = `${data.mainKPIs.bankroll.toFixed(2)} e.`;
+
+        let html = `
+            <div class="performance-center">
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <h5>Profit/Veszteség</h5>
+                        <div class="value pnl-value ${data.mainKPIs.pnl >= 0 ? 'positive' : 'negative'}">${data.mainKPIs.pnl >= 0 ? '+' : ''}${data.mainKPIs.pnl.toFixed(2)} e.</div>
+                    </div>
+                    <div class="kpi-card">
+                        <h5>ROI</h5>
+                        <div class="value">${data.mainKPIs.roi.toFixed(1)}%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <h5>Találati Arány</h5>
+                        <div class="value">${data.mainKPIs.winRate.toFixed(1)}%</div>
+                    </div>
+                     <div class="kpi-card">
+                        <h5>Összes Fogadás</h5>
+                        <div class="value">${data.mainKPIs.totalBets}</div>
+                    </div>
+                </div>
+                <div class="view-switcher">
+                    <button class="view-btn active" onclick="switchPcView('sport')">Sportágak</button>
+                    <button class="view-btn" onclick="switchPcView('strategy')">Stratégiák</button>
+                </div>
+                <div id="pc-view-sport" class="chart-view active"></div>
+                <div id="pc-view-strategy" class="chart-view"></div>
+            </div>
+        `;
+        contentEl.innerHTML = html;
+
+        renderBarChart('pc-view-sport', data.bySport);
+        renderBarChart('pc-view-strategy', data.byStrategy);
+
+    } catch(e) {
+        contentEl.innerHTML = `<p class="muted" style="color:var(--danger);">${e.message}</p>`;
+        bankrollValueEl.textContent = 'Hiba';
+    }
+}
+
+function renderBarChart(containerId, data) {
+    const container = document.getElementById(containerId);
+    let chartHtml = '';
+    const values = Object.values(data);
+    if(values.length === 0) {
+        container.innerHTML = '<p class="muted" style="text-align:center;">Nincs megjeleníthető adat.</p>';
+        return;
+    }
+    const maxVal = Math.max(...values.map(Math.abs));
+
+    for(const key in data) {
+        const value = data[key];
+        const width = maxVal > 0 ? (Math.abs(value) / maxVal) * 100 : 0;
+        const isPositive = value >= 0;
+
+        chartHtml += `
+            <div class="bar-chart-item">
+                <div class="bar-label" title="${key}">${key}</div>
+                <div class="bar-bg">
+                    <div class="bar-fill ${isPositive ? 'positive' : 'negative'}" style="width: ${width}%;"></div>
+                </div>
+                <div class="bar-value" style="color: ${isPositive ? 'var(--success)' : 'var(--danger)'};">${value.toFixed(2)}</div>
+            </div>
+        `;
+    }
+    container.innerHTML = chartHtml;
+}
+
+function switchPcView(view) {
+    document.querySelectorAll('.chart-view').forEach(el => el.classList.remove('active'));
+    document.getElementById(`pc-view-${view}`).classList.add('active');
+    document.querySelectorAll('.view-btn').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.view-btn[onclick="switchPcView('${view}')"]`).classList.add('active');
+}
+
+async function logBet(betData) {
+    if (!__sheetUrl) { alert('Kérlek, add meg a Google Táblázat URL-jét a naplózáshoz!'); return; }
+    const button = event.target;
+    button.disabled = true;
+    button.textContent = 'Naplózás...';
+    try {
+        await fetch(`${__gasUrl}`, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData })
+        });
+        button.textContent = 'Sikeresen Naplózva ✅';
+        setTimeout(updatePerformanceCenter, 1000);
+    } catch (e) {
+        alert(`Hiba a naplózás során: ${e.message}.`);
+        button.textContent = 'Naplózás Sikertelen';
+    }
+}
+
 function handleSportChange(){
-    __currentSport = document.getElementById('sportSelector').value;
+    __currentSport=document.getElementById('sportSelector').value;
     document.getElementById('fixtures-list').innerHTML = '';
     __fixtures = [];
 }
@@ -204,20 +477,25 @@ async function loadFixtures(){
 
         let html = '';
         for (const league in groupedByLeague) {
-            html += `<details open><summary class="list-group-header">${escapeHtml(league)}</summary>`;
+            html += `<details open>`; // Legyen nyitva alapból
+            html += `<details open>`;
+            html += `<summary class="list-group-header">${league}</summary>`;
             groupedByLeague[league].forEach(fx => {
                 const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
-                html += `<div class="list-item" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">
-                            <div>
-                                <div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div>
-                                <div class="list-item-meta">${d}</div>
-                            </div>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--muted);"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                         </div>`;
+                html += `
+                    <div class="list-item" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">
+                        <div>
+                            <div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div>
+                            <div class="list-item-meta">${d}</div>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--muted);"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                `;
             });
             html += `</details>`;
         }
         listEl.innerHTML = html || '<p class="muted" style="text-align:center;">Nincs megjeleníthető mérkőzés.</p>';
+
     } catch (e) {
         listEl.innerHTML = `<p class="muted" style="color:var(--danger);">${e.message}</p>`;
     } finally {
@@ -228,8 +506,7 @@ async function loadFixtures(){
 function fillAndAnalyze(home, away) {
     document.getElementById('home').value = home;
     document.getElementById('away').value = away;
-    document.querySelector('button[data-tab="tab-manual"]').click();
-    runAnalysis(false);
+    runAnalysis(true);
 }
 
 async function runAnalysis(forceNew = false) {
@@ -238,57 +515,204 @@ async function runAnalysis(forceNew = false) {
     const resultsEl = document.getElementById('analysis-results');
     const placeholderEl = document.getElementById('placeholder');
     const skeletonEl = document.getElementById('loading-skeleton');
-    const runBtn = document.getElementById('runAnalysisBtn');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar-inner');
+    const statusEl = document.getElementById('status');
 
-    if (!home || !away) {
-        alert('Mindkét csapat nevét meg kell adni!');
-        return;
+    // Mobil nézetben csukja be a vezérlőpultot az elemzés indításakor
+    const controlsAccordion = document.getElementById('controls-accordion');
+    if (window.innerWidth <= 1024 && controlsAccordion) {
+        controlsAccordion.removeAttribute('open');
     }
 
-    runBtn.disabled = true;
-    runBtn.textContent = 'Elemzés folyamatban...';
     resultsEl.innerHTML = '';
     placeholderEl.style.display = 'none';
     skeletonEl.style.display = 'block';
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    statusEl.textContent = '';
+
+    if (!home || !away) {
+        resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: Mindkét csapat nevét meg kell adni.</p>`;
+        skeletonEl.style.display = 'none';
+        progressContainer.style.display = 'none';
+        placeholderEl.style.display = 'flex';
+        return;
+    }
+
+    let progress = 0;
+    const updateProgress = (val, text) => {
+        progress = Math.max(progress, val);
+        progressBar.style.width = `${progress}%`;
+        statusEl.textContent = text;
+    };
 
     try {
-        const allOpeningOdds = JSON.parse(sessionStorage.getItem('openingOdds') || '{}');
-        const oddsKey = `${home.toLowerCase()}_vs_${away.toLowerCase()}`;
-        
-        const response = await fetch(__gasUrl, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'runAnalysis',
-                sport: __currentSport,
-                home: home,
-                away: away,
-                force: forceNew,
-                openingOdds: { [oddsKey]: allOpeningOdds[oddsKey] }
-            }),
-        });
+        updateProgress(5, "Elemzés indítása...");
+        let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=${forceNew}&sheetUrl=${encodeURIComponent(__sheetUrl)}`;
+        const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => null);
-            throw new Error(errorData?.error || `Szerver hiba: ${response.status}`);
+        fetch(analysisUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) }) });
+        updateProgress(10, "Adatok lekérése a szerverről...");
+
+        const interval = setInterval(() => {
+            if (progress < 85) updateProgress(progress + Math.random() * 5, "AI elemzés és szimuláció futtatása...");
+        }, 800);
+
+        await new Promise(resolve => setTimeout(resolve, 9000));
+        clearInterval(interval);
+        updateProgress(90, "Válasz feldolgozása...");
+
+        const resultResponse = await fetch(`${analysisUrl}&force=false`);
+        if (!resultResponse.ok) throw new Error(`Szerver válasz hiba: ${resultResponse.status}`);
+
+        const data = await resultResponse.json();
+        if (data.error) throw new Error(data.error);
+
+        updateProgress(100, "Kész.");
+        resultsEl.innerHTML = `<div class="analysis-body">${data.html}</div>`;
+        if (__sheetUrl && document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
+            loadHistory();
         }
-
-        const data = await response.json();
-        if (data.error) {
-            throw new Error(data.error);
-        }
-
-        resultsEl.innerHTML = data.html;
 
     } catch (e) {
-        resultsEl.innerHTML = `<p class="muted" style="color:var(--danger); text-align:center; padding: 2rem;">Hiba történt: ${e.message}</p>`;
+        resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
     } finally {
         skeletonEl.style.display = 'none';
-        runBtn.disabled = false;
-        runBtn.textContent = 'Elemzés Futtatása';
+        setTimeout(() => { progressContainer.style.display = 'none'; }, 2000);
+    }
+}
+
+async function loadHistory() {
+    if (!__sheetUrl) {
+        document.getElementById('history').innerHTML = '<p class="muted">A napló funkcióhoz add meg a Google Táblázat URL-jét.</p>';
+        return;
+    }
+    document.getElementById('history').innerHTML = '<p class="muted">Előzmények betöltése...</p>';
+    try {
+        const response = await fetch(`${__gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        renderHistory(data.history);
+    } catch(e) {
+        document.getElementById('history').innerHTML = `<p class="muted" style="color:var(--danger)">Hiba a napló betöltésekor: ${e.message}</p>`;
+    }
+}
+
+function filterHistory(allHistory) {
+    const query = document.getElementById('historySearch').value.toLowerCase();
+    const filtered = allHistory.filter(item =>
+        (item.sport === __historySportFilter) &&
+        (item.home.toLowerCase().includes(query) || item.away.toLowerCase().includes(query))
+    );
+    renderHistory(filtered, true);
+}
+
+function renderHistory(history, isFiltering = false) {
+    const box = document.getElementById('history');
+
+    if (!isFiltering) {
+        sessionStorage.setItem('fullHistory', JSON.stringify(history));
+    }
+
+    const searchAndFilterHtml = `
+        <input id="historySearch" placeholder="Keresés a naplóban..." oninput="filterHistory(JSON.parse(sessionStorage.getItem('fullHistory') || '[]'))" style="margin-bottom:0.8rem"/>
+        <div class="sport-filter-container">
+            <button class="sport-filter-btn ${__historySportFilter === 'soccer' ? 'active' : ''}" onclick="filterHistoryBySport('soccer', this)" title="Labdarúgás">⚽</button>
+            <button class="sport-filter-btn ${__historySportFilter === 'hockey' ? 'active' : ''}" onclick="filterHistoryBySport('hockey', this)" title="Jégkorong">🏒</button>
+            <button class="sport-filter-btn ${__historySportFilter === 'basketball' ? 'active' : ''}" onclick="filterHistoryBySport('basketball', this)" title="Kosárlabda">🏀</button>
+        </div>
+    `;
+
+    if (!history || history.length === 0) {
+        box.innerHTML = searchAndFilterHtml + '<p class="muted" style="text-align:center;">Nincsenek előzmények ebben a kategóriában.</p>';
+        return;
+    }
+
+    const groupedByDate = history.reduce((acc, item) => {
+        const dateKey = new Date(item.date).toISOString().split('T')[0];
+        if (!acc[dateKey]) acc[dateKey] = [];
+        acc[dateKey].push(item);
+        return acc;
+    }, {});
+
+    let finalHtml = '';
+    const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+
+    for (const date of sortedDates) {
+        finalHtml += `<details class="list-group-header" style="border:none; padding: 10px 0; font-size: 0.9rem;" open>`;
+        finalHtml += `<summary style="color:var(--text-secondary); cursor:pointer;">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
+
+        groupedByDate[date].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+            finalHtml += `
+                <div class="list-item">
+                    <div onclick="loadAnalysisFromHistory('${item.id}')" style="flex-grow:1;">
+                        <div class="list-item-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div>
+                        <div class="list-item-meta">${new Date(item.date).toLocaleTimeString('hu-HU', {hour:'2-digit', minute:'2-digit'})}</div>
+                    </div>
+                    <div style="display:flex;gap:5px">
+                        <a href="#" class="action-icon" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>
+                        <a href="#" class="action-icon delete" onclick="deleteHistoryItem('${item.id}')" title="Törlés"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></a>
+                    </div>
+                </div>
+            `;
+        });
+        finalHtml += `</details>`;
+    }
+    box.innerHTML = searchAndFilterHtml + finalHtml;
+}
+
+function filterHistoryBySport(sport, btn) {
+    __historySportFilter = sport;
+    document.querySelectorAll('.sport-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterHistory(JSON.parse(sessionStorage.getItem('fullHistory') || '[]'));
+}
+
+async function loadAnalysisFromHistory(id){
+    event.preventDefault();
+    if (!__sheetUrl) return;
+    const resultsEl = document.getElementById('analysis-results');
+    const placeholderEl = document.getElementById('placeholder');
+    const skeletonEl = document.getElementById('loading-skeleton');
+
+    // Mobil nézetben csukja be a vezérlőpultot
+    const controlsAccordion = document.getElementById('controls-accordion');
+    if (window.innerWidth <= 1024 && controlsAccordion) {
+        controlsAccordion.removeAttribute('open');
+    }
+
+    resultsEl.innerHTML = '';
+    placeholderEl.style.display = 'none';
+    skeletonEl.style.display = 'block';
+    try {
+        const response = await fetch(`${__gasUrl}?action=getAnalysisDetail&sheetUrl=${encodeURIComponent(__sheetUrl)}&id=${id}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        resultsEl.innerHTML = `<div class="analysis-body">${data.record.html}</div>`;
+    } catch(e) {
+        resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba az elemzés betöltésekor: ${e.message}</p>`;
+    } finally {
+        skeletonEl.style.display = 'none';
+    }
+}
+
+async function deleteHistoryItem(id){
+    event.preventDefault();
+    if (!__sheetUrl || !confirm("Biztosan törölni szeretnéd ezt az elemet a központi naplóból?")) return;
+    try {
+        await fetch(`${__gasUrl}`, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ action: 'deleteHistoryItem', sheetUrl: __sheetUrl, id: id })
+        });
+        alert('Elem sikeresen törölve.');
+        loadHistory();
+    } catch(e) {
+        alert(`Hiba a törlés során: ${e.message}`);
     }
 }
 </script>
 </body>
 </html>
+
