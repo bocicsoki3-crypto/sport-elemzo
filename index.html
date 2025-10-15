@@ -192,7 +192,8 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
                 </div>
             </details>
         </div>
-<div class="card">
+
+        <div class="card">
             <details open>
                 <summary>Egyéni Szelvény Naplózása</summary>
                 <div style="margin-top: 1rem;">
@@ -209,45 +210,7 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
                 </div>
             </details>
         </div>
-        ```
 
-#### 2. Lépés: Az Új JavaScript Függvény Hozzáadása
-
-Menj az `index.html` fájl aljára, a `<script>` blokkon belülre, és másold be a többi függvény mellé (például a legvégére, a `deleteHistoryItem` függvény után) ezt az új JavaScript funkciót:
-
-```javascript
-function logCustomBet() {
-    const description = document.getElementById('customBetDescription').value.trim();
-    const odds = parseFloat(document.getElementById('customBetOdds').value);
-    const stake = parseFloat(document.getElementById('customBetStake').value);
-
-    if (!description || !odds || !stake) {
-        alert('Kérlek, tölts ki minden mezőt a naplózáshoz!');
-        return;
-    }
-    if (odds <= 1 || stake <= 0) {
-        alert('Az odds vagy a tét értéke érvénytelen!');
-        return;
-    }
-
-    const betData = {
-        date: new Date().toISOString(),
-        sport: "Kombinált", // Mivel több meccsből áll, ezt a kategóriát használjuk
-        home: description,  // A leírást használjuk a meccs azonosítására
-        away: "",
-        market: description,
-        odd: odds,
-        stake: stake 
-    };
-
-    // A már meglévő logBet funkciót hívjuk meg a háttérben
-    logBet(betData);
-
-    // Ürítjük a mezőket a sikeres mentés után
-    document.getElementById('customBetDescription').value = '';
-    document.getElementById('customBetOdds').value = '';
-    document.getElementById('customBetStake').value = '';
-}
         <div class="card" id="performance-center-card">
              <details>
                 <summary>Teljesítmény Központ</summary>
@@ -432,7 +395,7 @@ function renderBarChart(containerId, data) {
         
         chartHtml += `
             <div class="bar-chart-item">
-                <div class="bar-label" title="${key}">${key}</div>
+                <div class="bar-label" title="${key}">${key}">${key}</div>
                 <div class="bar-bg">
                     <div class="bar-fill ${isPositive ? 'positive' : 'negative'}" style="width: ${width}%;"></div>
                 </div>
@@ -452,9 +415,14 @@ function switchPcView(view) {
 
 async function logBet(betData) {
     if (!__sheetUrl) { alert('Kérlek, add meg a Google Táblázat URL-jét a naplózáshoz!'); return; }
-    const button = event.target;
-    button.disabled = true;
-    button.textContent = 'Naplózás...';
+    
+    let button;
+    if (event) { // A 'logBet' hívás gomb eventet is tartalmazhat
+        button = event.target;
+        button.disabled = true;
+        button.textContent = 'Naplózás...';
+    }
+
     try {
         await fetch(`${__gasUrl}`, {
             method: 'POST',
@@ -462,11 +430,20 @@ async function logBet(betData) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'logBet', sheetUrl: __sheetUrl, bet: betData })
         });
-        button.textContent = 'Sikeresen Naplózva ✅';
+        
+        if (button) {
+            button.textContent = 'Sikeresen Naplózva ✅';
+        } else {
+            alert('Egyéni szelvény sikeresen naplózva!');
+        }
+
         setTimeout(updatePerformanceCenter, 1000);
     } catch (e) {
         alert(`Hiba a naplózás során: ${e.message}.`);
-        button.textContent = 'Naplózás Sikertelen';
+        if (button) {
+            button.textContent = 'Naplózás Sikertelen';
+            button.disabled = false;
+        }
     }
 }
 
@@ -729,7 +706,37 @@ async function deleteHistoryItem(id){
         alert(`Hiba a törlés során: ${e.message}`);
     }
 }
+
+function logCustomBet() {
+    const description = document.getElementById('customBetDescription').value.trim();
+    const odds = parseFloat(document.getElementById('customBetOdds').value);
+    const stake = parseFloat(document.getElementById('customBetStake').value);
+
+    if (!description || !odds || !stake) {
+        alert('Kérlek, tölts ki minden mezőt a naplózáshoz!');
+        return;
+    }
+    if (odds <= 1 || stake <= 0) {
+        alert('Az odds vagy a tét értéke érvénytelen!');
+        return;
+    }
+
+    const betData = {
+        date: new Date().toISOString(),
+        sport: "Kombinált", 
+        home: description,  
+        away: "",
+        market: description,
+        odd: odds,
+        stake: stake 
+    };
+
+    logBet(betData);
+
+    document.getElementById('customBetDescription').value = '';
+    document.getElementById('customBetOdds').value = '';
+    document.getElementById('customBetStake').value = '';
+}
 </script>
 </body>
 </html>
-
