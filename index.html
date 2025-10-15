@@ -129,35 +129,23 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .modal-close-btn { background: transparent; border: none; color: var(--text-secondary); font-size: 2rem; line-height: 1; cursor: pointer; padding: 0; }
 .modal-body { padding: 1.5rem; overflow-y: auto; }
 
-/* --- ÚJ RÉSZ: ELŐZMÉNYEK DIZÁJN --- */
-.history-group {
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 1rem;
-}
-.history-date-header {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    padding: 1rem 0;
-    cursor: pointer;
-    list-style: none; /* Eltávolítja az alapértelmezett nyilat */
-    display: flex;
-    align-items: center;
-}
-.history-date-header::-webkit-details-marker {
-    display: none; /* Biztos, ami biztos */
-}
-.history-date-header::before {
-    content: '›';
-    font-size: 1.5rem;
-    margin-right: 10px;
-    transition: transform 0.2s ease;
-    transform: rotate(0deg);
-}
-.history-group[open] > .history-date-header::before {
-    transform: rotate(90deg);
-}
+.history-group { border-bottom: 1px solid var(--border-color); margin-bottom: 1rem; }
+.history-date-header { font-size: 1rem; font-weight: 700; color: var(--text-primary); padding: 1rem 0; cursor: pointer; list-style: none; display: flex; align-items: center; }
+.history-date-header::-webkit-details-marker { display: none; }
+.history-date-header::before { content: '›'; font-size: 1.5rem; margin-right: 10px; transition: transform 0.2s ease; transform: rotate(0deg); }
+.history-group[open] > .history-date-header::before { transform: rotate(90deg); }
 
+.expert-confidence-card {
+    grid-column: 1 / -1; 
+    margin-bottom: 2rem;
+    border-color: var(--primary);
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15));
+}
+.expert-confidence-card .details {
+    font-size: 0.9rem;
+    max-width: 600px;
+    margin: 0.5rem auto 0;
+}
 </style>
 </head>
 <body>
@@ -321,17 +309,24 @@ function saveSheetUrl() {
 
 function loadSheetUrl() {
     __sheetUrl = localStorage.getItem('sheetUrl');
+    const historyTabContent = document.getElementById('history');
+    const sheetUrlInput = document.getElementById('sheetUrl');
+
     if (__sheetUrl) {
-        if(document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
+        // Ha van mentett URL, de az Előzmények fülön vagyunk,
+        // és valamilyen oknál fogva mégis a beviteli mező látszik, akkor töltjük a naplót.
+        if (document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
             loadHistory();
         }
     } else {
-        document.getElementById('history').innerHTML = `
+        // Ha nincs mentett URL, biztosítjuk, hogy a beviteli mező látszódjon.
+        historyTabContent.innerHTML = `
             <p class="muted">A funkcióhoz add meg a Google Táblázat URL-jét.</p>
             <label for="sheetUrl">Google Táblázat URL</label>
             <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="saveSheetUrl()">`;
     }
 }
+
 
 async function logBet(betData) {
     if (!__sheetUrl) { alert('Kérlek, add meg a Google Táblázat URL-jét a naplózáshoz!'); return; }
@@ -546,7 +541,6 @@ function renderHistory(history, isFiltering = false) {
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
     for (const date of sortedDates) {
-        // MÓDOSÍTÁS: Az "open" attribútum eltávolítva és új CSS osztályok hozzáadva
         finalHtml += `<details class="history-group">`;
         finalHtml += `<summary class="history-date-header">${new Date(date).toLocaleDateString('hu-HU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</summary>`;
 
