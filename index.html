@@ -36,11 +36,13 @@
 
                     <div id="tab-matches" class="tab-content active">
                         <label for="sportSelector">Sportág</label>
-                        <select id="sportSelector" onchange="handleSportChange()">
-                            <option value="soccer" selected>Labdarúgás</option>
-                            <option value="hockey">Jégkorong</option>
-                            <option value="basketball">Kosárlabda</option>
-                        </select>
+                        <div class="select-wrapper">
+                            <select id="sportSelector" onchange="handleSportChange()">
+                                <option value="soccer" selected>Labdarúgás</option>
+                                <option value="hockey">Jégkorong</option>
+                                <option value="basketball">Kosárlabda</option>
+                            </select>
+                        </div>
                         <button id="loadFixturesBtn" class="btn btn-primary" onclick="loadFixtures()" style="width:100%; margin-top:1rem;">Meccsek Betöltése (2 nap)</button>
                         <div id="fixtures-list" style="margin-top:1rem; max-height: 50vh; overflow-y:auto;"></div>
                     </div>
