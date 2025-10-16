@@ -225,3 +225,9 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
     align-items: center;
     justify-content: center;
 }
+
+/* --- ÚJ RÉSZ: AI CHAT --- */
+.chat-bubble { padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; max-width: 80%; line-height: 1.5; }
+.chat-bubble.user { background-color: var(--primary); color: #000; margin-left: auto; border-bottom-right-radius: 3px; }
+.chat-bubble.ai { background-color: rgba(255,255,255,0.1); border: 1px solid var(--border-color); border-bottom-left-radius: 3px; }
+.light-theme .chat-bubble.ai { background-color: rgba(0,0,0,0.05); }
