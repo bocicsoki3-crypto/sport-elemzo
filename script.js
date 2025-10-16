@@ -3,6 +3,8 @@ let __fixtures = [];
 let __currentSport = 'soccer';
 let __historySportFilter = 'soccer';
 let __sheetUrl = '';
+let __currentAnalysisContext = '';
+let __chatHistory = [];
 
 // ÚJ, ELEMZÉS-FÓKUSZÚ KATEGÓRIÁK
 const LEAGUE_CATEGORIES = {
@@ -88,6 +90,14 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         document.getElementById('userInfo').textContent=`Csatlakozva`;
     }
+
+    document.getElementById('chat-send-btn').addEventListener('click', sendChatMessage);
+    document.getElementById('chat-input').addEventListener('keyup', function(event) {
+        if (event.key === "Enter") {
+            sendChatMessage();
+        }
+    });
+
     loadSheetUrl();
 });
 
@@ -105,7 +115,6 @@ async function loadFixtures() {
         __fixtures = data.fixtures || [];
         sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
 
-        // --- ÚJ RÉSZ: Intelligens csoportosítás az új kategóriák szerint ---
         const groupedByMasterCategory = __fixtures.reduce((acc, fx) => {
             const { group } = getLeagueGroupAndIcon(fx.league);
             if (!acc[group]) {
@@ -118,7 +127,6 @@ async function loadFixtures() {
             return acc;
         }, {});
 
-        // Meghatározott sorrend a főcsoportoknak
         const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
         let html = '';
 
@@ -150,7 +158,6 @@ async function loadFixtures() {
                 html += `</div>`;
             }
         }
-        // --- Csoportosítás Vége ---
 
         listEl.innerHTML = html || '<p class="muted" style="text-align:center;">Nincs megjeleníthető mérkőzés.</p>';
 
@@ -177,8 +184,10 @@ async function runAnalysis(forceNew = false) {
     const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress-bar-inner');
     const statusEl = document.getElementById('status');
+    const chatContainer = document.getElementById('chat-container');
 
     resultsEl.innerHTML = '';
+    chatContainer.style.display = 'none'; // Chat elrejtése új elemzéskor
     placeholderEl.style.display = 'none';
     skeletonEl.style.display = 'block';
     progressContainer.style.display = 'block';
@@ -196,8 +205,6 @@ async function runAnalysis(forceNew = false) {
     if (window.innerWidth <= 1024) {
         const controlsAccordion = document.getElementById('controls-accordion');
         if (controlsAccordion) controlsAccordion.removeAttribute('open');
-        resultsEl.innerHTML = '';
-        placeholderEl.style.display = 'flex';
     }
 
     let progress = 0;
@@ -230,13 +237,14 @@ async function runAnalysis(forceNew = false) {
         if (data.error) throw new Error(data.error);
 
         updateProgress(100, "Kész.");
-
+        
         const analysisHtml = `<div class="analysis-body">${data.html}</div>`;
-        if (window.innerWidth <= 1024) {
-            openAnalysisModal(analysisHtml);
-        } else {
-            resultsEl.innerHTML = analysisHtml;
-        }
+        resultsEl.innerHTML = analysisHtml;
+
+        __currentAnalysisContext = data.html;
+        __chatHistory = [];
+        document.getElementById('chat-messages').innerHTML = '';
+        chatContainer.style.display = 'block';
 
         if (__sheetUrl && document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
             loadHistory();
@@ -281,6 +289,7 @@ function loadSheetUrl() {
     const historyTabContent = document.getElementById('history');
 
     if (__sheetUrl) {
+        document.getElementById('sheetUrl').value = __sheetUrl;
         if (document.querySelector('.tab-btn[data-tab="tab-history"]').classList.contains('active')) {
             loadHistory();
         }
@@ -374,7 +383,7 @@ function renderHistory(history, isFiltering = false) {
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
     for (const date of sortedDates) {
-        finalHtml += `<details class="history-group">`;
+        finalHtml += `<details class="history-group" open>`;
         finalHtml += `<summary class="history-date-header">${new Date(date).toLocaleDateString('hu-HU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</summary>`;
 
         groupedByDate[date].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
@@ -409,8 +418,10 @@ async function loadAnalysisFromHistory(id) {
     const resultsEl = document.getElementById('analysis-results');
     const placeholderEl = document.getElementById('placeholder');
     const skeletonEl = document.getElementById('loading-skeleton');
+    const chatContainer = document.getElementById('chat-container');
 
     resultsEl.innerHTML = '';
+    chatContainer.style.display = 'none'; // Chat elrejtése
     placeholderEl.style.display = 'none';
     skeletonEl.style.display = 'block';
 
@@ -420,21 +431,17 @@ async function loadAnalysisFromHistory(id) {
         if (data.error) throw new Error(data.error);
 
         const analysisHtml = `<div class="analysis-body">${data.record.html}</div>`;
-        if (window.innerWidth <= 1024) {
-            openAnalysisModal(analysisHtml);
-        } else {
-            resultsEl.innerHTML = analysisHtml;
-        }
+        resultsEl.innerHTML = analysisHtml;
+
+        __currentAnalysisContext = data.record.html;
+        __chatHistory = [];
+        document.getElementById('chat-messages').innerHTML = '';
+        chatContainer.style.display = 'block';
 
     } catch (e) {
         resultsEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba az elemzés betöltésekor: ${e.message}</p>`;
     } finally {
         skeletonEl.style.display = 'none';
-        if (window.innerWidth > 1024) {
-            placeholderEl.style.display = 'none';
-        } else {
-            placeholderEl.style.display = 'flex';
-        }
     }
 }
 
@@ -452,4 +459,56 @@ async function deleteHistoryItem(id) {
     } catch (e) {
         alert(`Hiba a törlés során: ${e.message}`);
     }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    if (!message) return;
+
+    addMessageToChat(message, 'user');
+    input.value = '';
+    document.getElementById('chat-thinking-indicator').style.display = 'block';
+    document.getElementById('chat-send-btn').disabled = true;
+
+    try {
+        const response = await fetch(__gasUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'text/plain', // Fontos a doPost-hoz
+            },
+            body: JSON.stringify({
+                action: 'askChat',
+                context: __currentAnalysisContext,
+                history: __chatHistory,
+                question: message
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Szerver hiba: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        addMessageToChat(data.answer, 'ai');
+        __chatHistory.push({role: 'user', text: message});
+        __chatHistory.push({role: 'ai', text: data.answer});
+
+    } catch (e) {
+        addMessageToChat(`Hiba történt a válasszal: ${e.message}`, 'ai');
+    } finally {
+        document.getElementById('chat-thinking-indicator').style.display = 'none';
+        document.getElementById('chat-send-btn').disabled = false;
+    }
+}
+
+function addMessageToChat(text, role) {
+    const messagesContainer = document.getElementById('chat-messages');
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${role}`;
+    bubble.textContent = text;
+    messagesContainer.appendChild(bubble);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
