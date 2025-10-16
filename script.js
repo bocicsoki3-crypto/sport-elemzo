@@ -65,7 +65,7 @@ function getLeagueCategory(leagueName) {
     const sportCategories = LEAGUE_CATEGORIES[__currentSport];
     for (const categoryName in sportCategories) {
         const categoryData = sportCategories[categoryName];
-        if (categoryData.leagues.some(l => leagueName.includes(l))) {
+        if (categoryData.leagues.some(l => leagueName.toLowerCase().includes(l.toLowerCase()))) {
             return { name: categoryName, description: categoryData.description };
         }
     }
@@ -79,7 +79,6 @@ function getCategoryTagClass(categoryName) {
     if (categoryName.includes('Kiszámíthatatlan')) return 'tag-unpredictable';
     return '';
 }
-
 
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
@@ -168,7 +167,6 @@ function loadSheetUrl() {
     }
 }
 
-
 async function logBet(betData) {
     if (!__sheetUrl) { alert('Kérlek, add meg a Google Táblázat URL-jét a naplózáshoz!'); return; }
     const button = event.target;
@@ -214,7 +212,9 @@ async function loadFixtures(){
         }, {});
 
         let html = '';
-        for (const league in groupedByLeague) {
+        const sortedLeagues = Object.keys(groupedByLeague).sort();
+
+        for (const league of sortedLeagues) {
             const categoryInfo = getLeagueCategory(league);
             let tagHtml = '';
             if (categoryInfo) {
