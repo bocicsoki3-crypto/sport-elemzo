@@ -4,46 +4,80 @@ let __currentSport = 'soccer';
 let __historySportFilter = 'soccer';
 let __sheetUrl = '';
 
-// ÚJ RÉSZ: Liga kategóriák definiálása
 const LEAGUE_CATEGORIES = {
     soccer: {
-        'Elite': ['Premier League', 'LaLiga', 'Bundesliga', 'Serie A', 'Champions League'],
-        'Gólgazdag': ['Eredivisie', 'German 2. Bundesliga', 'Australian A-League'],
-        'Védekező': ['Ligue 1', 'Greek Super League', 'Argentinian Liga Profesional', 'Serie B'],
-        'Kiszámíthatatlan': ['Championship', 'Brazil Serie A', 'MLS', 'Turkey Super Lig']
+        '👑 Elite': {
+            description: 'A világ legerősebb bajnokságai és tornái, a legmagasabb szintű játékkal.',
+            leagues: ['Premier League', 'LaLiga', 'Bundesliga', 'Serie A', 'Champions League', 'FIFA World Cup', 'UEFA European Championship']
+        },
+        '🥅 Gólgazdag': {
+            description: 'Ezekben a bajnokságokban az átlagos gól/meccs arány magas, gyakoriak a nyílt, támadó szellemű mérkőzések.',
+            leagues: ['Eredivisie', '2. Bundesliga', 'MLS', 'Australian A-League', 'Swiss Super League', 'Allsvenskan']
+        },
+        '🛡️ Védekező': {
+            description: 'Jellemzően taktikus, fegyelmezett védekezésre épülő bajnokságok, ahol kevesebb gól születik.',
+            leagues: ['Ligue 1', 'Serie B', 'Greek Super League', 'Argentinian Liga Profesional', 'Brazil Serie A']
+        },
+        '🎲 Kiszámíthatatlan': {
+            description: 'Kiegyenlített erőviszonyok jellemzik, ahol a papírforma gyakran borul. Bármilyen eredmény előfordulhat.',
+            leagues: ['Championship', 'Europa Conference League', 'Super Lig', 'Liga MX', 'Jupiler Pro League']
+        }
     },
     hockey: {
-        'Elite': ['NHL'],
-        'Gólgazdag': ['KHL', 'German DEL'],
-        'Védekező': ['Finnish Liiga', 'Swiss National League', 'SHL'],
-        'Kiszámíthatatlan': ['IIHF World Championship', 'Czech Extraliga']
+        '👑 Elite': {
+            description: 'A jégkorong csúcsa, a világ legjobb játékosaival.',
+            leagues: ['NHL', 'IIHF World Championship']
+        },
+        '🥅 Gólgazdag': {
+            description: 'Támadó-orientált ligák, ahol magas a gólátlag.',
+            leagues: ['KHL', 'German DEL', 'SHL']
+        },
+        '🛡️ Védekező': {
+            description: 'Taktikus, védekezés-központú bajnokságok, szoros eredményekkel.',
+            leagues: ['Finnish Liiga', 'Swiss National League', 'Czech Extraliga']
+        },
+        '🎲 Kiszámíthatatlan': {
+            description: 'Kiegyenlített mezőny, ahol gyakoriak a meglepetés eredmények.',
+            leagues: ['Olimpiai Játékok', 'Spengler Cup']
+        }
     },
     basketball: {
-        'Elite': ['NBA', 'Euroleague'],
-        'Gólgazdag': ['NBA'],
-        'Védekező': ['Euroleague', 'Spanish Liga ACB'],
-        'Kiszámíthatatlan': ['FIBA World Cup', 'French LNB Pro A']
+        '👑 Elite': {
+            description: 'A sportág abszolút csúcsa, a legjobb csapatokkal és játékosokkal.',
+            leagues: ['NBA', 'Euroleague', 'FIBA World Cup', 'Olimpiai Játékok']
+        },
+        '🥅 Gólgazdag': {
+            description: 'Gyors tempójú, pontgazdag mérkőzések jellemzik ezeket a bajnokságokat.',
+            leagues: ['NBA', 'Spanish Liga ACB', 'German BBL']
+        },
+        '🛡️ Védekező': {
+            description: 'Fizikai, lassabb játékstílus, ahol a védekezésé a főszerep.',
+            leagues: ['Euroleague', 'Italian Lega A', 'French LNB Pro A']
+        },
+        '🎲 Kiszámíthatatlan': {
+            description: 'A nagy nemzetközi tornák gyakran hoznak meglepetéseket a rövidebb felkészülési idő miatt.',
+            leagues: ['FIBA World Cup', 'EuroBasket', 'FIBA Champions League']
+        }
     }
 };
 
 function getLeagueCategory(leagueName) {
     const sportCategories = LEAGUE_CATEGORIES[__currentSport];
-    for (const category in sportCategories) {
-        if (sportCategories[category].some(l => leagueName.includes(l))) {
-            return category;
+    for (const categoryName in sportCategories) {
+        const categoryData = sportCategories[categoryName];
+        if (categoryData.leagues.some(l => leagueName.includes(l))) {
+            return { name: categoryName, description: categoryData.description };
         }
     }
     return null;
 }
 
-function getCategoryTagClass(category) {
-    switch (category) {
-        case 'Elite': return 'tag-elite';
-        case 'Gólgazdag': return 'tag-high-scoring';
-        case 'Védekező': return 'tag-low-scoring';
-        case 'Kiszámíthatatlan': return 'tag-unpredictable';
-        default: return '';
-    }
+function getCategoryTagClass(categoryName) {
+    if (categoryName.includes('Elite')) return 'tag-elite';
+    if (categoryName.includes('Gólgazdag')) return 'tag-high-scoring';
+    if (categoryName.includes('Védekező')) return 'tag-low-scoring';
+    if (categoryName.includes('Kiszámíthatatlan')) return 'tag-unpredictable';
+    return '';
 }
 
 
@@ -181,12 +215,17 @@ async function loadFixtures(){
 
         let html = '';
         for (const league in groupedByLeague) {
-            const category = getLeagueCategory(league);
-            const tagClass = getCategoryTagClass(category);
-            const tagHtml = category ? `<span class="league-category-tag ${tagClass}" title="${category}">${category}</span>` : '';
+            const categoryInfo = getLeagueCategory(league);
+            let tagHtml = '';
+            if (categoryInfo) {
+                const tagClass = getCategoryTagClass(categoryInfo.name);
+                const icon = categoryInfo.name.split(' ')[0];
+                const text = categoryInfo.name.split(' ').slice(1).join(' ');
+                tagHtml = `<span class="league-category-tag ${tagClass}" title="${categoryInfo.description}">${icon} ${text}</span>`;
+            }
 
-            html += `<details class="league-group">`; // MÓDOSÍTVA: Nincs "open"
-            html += `<summary class="league-header"><span>${league}</span>${tagHtml}</summary>`; // MÓDOSÍTVA: Új dizájn
+            html += `<details class="league-group">`;
+            html += `<summary class="league-header"><span>${league}</span>${tagHtml}</summary>`;
             groupedByLeague[league].forEach(fx => {
                 const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
                 html += `
