@@ -76,6 +76,18 @@
             <div class="skeleton-card"><div class="skeleton-line" style="height: 1.5rem; width: 40%;"></div><div class="skeleton-line" style="height: 1rem; width: 90%;"></div><div class="skeleton-line" style="height: 1rem; width: 70%;"></div></div>
         </div>
         <div id="analysis-results"></div>
+        <div id="chat-container" class="card" style="display:none; margin-top: 2rem;">
+            <h4>Beszélgetés az AI Elemzővel</h4>
+            <div id="chat-messages" style="max-height: 400px; overflow-y: auto; margin-bottom: 1rem; padding-right: 1rem;">
+            </div>
+            <div id="chat-thinking-indicator" style="display: none; margin-bottom: 1rem;">
+                <p class="muted" style="text-align:center;"><i>Az elemző gondolkodik...</i></p>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <input id="chat-input" type="text" placeholder="Kérdezz az elemzéstől..." style="flex-grow: 1; margin-top: 0;">
+                <button id="chat-send-btn" class="btn btn-primary">Küldés</button>
+            </div>
+        </div>
         <div id="progress-container" style="display:none;">
             <div class="progress-bar"><div id="progress-bar-inner" class="progress-bar-inner"></div></div>
             <p id="status" class="status-text muted"></p>
