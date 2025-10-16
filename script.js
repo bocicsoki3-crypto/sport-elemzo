@@ -8,19 +8,19 @@ const LEAGUE_CATEGORIES = {
     soccer: {
         '👑 Elite': {
             description: 'A világ legerősebb bajnokságai és tornái, a legmagasabb szintű játékkal.',
-            leagues: ['Premier League', 'LaLiga', 'Bundesliga', 'Serie A', 'Champions League', 'FIFA World Cup', 'UEFA European Championship']
+            leagues: ['Premier League', 'LaLiga', 'Bundesliga', 'Serie A', 'Champions League', 'FIFA World Cup', 'UEFA European Championship', 'Europa League']
         },
         '🥅 Gólgazdag': {
             description: 'Ezekben a bajnokságokban az átlagos gól/meccs arány magas, gyakoriak a nyílt, támadó szellemű mérkőzések.',
-            leagues: ['Eredivisie', '2. Bundesliga', 'MLS', 'Australian A-League', 'Swiss Super League', 'Allsvenskan']
+            leagues: ['Eredivisie', '2. Bundesliga', 'MLS', 'Australian A-League', 'Swiss Super League', 'Allsvenskan', 'Eliteserien', 'Superliga']
         },
         '🛡️ Védekező': {
             description: 'Jellemzően taktikus, fegyelmezett védekezésre épülő bajnokságok, ahol kevesebb gól születik.',
-            leagues: ['Ligue 1', 'Serie B', 'Greek Super League', 'Argentinian Liga Profesional', 'Brazil Serie A']
+            leagues: ['Ligue 1', 'Serie B', 'Greek Super League', 'Argentinian Liga Profesional', 'Brazil Serie A', 'Ligue 2', 'LaLiga2', 'HNL', 'NB I']
         },
         '🎲 Kiszámíthatatlan': {
             description: 'Kiegyenlített erőviszonyok jellemzik, ahol a papírforma gyakran borul. Bármilyen eredmény előfordulhat.',
-            leagues: ['Championship', 'Europa Conference League', 'Super Lig', 'Liga MX', 'Jupiler Pro League']
+            leagues: ['Championship', 'Conference League', 'Super Lig', 'Liga MX', 'Jupiler Pro League', 'Premiership', 'Liga Portugal', 'Premier Division', 'Primera A', 'Brazil Serie B']
         }
     },
     hockey: {
@@ -48,15 +48,15 @@ const LEAGUE_CATEGORIES = {
         },
         '🥅 Gólgazdag': {
             description: 'Gyors tempójú, pontgazdag mérkőzések jellemzik ezeket a bajnokságokat.',
-            leagues: ['NBA', 'Spanish Liga ACB', 'German BBL']
+            leagues: ['Spanish Liga ACB', 'German BBL', 'Turkish BSL']
         },
         '🛡️ Védekező': {
             description: 'Fizikai, lassabb játékstílus, ahol a védekezésé a főszerep.',
-            leagues: ['Euroleague', 'Italian Lega A', 'French LNB Pro A']
+            leagues: ['Italian Lega A', 'French LNB Pro A']
         },
         '🎲 Kiszámíthatatlan': {
             description: 'A nagy nemzetközi tornák gyakran hoznak meglepetéseket a rövidebb felkészülési idő miatt.',
-            leagues: ['FIBA World Cup', 'EuroBasket', 'FIBA Champions League']
+            leagues: ['EuroBasket', 'FIBA Champions League', 'EuroCup']
         }
     }
 };
