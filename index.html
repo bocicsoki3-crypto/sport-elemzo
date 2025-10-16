@@ -121,17 +121,20 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .total-line { font-size: 1.05rem; }
 .total-label { color: var(--text-secondary); margin-right: 0.5rem; }
 .total-value { font-weight: 700; color: var(--text-primary); }
+
 .analysis-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); justify-content: center; align-items: center; animation: fadeIn 0.3s; }
 .modal-content { background: var(--bg); border-radius: 16px; border: 1px solid var(--border-color); width: 95%; max-width: 600px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); }
 .modal-header h3 { margin: 0; font-size: 1.2rem; color: var(--primary); }
 .modal-close-btn { background: transparent; border: none; color: var(--text-secondary); font-size: 2rem; line-height: 1; cursor: pointer; padding: 0; }
 .modal-body { padding: 1.5rem; overflow-y: auto; }
+
 .history-group { border-bottom: 1px solid var(--border-color); margin-bottom: 1rem; }
 .history-date-header { font-size: 1rem; font-weight: 700; color: var(--text-primary); padding: 1rem 0; cursor: pointer; list-style: none; display: flex; align-items: center; }
 .history-date-header::-webkit-details-marker { display: none; }
 .history-date-header::before { content: '›'; font-size: 1.5rem; margin-right: 10px; transition: transform 0.2s ease; transform: rotate(0deg); }
 .history-group[open] > .history-date-header::before { transform: rotate(90deg); }
+
 .expert-confidence-card { grid-column: 1 / -1; margin-bottom: 2rem; border-color: var(--primary); background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15)); }
 .expert-confidence-card .details { font-size: 0.9rem; max-width: 600px; margin: 0.5rem auto 0; }
 .player-props-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
@@ -139,6 +142,49 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .player-name { font-weight: 700; font-family: var(--font-family-header); font-size: 1.1rem; margin-bottom: 0.5rem; }
 .player-prop { font-size: 1rem; color: var(--text-secondary); }
 .player-prop strong { color: var(--primary); }
+
+/* --- ÚJ RÉSZ: MECCS/LIGA LISTA DIZÁJN --- */
+.league-group {
+    border-bottom: 1px solid var(--border-color);
+}
+.league-header {
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 1rem 0.5rem;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.2s ease;
+}
+.league-header:hover {
+    background-color: rgba(212, 175, 55, 0.05);
+}
+.league-header::-webkit-details-marker {
+    display: none;
+}
+.league-header::before {
+    content: '›';
+    font-size: 1.5rem;
+    margin-right: 10px;
+    transition: transform 0.2s ease;
+    transform: rotate(0deg);
+}
+.league-group[open] > .league-header::before {
+    transform: rotate(90deg);
+}
+.league-category-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: #000;
+}
+.tag-elite { background: linear-gradient(135deg, #FFD700, #B8860B); }
+.tag-high-scoring { background: linear-gradient(135deg, #39FF14, #2E8B57); }
+.tag-low-scoring { background: linear-gradient(135deg, #00BFFF, #1E90FF); }
+.tag-unpredictable { background: linear-gradient(135deg, #FF4747, #B22222); }
 </style>
 </head>
 <body>
@@ -230,6 +276,49 @@ let __fixtures = [];
 let __currentSport = 'soccer';
 let __historySportFilter = 'soccer';
 let __sheetUrl = '';
+
+// ÚJ RÉSZ: Liga kategóriák definiálása
+const LEAGUE_CATEGORIES = {
+    soccer: {
+        'Elite': ['Premier League', 'LaLiga', 'Bundesliga', 'Serie A', 'Champions League'],
+        'Gólgazdag': ['Eredivisie', 'German 2. Bundesliga', 'Australian A-League'],
+        'Védekező': ['Ligue 1', 'Greek Super League', 'Argentinian Liga Profesional', 'Serie B'],
+        'Kiszámíthatatlan': ['Championship', 'Brazil Serie A', 'MLS', 'Turkey Super Lig']
+    },
+    hockey: {
+        'Elite': ['NHL'],
+        'Gólgazdag': ['KHL', 'German DEL'],
+        'Védekező': ['Finnish Liiga', 'Swiss National League', 'SHL'],
+        'Kiszámíthatatlan': ['IIHF World Championship', 'Czech Extraliga']
+    },
+    basketball: {
+        'Elite': ['NBA', 'Euroleague'],
+        'Gólgazdag': ['NBA'],
+        'Védekező': ['Euroleague', 'Spanish Liga ACB'],
+        'Kiszámíthatatlan': ['FIBA World Cup', 'French LNB Pro A']
+    }
+};
+
+function getLeagueCategory(leagueName) {
+    const sportCategories = LEAGUE_CATEGORIES[__currentSport];
+    for (const category in sportCategories) {
+        if (sportCategories[category].some(l => leagueName.includes(l))) {
+            return category;
+        }
+    }
+    return null;
+}
+
+function getCategoryTagClass(category) {
+    switch (category) {
+        case 'Elite': return 'tag-elite';
+        case 'Gólgazdag': return 'tag-high-scoring';
+        case 'Védekező': return 'tag-low-scoring';
+        case 'Kiszámíthatatlan': return 'tag-unpredictable';
+        default: return '';
+    }
+}
+
 
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
@@ -365,8 +454,12 @@ async function loadFixtures(){
 
         let html = '';
         for (const league in groupedByLeague) {
-            html += `<details open>`;
-            html += `<summary class="list-group-header">${league}</summary>`;
+            const category = getLeagueCategory(league);
+            const tagClass = getCategoryTagClass(category);
+            const tagHtml = category ? `<span class="league-category-tag ${tagClass}" title="${category}">${category}</span>` : '';
+
+            html += `<details class="league-group">`; // MÓDOSÍTVA: Nincs "open"
+            html += `<summary class="league-header"><span>${league}</span>${tagHtml}</summary>`; // MÓDOSÍTVA: Új dizájn
             groupedByLeague[league].forEach(fx => {
                 const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
                 html += `
@@ -543,8 +636,8 @@ function renderHistory(history, isFiltering = false) {
                         <div class="list-item-meta">${new Date(item.date).toLocaleTimeString('hu-HU', {hour:'2-digit', minute:'2-digit'})}</div>
                     </div>
                     <div style="display:flex;gap:5px">
-                        <a href="#" class="action-icon" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>
-                        <a href="#" class="action-icon delete" onclick="deleteHistoryItem('${item.id}')" title="Törlés"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></a>
+                        <a href="#" class="action-icon" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>
+                        <a href="#" class="action-icon delete" onclick="deleteHistoryItem('${item.id}')" title="Törlés"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></a>
                     </div>
                 </div>
             `;
