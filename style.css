@@ -132,7 +132,6 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
 .player-prop { font-size: 1rem; color: var(--text-secondary); }
 .player-prop strong { color: var(--primary); }
 
-/* --- ÚJ RÉSZ: MECCS/LIGA LISTA DIZÁJN --- */
 .league-group {
     border-bottom: 1px solid var(--border-color);
 }
@@ -164,11 +163,15 @@ details:not([open]) > .controls-summary::before {transform: rotate(-90deg);}
     transform: rotate(90deg);
 }
 .league-category-tag {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 6px;
+    padding: 4px 10px;
+    border-radius: 8px;
     color: #000;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 .tag-elite { background: linear-gradient(135deg, #FFD700, #B8860B); }
 .tag-high-scoring { background: linear-gradient(135deg, #39FF14, #2E8B57); }
