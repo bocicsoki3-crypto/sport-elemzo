@@ -337,8 +337,11 @@ function filterHistory(allHistory) {
     renderHistory(filtered, true);
 }
 
-function renderHistory(history, isFiltering = false) {
+function renderHistory(historyData, isFiltering = false) {
     const box = document.getElementById('history');
+
+    // --- VÉDELEM AZ ÜRES SOROK ELLEN ---
+    const history = historyData.filter(item => item.home && item.away);
 
     if (!isFiltering) {
         sessionStorage.setItem('fullHistory', JSON.stringify(history));
@@ -369,7 +372,8 @@ function renderHistory(history, isFiltering = false) {
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
     for (const date of sortedDates) {
-        finalHtml += `<details class="history-group" open>`;
+        // --- JAVÍTÁS: 'open' attribútum eltávolítva ---
+        finalHtml += `<details class="history-group">`;
         finalHtml += `<summary class="history-date-header">${new Date(date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</summary>`;
 
         groupedByDate[date].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
