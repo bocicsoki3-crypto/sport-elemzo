@@ -203,7 +203,7 @@ async function openHistoryModal() {
         if (url && url.startsWith('https://docs.google.com/spreadsheets/d/')) {
             __sheetUrl = url;
             localStorage.setItem('sheetUrl', url);
-        } else if(url) { // Csak akkor jelezzen hibát, ha a felhasználó írt be valamit
+        } else if(url) {
             alert('Érvénytelen URL.');
             return;
         } else { return; }
@@ -241,22 +241,41 @@ function runManualAnalysis() {
 }
 
 function renderHistory(historyData) {
-    const history = historyData.filter(item => item.home && item.away);
+    const history = historyData.filter(item => item.home && item.away).sort((a,b) => new Date(b.date) - new Date(a.date));
     if (!history || history.length === 0) {
         return '<p class="muted">Nincsenek mentett előzmények.</p>';
     }
+    const groupedByDate = groupBy(history, item => new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
+    
     let html = '';
-    history.forEach(item => {
-        const date = new Date(item.date).toLocaleString('hu-HU', { timeZone: 'Europe/Budapest', dateStyle: 'short', timeStyle: 'short'});
-        html += `<div class="list-item" onclick="runAnalysis('${escape(item.home)}', '${escape(item.away)}');">
-                    <div>
+    Object.keys(groupedByDate).forEach(dateKey => {
+        html += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
+        groupedByDate[dateKey].forEach(item => {
+            const time = new Date(item.date).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
+            html += `
+                <div class="list-item">
+                    <div style="flex-grow:1;" onclick="runAnalysis('${escape(item.home)}', '${escape(item.away)}')">
                         <div class="list-item-title">${item.home} – ${item.away}</div>
-                        <div class="list-item-meta">${item.sport} - ${date}</div>
+                        <div class="list-item-meta">${item.sport} - ${time}</div>
                     </div>
-                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <button class="btn" onclick="deleteHistoryItem('${item.id}')" title="Törlés">🗑️</button>
                 </div>`;
+        });
+        html += `</details>`;
     });
     return html;
+}
+
+async function deleteHistoryItem(id) {
+    event.stopPropagation(); // Megakadályozza, hogy a háttérben lévő elemre is kattintson
+    if (!__sheetUrl || !confirm("Biztosan törölni szeretnéd ezt az elemet a naplóból?")) return;
+    try {
+        // Itt lenne a szerverhívás a törléshez
+        alert('Törlési funkció bemutató. A valóságban itt történne a törlés.');
+        // openHistoryModal(); // Újratölti a listát a sikeres törlés után
+    } catch (e) {
+        alert(`Hiba a törlés során: ${e.message}`);
+    }
 }
 
 function groupBy(arr, key) { return arr.reduce((acc, item) => ((acc[key(item)] = [...(acc[key(item)] || []), item]), acc), {}); }
@@ -269,12 +288,14 @@ function formatDateLabel(dateStr) {
 }
 
 async function sendChatMessage() {
-    const input = document.querySelector('#modal-container #chat-input');
+    const modal = document.getElementById('modal-container');
+    const input = modal.querySelector('#chat-input');
+    const thinkingIndicator = modal.querySelector('#chat-thinking-indicator');
     const message = input.value.trim();
     if (!message) return;
     addMessageToChat(message, 'user');
     input.value = '';
-    document.querySelector('#modal-container #chat-thinking-indicator').style.display = 'block';
+    thinkingIndicator.style.display = 'block';
 
     try {
         const response = await fetch(__gasUrl, {
@@ -291,7 +312,7 @@ async function sendChatMessage() {
     } catch (e) {
         addMessageToChat(`Hiba történt: ${e.message}`, 'ai');
     } finally {
-        document.querySelector('#modal-container #chat-thinking-indicator').style.display = 'none';
+        thinkingIndicator.style.display = 'none';
     }
 }
 
