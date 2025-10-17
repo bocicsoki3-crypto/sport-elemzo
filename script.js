@@ -1,4 +1,4 @@
-let __gasUrl = 'IDE_ILLESZD_BE_AZ_UJ_WEB_APP_URLT';
+let __gasUrl = 'https://script.google.com/macros/s/AKfycbyN99ot1yzv4Na9nq0rTIsCSQ2DUlMMCzSKQmtM8fg7qDMAaFzHW8n_2Y8eNxnsFdabvg/exec';
 let __fixtures = [];
 let __currentSport = 'soccer';
 let __historySportFilter = 'soccer';
