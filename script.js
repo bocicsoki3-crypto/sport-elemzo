@@ -64,7 +64,7 @@ async function loadFixtures() {
 
         if (isMobile()) {
             renderFixturesForMobile(__fixtures);
-            openMobileModal('Mérkőzések');
+            openModal('Mérkőzések');
         } else {
             renderFixturesForDesktop(__fixtures);
         }
@@ -72,7 +72,7 @@ async function loadFixtures() {
         alert(`Hiba a meccsek betöltésekor: ${e.message}`);
     } finally {
         loadBtn.disabled = false;
-        loadBtn.textContent = 'Meccsek Betöltése (2 nap)';
+        loadBtn.textContent = 'Meccsek Betöltése';
     }
 }
 
@@ -86,7 +86,7 @@ function renderFixturesForDesktop(fixtures) {
 
     let columns = groupOrder.reduce((acc, group) => ({...acc, [group]: ''}), {});
 
-    Object.keys(groupedByDate).sort((a,b) => new Date(a) - new Date(b)).forEach(dateKey => {
+    Object.keys(groupedByDate).sort((a,b) => new Date(a.split('. ').join('.').split('.').reverse().join('-')) - new Date(b.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
         const fixturesForDate = groupedByDate[dateKey];
         const groupedByCategory = groupBy(fixturesForDate, fx => getLeagueGroup(fx.league));
 
@@ -112,17 +112,19 @@ function renderFixturesForDesktop(fixtures) {
         board.innerHTML += `
             <div class="kanban-column">
                 <h4 class="kanban-column-header">${group}</h4>
-                ${columns[group] || '<p class="muted">Nincs meccs ebben a kategóriában.</p>'}
+                <div class="column-content">
+                    ${columns[group] || '<p class="muted">Nincs meccs ebben a kategóriában.</p>'}
+                </div>
             </div>`;
     });
 }
 
 function renderFixturesForMobile(fixtures) {
-    const mobileBody = document.getElementById('mobile-modal-body');
+    const mobileBody = document.getElementById('modal-body');
     const groupedByDate = groupBy(fixtures, fx => new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
     let html = '';
 
-    Object.keys(groupedByDate).sort((a,b) => new Date(a) - new Date(b)).forEach(dateKey => {
+    Object.keys(groupedByDate).sort((a,b) => new Date(a.split('. ').join('.').split('.').reverse().join('-')) - new Date(b.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
         html += `<h4 class="date-header">${formatDateLabel(dateKey)}</h4>`;
         groupedByDate[dateKey].forEach(fx => {
             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
@@ -132,6 +134,7 @@ function renderFixturesForMobile(fixtures) {
                         <div class="list-item-title">${fx.home} – ${fx.away}</div>
                         <div class="list-item-meta">${fx.league} - ${time}</div>
                     </div>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>`;
         });
     });
@@ -151,8 +154,12 @@ async function runAnalysis(home, away) {
     skeleton.classList.add('active');
 
     if(isMobile()) {
-        openMobileModal('Elemzés');
-        document.getElementById('mobile-modal-body').innerHTML = skeleton.outerHTML + resultsEl.outerHTML + chatContainer.outerHTML;
+        openModal('Elemzés');
+        const modalBody = document.getElementById('modal-body');
+        modalBody.innerHTML = '';
+        modalBody.appendChild(skeleton);
+        modalBody.appendChild(resultsEl);
+        modalBody.appendChild(chatContainer);
     } else {
         openAnalysisPanel(`${home} vs ${away}`);
     }
@@ -173,20 +180,20 @@ async function runAnalysis(home, away) {
         __currentAnalysisContext = data.html;
         __chatHistory = [];
         
-        const targetResultsEl = isMobile() ? document.querySelector('#mobile-modal-body #analysis-results') : document.getElementById('analysis-results');
-        const targetSkeleton = isMobile() ? document.querySelector('#mobile-modal-body #loading-skeleton') : document.getElementById('loading-skeleton');
-        const targetChat = isMobile() ? document.querySelector('#mobile-modal-body #chat-container') : document.getElementById('chat-container');
+        const targetResultsEl = isMobile() ? document.querySelector('#modal-body #analysis-results') : document.getElementById('analysis-results');
+        const targetSkeleton = isMobile() ? document.querySelector('#modal-body #loading-skeleton') : document.getElementById('loading-skeleton');
+        const targetChat = isMobile() ? document.querySelector('#modal-body #chat-container') : document.getElementById('chat-container');
 
         targetResultsEl.innerHTML = `<div class="analysis-body">${data.html}</div>`;
         targetSkeleton.classList.remove('active');
         targetChat.style.display = 'block';
-        document.querySelector('#chat-messages').innerHTML = '';
-
+        targetChat.querySelector('#chat-messages').innerHTML = '';
 
     } catch (e) {
-        const targetEl = isMobile() ? document.querySelector('#mobile-modal-body #analysis-results') : resultsEl;
+        const targetEl = isMobile() ? document.querySelector('#modal-body #analysis-results') : resultsEl;
         targetEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
-        skeleton.classList.remove('active');
+        if(isMobile()) document.querySelector('#modal-body #loading-skeleton').classList.remove('active');
+        else skeleton.classList.remove('active');
     }
 }
 
@@ -198,18 +205,18 @@ function handleSportChange() {
     }
 }
 
-// --- PANEL ÉS MODAL KEZELŐ FÜGGVÉNYEK ---
 function openAnalysisPanel(title) {
     document.getElementById('panel-title').textContent = title;
     document.getElementById('analysis-panel').classList.add('open');
 }
 function closeAnalysisPanel() { document.getElementById('analysis-panel').classList.remove('open'); }
 
-function openMobileModal(title) {
-    document.getElementById('mobile-modal-title').textContent = title;
-    document.getElementById('mobile-modal-container').classList.add('open');
+function openModal(title, content = '') {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = content;
+    document.getElementById('modal-container').classList.add('open');
 }
-function closeMobileModal() { document.getElementById('mobile-modal-container').classList.remove('open'); }
+function closeModal() { document.getElementById('modal-container').classList.remove('open'); }
 
 async function openHistoryModal() {
     if (!__sheetUrl) {
@@ -222,22 +229,35 @@ async function openHistoryModal() {
             return;
         }
     }
-
-    if (isMobile()) {
-        openMobileModal('Előzmények');
-        document.getElementById('mobile-modal-body').innerHTML = '<p class="muted">Előzmények betöltése...</p>';
-        try {
-            const response = await fetch(`${__gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            renderHistory(data.history, 'mobile-modal-body');
-        } catch (e) {
-            document.getElementById('mobile-modal-body').innerHTML = `<p class="muted" style="color:var(--danger)">Hiba: ${e.message}</p>`;
-        }
-    } else {
-        // Asztali nézethez egy új, elegánsabb modal ablakot kellene készíteni a jövőben.
-        alert('Az előzmények funkció jelenleg mobil nézeten érhető el a felugró ablakban.');
+    openModal('Előzmények', '<p class="muted">Előzmények betöltése...</p>');
+    try {
+        const response = await fetch(`${__gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        renderHistory(data.history, 'modal-body');
+    } catch (e) {
+        document.getElementById('modal-body').innerHTML = `<p class="muted" style="color:var(--danger)">Hiba: ${e.message}</p>`;
     }
+}
+
+function openManualAnalysisModal() {
+    let content = `
+        <div class="control-group"><label for="manual-home">Hazai csapat</label><input id="manual-home" placeholder="Pl. Liverpool"/></div>
+        <div class="control-group" style="margin-top: 1rem;"><label for="manual-away">Vendég csapat</label><input id="manual-away" placeholder="Pl. Manchester City"/></div>
+        <button class="btn btn-primary" onclick="runManualAnalysis()" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
+    `;
+    openModal('Kézi Elemzés', content);
+}
+
+function runManualAnalysis() {
+    const home = document.getElementById('manual-home').value;
+    const away = document.getElementById('manual-away').value;
+    if (!home || !away) {
+        alert('Mindkét csapat nevét meg kell adni.');
+        return;
+    }
+    closeModal();
+    runAnalysis(home, away);
 }
 
 function renderHistory(historyData, targetElementId) {
@@ -249,12 +269,18 @@ function renderHistory(historyData, targetElementId) {
     }
     let html = '';
     history.forEach(item => {
-        html += `<div class="list-item" onclick="runAnalysis('${escape(item.home)}', '${escape(item.away)}')">...</div>`; // Leegyszerűsítve
+        const date = new Date(item.date).toLocaleString('hu-HU', { timeZone: 'Europe/Budapest', dateStyle: 'short', timeStyle: 'short'});
+        html += `<div class="list-item" onclick="runAnalysis('${escape(item.home)}', '${escape(item.away)}')">
+                    <div>
+                        <div class="list-item-title">${item.home} – ${item.away}</div>
+                        <div class="list-item-meta">${item.sport} - ${date}</div>
+                    </div>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>`;
     });
     targetEl.innerHTML = html;
 }
 
-// --- SEGÉDFÜGGVÉNYEK ---
 function groupBy(arr, key) { return arr.reduce((acc, item) => ((acc[key(item)] = [...(acc[key(item)] || []), item]), acc), {}); }
 function formatDateLabel(dateStr) {
     const today = new Date().toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
@@ -264,7 +290,6 @@ function formatDateLabel(dateStr) {
     return dateStr;
 }
 
-// --- CHAT FÜGGVÉNYEK ---
 async function sendChatMessage() {
     const input = document.querySelector('#chat-input');
     const message = input.value.trim();
