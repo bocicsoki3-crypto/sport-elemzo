@@ -1,4 +1,4 @@
-let __gasUrl = 'https://script.google.com/macros/s/AKfycbyN99ot1yzv4Na9nq0rTIsCSQ2DUlMMCzSKQmtM8fg7qDMAaFzHW8n_2Y8eNxnsFdabvg/exec';
+let __gasUrl = 'IDE_ILLESZD_BE_AZ_UJ_WEB_APP_URLT';
 let __fixtures = [];
 let __currentSport = 'soccer';
 let __historySportFilter = 'soccer';
@@ -113,12 +113,9 @@ async function loadFixtures() {
         __fixtures = data.fixtures || [];
         sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
 
-        // --- ÚJ RÉSZ: DÁTUM SZERINTI CSOPORTOSÍTÁS ---
         const groupedByDate = __fixtures.reduce((acc, fx) => {
             const kickoffDate = new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
-            if (!acc[kickoffDate]) {
-                acc[kickoffDate] = [];
-            }
+            if (!acc[kickoffDate]) acc[kickoffDate] = [];
             acc[kickoffDate].push(fx);
             return acc;
         }, {});
@@ -128,8 +125,7 @@ async function loadFixtures() {
 
         let html = '';
         const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
-
-        const sortedDates = Object.keys(groupedByDate).sort((a,b) => new Date(a) - new Date(b));
+        const sortedDates = Object.keys(groupedByDate).sort((a,b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
 
         for (const dateKey of sortedDates) {
             let dateLabel = dateKey;
@@ -141,20 +137,16 @@ async function loadFixtures() {
             const fixturesForDate = groupedByDate[dateKey];
             const groupedByCategory = fixturesForDate.reduce((acc, fx) => {
                 const { group } = getLeagueGroupAndIcon(fx.league);
-                if (!acc[group]) {
-                    acc[group] = { leagues: {} };
-                }
-                if (!acc[group].leagues[fx.league]) {
-                    acc[group].leagues[fx.league] = [];
-                }
+                if (!acc[group]) acc[group] = { leagues: {} };
+                if (!acc[group].leagues[fx.league]) acc[group].leagues[fx.league] = [];
                 acc[group].leagues[fx.league].push(fx);
                 return acc;
             }, {});
 
             for (const masterGroup of groupOrder) {
                 if (groupedByCategory[masterGroup]) {
-                    html += `<div class="league-master-group">`;
-                    html += `<div class="league-master-group-header">${masterGroup}</div>`;
+                    html += `<details class="league-master-group">`;
+                    html += `<summary class="league-master-group-header">${masterGroup}</summary>`;
 
                     for (const leagueName in groupedByCategory[masterGroup].leagues) {
                         const { icon, description } = getLeagueGroupAndIcon(leagueName);
@@ -176,7 +168,7 @@ async function loadFixtures() {
                         });
                         html += `</details>`;
                     }
-                    html += `</div>`;
+                    html += `</details>`;
                 }
             }
         }
