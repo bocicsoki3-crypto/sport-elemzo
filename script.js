@@ -26,7 +26,6 @@ const LEAGUE_CATEGORIES = {
     }
 };
 
-// Ikonok és leírások az új kategóriákhoz
 const LEAGUE_CHARACTERISTICS = {
     '🎯 Prémium Elemzés': { icon: '🎯', description: 'A legjobb ligák, ahol a legtöbb mélystatisztikai adat áll rendelkezésre. A modell itt a legpontosabb.' },
     '📈 Stabil Ligák': { icon: '📈', description: 'Erős, ismert bajnokságok, ahol jó az adatelérhetőség és a meccsek megbízhatóan elemezhetőek.' },
@@ -34,7 +33,6 @@ const LEAGUE_CHARACTERISTICS = {
     '🎲 Vad Kártyák': { icon: '🎲', description: 'A legkiszámíthatatlanabb kategória (kupák, tornák, kisebb ligák). Az adatok hiányosak lehetnek, a kockázat magasabb.' }
 };
 
-// Robusztus kategória-kereső függvény
 function getLeagueGroupAndIcon(leagueName) {
     const sportGroups = LEAGUE_CATEGORIES[__currentSport] || {};
     const lowerLeagueName = leagueName.toLowerCase();
@@ -47,7 +45,7 @@ function getLeagueGroupAndIcon(leagueName) {
             return { group: groupName, icon, description };
         }
     }
-    return { group: '🎲 Vad Kártyák', icon: '🎲', description: 'A legkiszámíthatatlanabb kategória (kupák, tornák, kisebb ligák). Az adatok hiányosak lehetnek, a kockázat magasabb.' }; // Alapértelmezett csoport a legkockázatosabb
+    return { group: '🎲 Vad Kártyák', icon: '🎲', description: 'A legkiszámíthatatlanabb kategória (kupák, tornák, kisebb ligák). Az adatok hiányosak lehetnek, a kockázat magasabb.' };
 }
 
 function escapeHtml(s) {
@@ -115,47 +113,71 @@ async function loadFixtures() {
         __fixtures = data.fixtures || [];
         sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
 
-        const groupedByMasterCategory = __fixtures.reduce((acc, fx) => {
-            const { group } = getLeagueGroupAndIcon(fx.league);
-            if (!acc[group]) {
-                acc[group] = { leagues: {} };
+        // --- ÚJ RÉSZ: DÁTUM SZERINTI CSOPORTOSÍTÁS ---
+        const groupedByDate = __fixtures.reduce((acc, fx) => {
+            const kickoffDate = new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
+            if (!acc[kickoffDate]) {
+                acc[kickoffDate] = [];
             }
-            if (!acc[group].leagues[fx.league]) {
-                acc[group].leagues[fx.league] = [];
-            }
-            acc[group].leagues[fx.league].push(fx);
+            acc[kickoffDate].push(fx);
             return acc;
         }, {});
 
-        const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
+        const today = new Date().toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
+        const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
+
         let html = '';
+        const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
 
-        for (const masterGroup of groupOrder) {
-            if (groupedByMasterCategory[masterGroup]) {
-                html += `<div class="league-master-group">`;
-                html += `<div class="league-master-group-header">${masterGroup}</div>`;
+        const sortedDates = Object.keys(groupedByDate).sort((a,b) => new Date(a) - new Date(b));
 
-                for (const leagueName in groupedByMasterCategory[masterGroup].leagues) {
-                    const { icon, description } = getLeagueGroupAndIcon(leagueName);
-                    const tagHtml = `<span class="league-category-tag" title="${description}">${icon}</span>`;
+        for (const dateKey of sortedDates) {
+            let dateLabel = dateKey;
+            if (dateKey === today) dateLabel = "MA";
+            if (dateKey === tomorrow) dateLabel = "HOLNAP";
 
-                    html += `<details class="league-group">`;
-                    html += `<summary class="league-header"><span>${leagueName}</span>${tagHtml}</summary>`;
-                    groupedByMasterCategory[masterGroup].leagues[leagueName].forEach(fx => {
-                        const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
-                        html += `
-                            <div class="list-item" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">
-                                <div>
-                                    <div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div>
-                                    <div class="list-item-meta">${d}</div>
-                                </div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--text-secondary);"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </div>
-                        `;
-                    });
-                    html += `</details>`;
+            html += `<h4 class="date-header">${dateLabel}</h4>`;
+
+            const fixturesForDate = groupedByDate[dateKey];
+            const groupedByCategory = fixturesForDate.reduce((acc, fx) => {
+                const { group } = getLeagueGroupAndIcon(fx.league);
+                if (!acc[group]) {
+                    acc[group] = { leagues: {} };
                 }
-                html += `</div>`;
+                if (!acc[group].leagues[fx.league]) {
+                    acc[group].leagues[fx.league] = [];
+                }
+                acc[group].leagues[fx.league].push(fx);
+                return acc;
+            }, {});
+
+            for (const masterGroup of groupOrder) {
+                if (groupedByCategory[masterGroup]) {
+                    html += `<div class="league-master-group">`;
+                    html += `<div class="league-master-group-header">${masterGroup}</div>`;
+
+                    for (const leagueName in groupedByCategory[masterGroup].leagues) {
+                        const { icon, description } = getLeagueGroupAndIcon(leagueName);
+                        const tagHtml = `<span class="league-category-tag" title="${description}">${icon}</span>`;
+
+                        html += `<details class="league-group">`;
+                        html += `<summary class="league-header"><span>${leagueName}</span>${tagHtml}</summary>`;
+                        groupedByCategory[masterGroup].leagues[leagueName].forEach(fx => {
+                            const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
+                            html += `
+                                <div class="list-item" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">
+                                    <div>
+                                        <div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div>
+                                        <div class="list-item-meta">${d}</div>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--text-secondary);"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </div>
+                            `;
+                        });
+                        html += `</details>`;
+                    }
+                    html += `</div>`;
+                }
             }
         }
 
@@ -167,7 +189,6 @@ async function loadFixtures() {
         loadBtn.disabled = false;
     }
 }
-
 
 function fillAndAnalyze(home, away) {
     document.getElementById('home').value = home;
@@ -187,7 +208,7 @@ async function runAnalysis(forceNew = false) {
     const chatContainer = document.getElementById('chat-container');
 
     resultsEl.innerHTML = '';
-    chatContainer.style.display = 'none'; // Chat elrejtése új elemzéskor
+    chatContainer.style.display = 'none';
     placeholderEl.style.display = 'none';
     skeletonEl.style.display = 'block';
     progressContainer.style.display = 'block';
@@ -207,36 +228,28 @@ async function runAnalysis(forceNew = false) {
         if (controlsAccordion) controlsAccordion.removeAttribute('open');
     }
 
-    let progress = 0;
-    const updateProgress = (val, text) => {
-        progress = Math.max(progress, val);
-        progressBar.style.width = `${progress}%`;
-        statusEl.textContent = text;
-    };
-
     try {
-        updateProgress(5, "Elemzés indítása...");
+        statusEl.textContent = "Elemzés indítása...";
+        progressBar.style.width = '5%';
         let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=${forceNew}&sheetUrl=${encodeURIComponent(__sheetUrl)}`;
         const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
 
-        fetch(analysisUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) }) });
-        updateProgress(10, "Adatok lekérése a szerverről...");
+        const response = await fetch(analysisUrl, {
+            method: 'POST',
+            body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) }),
+            headers: { 'Content-Type': 'text/plain' }
+        });
 
-        const interval = setInterval(() => {
-            if (progress < 85) updateProgress(progress + Math.random() * 5, "AI elemzés és szimuláció futtatása...");
-        }, 800);
+        statusEl.textContent = "AI elemzés és szimuláció...";
+        progressBar.style.width = '50%';
 
-        await new Promise(resolve => setTimeout(resolve, 9000));
-        clearInterval(interval);
-        updateProgress(90, "Válasz feldolgozása...");
+        if (!response.ok) throw new Error(`Szerver válasz hiba: ${response.status}`);
 
-        const resultResponse = await fetch(`${analysisUrl}&force=false`);
-        if (!resultResponse.ok) throw new Error(`Szerver válasz hiba: ${resultResponse.status}`);
-
-        const data = await resultResponse.json();
+        const data = await response.json();
         if (data.error) throw new Error(data.error);
 
-        updateProgress(100, "Kész.");
+        statusEl.textContent = "Kész.";
+        progressBar.style.width = '100%';
         
         const analysisHtml = `<div class="analysis-body">${data.html}</div>`;
         resultsEl.innerHTML = analysisHtml;
@@ -255,21 +268,6 @@ async function runAnalysis(forceNew = false) {
     } finally {
         skeletonEl.style.display = 'none';
         setTimeout(() => { progressContainer.style.display = 'none'; }, 2000);
-    }
-}
-
-function openAnalysisModal(htmlContent) {
-    const modal = document.getElementById('analysis-modal');
-    const modalBody = document.getElementById('modal-body');
-    modalBody.innerHTML = htmlContent;
-    modal.style.display = 'flex';
-}
-
-function closeAnalysisModal(event) {
-    const modal = document.getElementById('analysis-modal');
-    if (!event || event.target === modal || event.target.classList.contains('modal-close-btn')) {
-        modal.style.display = 'none';
-        document.getElementById('modal-body').innerHTML = '';
     }
 }
 
@@ -302,7 +300,6 @@ function loadSheetUrl() {
         }
     }
 }
-
 
 async function logBet(betData) {
     if (!__sheetUrl) { alert('Kérlek, add meg a Google Táblázat URL-jét a naplózáshoz!'); return; }
@@ -384,18 +381,18 @@ function renderHistory(history, isFiltering = false) {
 
     for (const date of sortedDates) {
         finalHtml += `<details class="history-group" open>`;
-        finalHtml += `<summary class="history-date-header">${new Date(date).toLocaleDateString('hu-HU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</summary>`;
+        finalHtml += `<summary class="history-date-header">${new Date(date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</summary>`;
 
         groupedByDate[date].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
             finalHtml += `
                 <div class="list-item">
                     <div onclick="loadAnalysisFromHistory('${item.id}')" style="flex-grow:1;">
                         <div class="list-item-title">${escapeHtml(item.home)} – ${escapeHtml(item.away)}</div>
-                        <div class="list-item-meta">${new Date(item.date).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}</div>
+                        <div class="list-item-meta">${new Date(item.date).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' })}</div>
                     </div>
                     <div style="display:flex;gap:5px">
-                        <a href="#" class="action-icon" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>
-                        <a href="#" class="action-icon delete" onclick="deleteHistoryItem('${item.id}')" title="Törlés"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></a>
+                        <a href="#" class="action-icon" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>
+                        <a href="#" class="action-icon delete" onclick="deleteHistoryItem('${item.id}')" title="Törlés"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></a>
                     </div>
                 </div>
             `;
@@ -421,7 +418,7 @@ async function loadAnalysisFromHistory(id) {
     const chatContainer = document.getElementById('chat-container');
 
     resultsEl.innerHTML = '';
-    chatContainer.style.display = 'none'; // Chat elrejtése
+    chatContainer.style.display = 'none';
     placeholderEl.style.display = 'none';
     skeletonEl.style.display = 'block';
 
@@ -474,9 +471,7 @@ async function sendChatMessage() {
     try {
         const response = await fetch(__gasUrl, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'text/plain', // Fontos a doPost-hoz
-            },
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
                 action: 'askChat',
                 context: __currentAnalysisContext,
