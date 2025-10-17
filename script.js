@@ -82,20 +82,18 @@ function renderFixturesForDesktop(fixtures) {
     board.innerHTML = '';
 
     const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
-    const groupedByDate = groupBy(fixtures, fx => new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
+    const groupedByCategory = groupBy(fixtures, fx => getLeagueGroup(fx.league));
 
-    let columns = groupOrder.reduce((acc, group) => ({...acc, [group]: ''}), {});
-
-    Object.keys(groupedByDate).sort((a,b) => new Date(a.split('. ').join('.').split('.').reverse().join('-')) - new Date(b.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
-        const fixturesForDate = groupedByDate[dateKey];
-        const groupedByCategory = groupBy(fixturesForDate, fx => getLeagueGroup(fx.league));
-
-        groupOrder.forEach(group => {
-            if (groupedByCategory[group]) {
-                columns[group] += `<h5 class="date-header">${formatDateLabel(dateKey)}</h5>`;
-                groupedByCategory[group].forEach(fx => {
+    groupOrder.forEach(group => {
+        let columnContent = '';
+        if (groupedByCategory[group]) {
+            const groupedByDate = groupBy(groupedByCategory[group], fx => new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
+            
+            Object.keys(groupedByDate).sort((a,b) => new Date(a.split('. ').join('.').split('.').reverse().join('-')) - new Date(b.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
+                columnContent += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
+                groupedByDate[dateKey].forEach(fx => {
                     const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
-                    columns[group] += `
+                    columnContent += `
                         <div class="match-card" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}')">
                             <div class="match-card-teams">${fx.home} – ${fx.away}</div>
                             <div class="match-card-meta">
@@ -104,20 +102,20 @@ function renderFixturesForDesktop(fixtures) {
                             </div>
                         </div>`;
                 });
-            }
-        });
-    });
+                columnContent += `</details>`;
+            });
+        }
 
-    groupOrder.forEach(group => {
         board.innerHTML += `
             <div class="kanban-column">
                 <h4 class="kanban-column-header">${group}</h4>
                 <div class="column-content">
-                    ${columns[group] || '<p class="muted">Nincs meccs ebben a kategóriában.</p>'}
+                    ${columnContent || '<p class="muted">Nincs meccs ebben a kategóriában.</p>'}
                 </div>
             </div>`;
     });
 }
+
 
 function renderFixturesForMobile(fixtures) {
     const mobileBody = document.getElementById('modal-body');
@@ -134,7 +132,7 @@ function renderFixturesForMobile(fixtures) {
                         <div class="list-item-title">${fx.home} – ${fx.away}</div>
                         <div class="list-item-meta">${fx.league} - ${time}</div>
                     </div>
-                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>`;
         });
     });
@@ -157,7 +155,7 @@ async function runAnalysis(home, away) {
         openModal('Elemzés');
         const modalBody = document.getElementById('modal-body');
         modalBody.innerHTML = '';
-        modalBody.appendChild(skeleton);
+        modalBody.appendChild(skeleton.cloneNode(true));
         modalBody.appendChild(resultsEl);
         modalBody.appendChild(chatContainer);
     } else {
@@ -188,6 +186,7 @@ async function runAnalysis(home, away) {
         targetSkeleton.classList.remove('active');
         targetChat.style.display = 'block';
         targetChat.querySelector('#chat-messages').innerHTML = '';
+
 
     } catch (e) {
         const targetEl = isMobile() ? document.querySelector('#modal-body #analysis-results') : resultsEl;
