@@ -13,17 +13,28 @@ const LEAGUE_CATEGORIES = {
         '🎲 Vad Kártyák': [ 'FIFA World Cup', 'UEFA European Championship', 'Conference League', 'Brazil Serie A', 'Argentinian Liga Profesional', 'Greek Super League', 'Nemzetek Ligája', 'Kupa', 'Copa', 'Cup' ]
     },
     hockey: { '🎯 Prémium Elemzés': [ 'NHL' ], '📈 Stabil Ligák': [ 'KHL', 'SHL', 'Liiga', 'DEL', 'AHL', 'ICEHL', 'Champions Hockey League' ], '🎲 Vad Kártyák': [ 'IIHF World Championship', 'Olimpiai Játékok', 'Spengler Cup', 'Extraliga' ] },
-    basketball: { '🎯 Prémium Elemzés': [ 'NBA', 'Euroleague' ], '📈 Stabil Ligák': [ 'Spanish Liga ACB', 'Turkish BSL', 'German BBL', 'Italian Lega A' ], '🎲 Vad Kártyák': [ 'FIBA World Cup', 'Olimpiai Játékok', 'EuroBasket', 'FIBA Champions League', 'EuroCup', 'LNB Pro A' ] }
+    basketball: { '🎯 Prémium Elemzés': [ 'NBA', 'Euroleague' ], '📈 Stabil Ligák': [ 'Liga ACB', 'BSL', 'BBL', 'Lega A' ], '🎲 Vad Kártyák': [ 'FIBA World Cup', 'Olimpiai Játékok', 'EuroBasket', 'FIBA Champions League', 'EuroCup', 'LNB Pro A' ] }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
     const themeSwitcher = document.getElementById('theme-switcher');
+    const htmlEl = document.documentElement;
+
+    const setIcon = (theme) => {
+        themeSwitcher.innerHTML = theme === 'dark'
+            ? '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>'
+            : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+    };
+
     const currentTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.className = `${currentTheme}-theme`;
+    htmlEl.className = `${currentTheme}-theme`;
+    setIcon(currentTheme);
+
     themeSwitcher.addEventListener('click', () => {
-        let newTheme = document.documentElement.className === 'dark-theme' ? 'light' : 'dark';
-        document.documentElement.className = `${newTheme}-theme`;
+        let newTheme = htmlEl.className.includes('dark') ? 'light' : 'dark';
+        htmlEl.className = `${newTheme}-theme`;
         localStorage.setItem('theme', newTheme);
+        setIcon(newTheme);
     });
 
     if(!__gasUrl||!__gasUrl.startsWith('https://script.google.com')){
@@ -102,12 +113,15 @@ function renderFixturesForDesktop(fixtures) {
                 columnContent += `</details>`;
             });
         }
-
+        
+        const [icon, ...titleParts] = group.split(' ');
+        const title = titleParts.join(' ');
+        
         board.innerHTML += `
             <div class="kanban-column">
-                <h4 class="kanban-column-header">${group.split(' ')[0]} ${group.split(' ').slice(1).join(' ')}</h4>
+                <h4 class="kanban-column-header">${icon} ${title}</h4>
                 <div class="column-content">
-                    ${columnContent || '<p class="muted">Nincs meccs ebben a kategóriában.</p>'}
+                    ${columnContent || '<p class="muted" style="text-align: center; padding-top: 2rem;">Nincs meccs ebben a kategóriában.</p>'}
                 </div>
             </div>`;
     });
@@ -119,7 +133,7 @@ function renderFixturesForMobile(fixtures) {
     let html = '';
 
     Object.keys(groupedByDate).sort((a,b) => new Date(a.split('. ').join('.').split('.').reverse().join('-')) - new Date(b.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
-        html += `<h4 class="date-header">${formatDateLabel(dateKey)}</h4>`;
+        html += `<h4 class="date-header" style="padding: 1rem; border-bottom: 1px solid var(--border-color);">${formatDateLabel(dateKey)}</h4>`;
         groupedByDate[dateKey].forEach(fx => {
             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
             html += `
@@ -159,7 +173,7 @@ async function runAnalysis(home, away) {
         const response = await fetch(analysisUrl, {
             method: 'POST',
             body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) }),
-            headers: { 'Content-Type': 'text/plain' }
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' } // Best practice
         });
         if (!response.ok) throw new Error(`Szerver válasz hiba: ${response.status}`);
         const data = await response.json();
@@ -174,7 +188,7 @@ async function runAnalysis(home, away) {
         modalChat.querySelector('#chat-messages').innerHTML = '';
 
     } catch (e) {
-        modalResults.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
+        modalResults.innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba történt az elemzés során: ${e.message}</p>`;
         modalSkeleton.classList.remove('active');
     }
 }
@@ -188,12 +202,13 @@ function handleSportChange() {
 }
 
 function openModal(title, content = '', sizeClass = 'modal-sm') {
-    const modalContent = document.querySelector('#modal-container .modal-content');
+    const modalContainer = document.getElementById('modal-container');
+    const modalContent = modalContainer.querySelector('.modal-content');
     modalContent.className = 'modal-content'; // Reset classes
     modalContent.classList.add(sizeClass);
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-body').innerHTML = content;
-    document.getElementById('modal-container').classList.add('open');
+    modalContainer.classList.add('open');
 }
 function closeModal() { document.getElementById('modal-container').classList.remove('open'); }
 
@@ -209,14 +224,18 @@ async function openHistoryModal() {
         } else { return; }
     }
     const modalSize = isMobile() ? 'modal-fullscreen' : 'modal-lg';
-    openModal('Előzmények', '<p class="muted">Előzmények betöltése...</p>', modalSize);
+    // A sablonból másoljuk a betöltési animációt
+    const loadingHTML = document.getElementById('loading-skeleton').outerHTML;
+    openModal('Előzmények', loadingHTML, modalSize);
+    document.querySelector('#modal-container #loading-skeleton').classList.add('active'); // Aktiváljuk
+
     try {
         const response = await fetch(`${__gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         document.getElementById('modal-body').innerHTML = renderHistory(data.history);
     } catch (e) {
-        document.getElementById('modal-body').innerHTML = `<p class="muted" style="color:var(--danger)">Hiba: ${e.message}</p>`;
+        document.getElementById('modal-body').innerHTML = `<p class="muted" style="color:var(--danger); text-align:center; padding: 2rem;">Hiba az előzmények betöltésekor: ${e.message}</p>`;
     }
 }
 
@@ -241,24 +260,30 @@ function runManualAnalysis() {
 }
 
 function renderHistory(historyData) {
-    const history = historyData.filter(item => item.home && item.away).sort((a,b) => new Date(b.date) - new Date(a.date));
-    if (!history || history.length === 0) {
-        return '<p class="muted">Nincsenek mentett előzmények.</p>';
+    if (!historyData || historyData.length === 0) {
+        return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek mentett előzmények.</p>';
     }
+    const history = historyData.filter(item => item.home && item.away);
     const groupedByDate = groupBy(history, item => new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
     
     let html = '';
     Object.keys(groupedByDate).sort((a,b) => new Date(b.split('. ').join('.').split('.').reverse().join('-')) - new Date(a.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
+        // A <details> elem alapból csukva van, nincs szükség extra logikára
         html += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
-        groupedByDate[dateKey].forEach(item => {
+        // A dátumon belüli elemeket is rendezzük idő szerint csökkenőbe
+        const sortedItems = groupedByDate[dateKey].sort((a,b) => new Date(b.date) - new Date(a.date));
+        
+        sortedItems.forEach(item => {
             const time = new Date(item.date).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
             html += `
                 <div class="list-item">
-                    <div style="flex-grow:1;" onclick="runAnalysis('${escape(item.home)}', '${escape(item.away)}')">
+                    <div style="flex-grow:1;" onclick="viewHistoryDetail('${item.id}')">
                         <div class="list-item-title">${item.home} – ${item.away}</div>
-                        <div class="list-item-meta">${item.sport} - ${time}</div>
+                        <div class="list-item-meta">${item.sport.charAt(0).toUpperCase() + item.sport.slice(1)} - ${time}</div>
                     </div>
-                     <button class="btn" onclick="deleteHistoryItem('${item.id}'); event.stopPropagation();" title="Törlés">🗑️</button>
+                     <button class="btn" onclick="deleteHistoryItem('${item.id}'); event.stopPropagation();" title="Törlés">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                     </button>
                 </div>`;
         });
         html += `</details>`;
@@ -266,16 +291,48 @@ function renderHistory(historyData) {
     return html;
 }
 
+async function viewHistoryDetail(id) {
+    openModal('Elemzés Betöltése...', document.getElementById('loading-skeleton').outerHTML, isMobile() ? 'modal-fullscreen' : 'modal-lg');
+    document.querySelector('#modal-container #loading-skeleton').classList.add('active');
+
+    try {
+        const response = await fetch(`${__gasUrl}?action=getAnalysisDetail&sheetUrl=${encodeURIComponent(__sheetUrl)}&id=${id}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        const { record } = data;
+        document.getElementById('modal-title').textContent = `${record.home} vs ${record.away}`;
+        
+        const modalBody = document.getElementById('modal-body');
+        modalBody.innerHTML = document.getElementById('common-elements').innerHTML;
+        modalBody.querySelector('#loading-skeleton').style.display = 'none';
+        modalBody.querySelector('#analysis-results').innerHTML = `<div class="analysis-body">${record.html}</div>`;
+        
+        const modalChat = modalBody.querySelector('#chat-container');
+        modalChat.style.display = 'block';
+        __currentAnalysisContext = record.html;
+        __chatHistory = [];
+        
+        modalChat.querySelector('#chat-messages').innerHTML = '';
+        modalChat.querySelector('#chat-send-btn').onclick = sendChatMessage;
+        modalChat.querySelector('#chat-input').onkeyup = (e) => e.key === "Enter" && sendChatMessage();
+
+    } catch(e) {
+        document.getElementById('modal-body').innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba: ${e.message}</p>`;
+    }
+}
+
+
 async function deleteHistoryItem(id) {
     if (!__sheetUrl || !confirm("Biztosan törölni szeretnéd ezt az elemet a naplóból?")) return;
     try {
         const response = await fetch(__gasUrl, {
             method: 'POST',
-            mode: 'no-cors', // Mivel a doPost nem ad vissza JSON-t, a 'no-cors' egyszerűbb
-            body: JSON.stringify({ action: 'deleteHistoryItem', sheetUrl: __sheetUrl, id: id })
+            body: JSON.stringify({ action: 'deleteHistoryItem', sheetUrl: __sheetUrl, id: id }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
-        alert('Elem sikeresen törölve.');
-        openHistoryModal(); // Újratölti a listát
+        // Újratöltjük a listát a sikeresség ellenőrzése nélkül, a felhasználói élmény gyorsabb
+        openHistoryModal();
     } catch (e) {
         alert(`Hiba a törlés során: ${e.message}`);
     }
@@ -304,7 +361,7 @@ async function sendChatMessage() {
         const response = await fetch(__gasUrl, {
             method: 'POST',
             body: JSON.stringify({ action: 'askChat', context: __currentAnalysisContext, history: __chatHistory, question: message }),
-            headers: { 'Content-Type': 'text/plain' }
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
         if (!response.ok) throw new Error(`Szerver hiba: ${response.statusText}`);
         const data = await response.json();
@@ -321,6 +378,7 @@ async function sendChatMessage() {
 
 function addMessageToChat(text, role) {
     const messagesContainer = document.querySelector('#modal-container #chat-messages');
+    if (!messagesContainer) return; // Biztonsági ellenőrzés
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${role}`;
     bubble.textContent = text;
