@@ -26,17 +26,17 @@
     </header>
 
     <div class="controls-bar">
-        <div class="control-group">
-            <label for="sportSelector">Sportág</label>
-            <div class="select-wrapper">
-                <select id="sportSelector" onchange="handleSportChange()">
-                    <option value="soccer" selected>Labdarúgás</option>
-                    <option value="hockey">Jégkorong</option>
-                    <option value="basketball">Kosárlabda</option>
-                </select>
-            </div>
-        </div>
         <div class="main-actions">
+            <div class="control-group">
+                <label for="sportSelector">Sportág</label>
+                <div class="select-wrapper">
+                    <select id="sportSelector" onchange="handleSportChange()">
+                        <option value="soccer" selected>Labdarúgás</option>
+                        <option value="hockey">Jégkorong</option>
+                        <option value="basketball">Kosárlabda</option>
+                    </select>
+                </div>
+            </div>
              <button id="loadFixturesBtn" class="btn btn-primary btn-lg" onclick="loadFixtures()">Meccsek Betöltése</button>
              <button id="historyBtn" class="btn btn-lg" onclick="openHistoryModal()">Előzmények</button>
              <button id="manualBtn" class="btn btn-lg" onclick="openManualAnalysisModal()">Kézi Megnyitás</button>
