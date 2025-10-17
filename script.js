@@ -4,6 +4,7 @@ let __currentSport = 'soccer';
 let __sheetUrl = '';
 let __currentAnalysisContext = '';
 let __chatHistory = [];
+let __completedAnalyses = [];
 
 const LEAGUE_CATEGORIES = {
     soccer: {
@@ -98,7 +99,7 @@ function renderFixturesForDesktop(fixtures) {
             const groupedByDate = groupBy(groupedByCategory[group], fx => new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
             
             Object.keys(groupedByDate).sort((a,b) => new Date(a.split('. ').join('.').split('.').reverse().join('-')) - new Date(b.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
-                columnContent += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
+                columnContent += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
                 groupedByDate[dateKey].forEach(fx => {
                     const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
                     columnContent += `
@@ -126,7 +127,6 @@ function renderFixturesForDesktop(fixtures) {
             </div>`;
     });
 }
-
 
 function renderFixturesForMobile(fixtures) {
     const groupedByDate = groupBy(fixtures, fx => new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
@@ -173,7 +173,7 @@ async function runAnalysis(home, away) {
         const response = await fetch(analysisUrl, {
             method: 'POST',
             body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) }),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' } // Best practice
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
         if (!response.ok) throw new Error(`Szerver válasz hiba: ${response.status}`);
         const data = await response.json();
@@ -187,14 +187,80 @@ async function runAnalysis(home, away) {
         modalChat.style.display = 'block';
         modalChat.querySelector('#chat-messages').innerHTML = '';
 
+        const portfolioData = extractDataForPortfolio(data.html, home, away);
+        if (portfolioData && !__completedAnalyses.some(a => a.match === portfolioData.match)) {
+            __completedAnalyses.push(portfolioData);
+            updatePortfolioButton();
+        }
+
     } catch (e) {
         modalResults.innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba történt az elemzés során: ${e.message}</p>`;
         modalSkeleton.classList.remove('active');
     }
 }
 
+function updatePortfolioButton() {
+    const btn = document.getElementById('portfolioBtn');
+    const count = __completedAnalyses.length;
+    btn.textContent = `Portfólió Építése (${count}/3)`;
+    if (count >= 3) {
+        btn.disabled = false;
+    } else {
+        btn.disabled = true;
+    }
+}
+
+function extractDataForPortfolio(html, home, away) {
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        const bestBetCard = Array.from(doc.querySelectorAll('.summary-card h5')).find(h5 => h5.textContent.includes('AI Legjobb Tipp') || h5.textContent.includes('Legvalószínűbb kimenetel'));
+        if (!bestBetCard) return null;
+
+        const bestBet = bestBetCard.nextElementSibling.textContent.trim();
+        const confidence = bestBetCard.nextElementSibling.nextElementSibling.querySelector('strong').textContent.trim();
+        
+        if (bestBet && confidence) {
+            return {
+                match: `${home} vs ${away}`,
+                bestBet: bestBet,
+                confidence: confidence
+            };
+        }
+        return null;
+    } catch (e) {
+        console.error("Hiba az adatok kinyerésekor a portfólióhoz:", e);
+        return null;
+    }
+}
+
+async function buildPortfolio() {
+    openModal('Napi Portfólió Építése', document.getElementById('loading-skeleton').outerHTML, 'modal-lg');
+    document.querySelector('#modal-container #loading-skeleton').classList.add('active');
+
+    try {
+        const response = await fetch(__gasUrl, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'buildPortfolio', analyses: __completedAnalyses }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+        if (!response.ok) throw new Error(`Szerver hiba: ${response.statusText}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        const formattedReport = data.report.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>').replace(/- /g, '&bull; ');
+        document.getElementById('modal-body').innerHTML = `<div class="portfolio-report" style="font-family: var(--font-family-body); line-height: 1.8;">${formattedReport}</div>`;
+
+    } catch (e) {
+        document.getElementById('modal-body').innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
+    }
+}
+
 function handleSportChange() {
     __currentSport = document.getElementById('sportSelector').value;
+    __completedAnalyses = [];
+    updatePortfolioButton();
     if (!isMobile()) {
         document.getElementById('kanban-board').innerHTML = '';
         document.getElementById('placeholder').style.display = 'flex';
@@ -204,7 +270,7 @@ function handleSportChange() {
 function openModal(title, content = '', sizeClass = 'modal-sm') {
     const modalContainer = document.getElementById('modal-container');
     const modalContent = modalContainer.querySelector('.modal-content');
-    modalContent.className = 'modal-content'; // Reset classes
+    modalContent.className = 'modal-content';
     modalContent.classList.add(sizeClass);
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-body').innerHTML = content;
@@ -224,10 +290,9 @@ async function openHistoryModal() {
         } else { return; }
     }
     const modalSize = isMobile() ? 'modal-fullscreen' : 'modal-lg';
-    // A sablonból másoljuk a betöltési animációt
     const loadingHTML = document.getElementById('loading-skeleton').outerHTML;
     openModal('Előzmények', loadingHTML, modalSize);
-    document.querySelector('#modal-container #loading-skeleton').classList.add('active'); // Aktiváljuk
+    document.querySelector('#modal-container #loading-skeleton').classList.add('active');
 
     try {
         const response = await fetch(`${__gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
@@ -235,7 +300,7 @@ async function openHistoryModal() {
         if (data.error) throw new Error(data.error);
         document.getElementById('modal-body').innerHTML = renderHistory(data.history);
     } catch (e) {
-        document.getElementById('modal-body').innerHTML = `<p class="muted" style="color:var(--danger); text-align:center; padding: 2rem;">Hiba az előzmények betöltésekor: ${e.message}</p>`;
+        document.getElementById('modal-body').innerHTML = `<p class="muted" style="color:var(--danger); text-align:center; padding: 2rem;">Hiba: ${e.message}</p>`;
     }
 }
 
@@ -268,9 +333,7 @@ function renderHistory(historyData) {
     
     let html = '';
     Object.keys(groupedByDate).sort((a,b) => new Date(b.split('. ').join('.').split('.').reverse().join('-')) - new Date(a.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
-        // A <details> elem alapból csukva van, nincs szükség extra logikára
         html += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
-        // A dátumon belüli elemeket is rendezzük idő szerint csökkenőbe
         const sortedItems = groupedByDate[dateKey].sort((a,b) => new Date(b.date) - new Date(a.date));
         
         sortedItems.forEach(item => {
@@ -282,7 +345,7 @@ function renderHistory(historyData) {
                         <div class="list-item-meta">${item.sport.charAt(0).toUpperCase() + item.sport.slice(1)} - ${time}</div>
                     </div>
                      <button class="btn" onclick="deleteHistoryItem('${item.id}'); event.stopPropagation();" title="Törlés">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                      </button>
                 </div>`;
         });
@@ -322,16 +385,14 @@ async function viewHistoryDetail(id) {
     }
 }
 
-
 async function deleteHistoryItem(id) {
     if (!__sheetUrl || !confirm("Biztosan törölni szeretnéd ezt az elemet a naplóból?")) return;
     try {
-        const response = await fetch(__gasUrl, {
+        await fetch(__gasUrl, {
             method: 'POST',
             body: JSON.stringify({ action: 'deleteHistoryItem', sheetUrl: __sheetUrl, id: id }),
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
-        // Újratöltjük a listát a sikeresség ellenőrzése nélkül, a felhasználói élmény gyorsabb
         openHistoryModal();
     } catch (e) {
         alert(`Hiba a törlés során: ${e.message}`);
@@ -378,7 +439,7 @@ async function sendChatMessage() {
 
 function addMessageToChat(text, role) {
     const messagesContainer = document.querySelector('#modal-container #chat-messages');
-    if (!messagesContainer) return; // Biztonsági ellenőrzés
+    if (!messagesContainer) return;
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${role}`;
     bubble.textContent = text;
