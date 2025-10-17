@@ -32,8 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         document.getElementById('userInfo').textContent=`Csatlakozva`;
     }
-    document.getElementById('chat-send-btn').addEventListener('click', sendChatMessage);
-    document.getElementById('chat-input').addEventListener('keyup', (e) => e.key === "Enter" && sendChatMessage());
     __sheetUrl = localStorage.getItem('sheetUrl');
 });
 
@@ -63,8 +61,7 @@ async function loadFixtures() {
         sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
 
         if (isMobile()) {
-            renderFixturesForMobile(__fixtures);
-            openModal('Mérkőzések');
+            openModal('Mérkőzések', renderFixturesForMobile(__fixtures), 'modal-fullscreen');
         } else {
             renderFixturesForDesktop(__fixtures);
         }
@@ -118,7 +115,6 @@ function renderFixturesForDesktop(fixtures) {
 
 
 function renderFixturesForMobile(fixtures) {
-    const mobileBody = document.getElementById('modal-body');
     const groupedByDate = groupBy(fixtures, fx => new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
     let html = '';
 
@@ -136,31 +132,26 @@ function renderFixturesForMobile(fixtures) {
                 </div>`;
         });
     });
-    mobileBody.innerHTML = html;
+    return html;
 }
 
 async function runAnalysis(home, away) {
     home = unescape(home);
     away = unescape(away);
+    
+    openModal(`${home} vs ${away}`, document.getElementById('common-elements').innerHTML, 'modal-lg');
+    
+    const modalSkeleton = document.querySelector('#modal-container #loading-skeleton');
+    const modalResults = document.querySelector('#modal-container #analysis-results');
+    const modalChat = document.querySelector('#modal-container #chat-container');
+    
+    modalResults.innerHTML = '';
+    modalChat.style.display = 'none';
+    modalSkeleton.classList.add('active');
 
-    const skeleton = document.getElementById('loading-skeleton');
-    const resultsEl = document.getElementById('analysis-results');
-    const chatContainer = document.getElementById('chat-container');
-
-    resultsEl.innerHTML = '';
-    chatContainer.style.display = 'none';
-    skeleton.classList.add('active');
-
-    if(isMobile()) {
-        openModal('Elemzés');
-        const modalBody = document.getElementById('modal-body');
-        modalBody.innerHTML = '';
-        modalBody.appendChild(skeleton.cloneNode(true));
-        modalBody.appendChild(resultsEl);
-        modalBody.appendChild(chatContainer);
-    } else {
-        openAnalysisPanel(`${home} vs ${away}`);
-    }
+    // Chat eseménykezelők újbóli hozzárendelése, mert a klónozás nem viszi át őket
+    modalChat.querySelector('#chat-send-btn').onclick = sendChatMessage;
+    modalChat.querySelector('#chat-input').onkeyup = (e) => e.key === "Enter" && sendChatMessage();
 
     try {
         let analysisUrl = `${__gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${__currentSport}&force=true&sheetUrl=${encodeURIComponent(__sheetUrl)}`;
@@ -178,21 +169,14 @@ async function runAnalysis(home, away) {
         __currentAnalysisContext = data.html;
         __chatHistory = [];
         
-        const targetResultsEl = isMobile() ? document.querySelector('#modal-body #analysis-results') : document.getElementById('analysis-results');
-        const targetSkeleton = isMobile() ? document.querySelector('#modal-body #loading-skeleton') : document.getElementById('loading-skeleton');
-        const targetChat = isMobile() ? document.querySelector('#modal-body #chat-container') : document.getElementById('chat-container');
-
-        targetResultsEl.innerHTML = `<div class="analysis-body">${data.html}</div>`;
-        targetSkeleton.classList.remove('active');
-        targetChat.style.display = 'block';
-        targetChat.querySelector('#chat-messages').innerHTML = '';
-
+        modalResults.innerHTML = `<div class="analysis-body">${data.html}</div>`;
+        modalSkeleton.classList.remove('active');
+        modalChat.style.display = 'block';
+        modalChat.querySelector('#chat-messages').innerHTML = '';
 
     } catch (e) {
-        const targetEl = isMobile() ? document.querySelector('#modal-body #analysis-results') : resultsEl;
-        targetEl.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
-        if(isMobile()) document.querySelector('#modal-body #loading-skeleton').classList.remove('active');
-        else skeleton.classList.remove('active');
+        modalResults.innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
+        modalSkeleton.classList.remove('active');
     }
 }
 
@@ -204,13 +188,10 @@ function handleSportChange() {
     }
 }
 
-function openAnalysisPanel(title) {
-    document.getElementById('panel-title').textContent = title;
-    document.getElementById('analysis-panel').classList.add('open');
-}
-function closeAnalysisPanel() { document.getElementById('analysis-panel').classList.remove('open'); }
-
-function openModal(title, content = '') {
+function openModal(title, content = '', sizeClass = 'modal-sm') {
+    const modalContent = document.querySelector('#modal-container .modal-content');
+    modalContent.classList.remove('modal-sm', 'modal-lg', 'modal-fullscreen');
+    modalContent.classList.add(sizeClass);
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-body').innerHTML = content;
     document.getElementById('modal-container').classList.add('open');
@@ -228,7 +209,7 @@ async function openHistoryModal() {
             return;
         }
     }
-    openModal('Előzmények', '<p class="muted">Előzmények betöltése...</p>');
+    openModal('Előzmények', '<p class="muted">Előzmények betöltése...</p>', 'modal-lg');
     try {
         const response = await fetch(`${__gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
         const data = await response.json();
@@ -245,7 +226,7 @@ function openManualAnalysisModal() {
         <div class="control-group" style="margin-top: 1rem;"><label for="manual-away">Vendég csapat</label><input id="manual-away" placeholder="Pl. Manchester City"/></div>
         <button class="btn btn-primary" onclick="runManualAnalysis()" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
     `;
-    openModal('Kézi Elemzés', content);
+    openModal('Kézi Elemzés', content, 'modal-sm');
 }
 
 function runManualAnalysis() {
@@ -269,7 +250,7 @@ function renderHistory(historyData, targetElementId) {
     let html = '';
     history.forEach(item => {
         const date = new Date(item.date).toLocaleString('hu-HU', { timeZone: 'Europe/Budapest', dateStyle: 'short', timeStyle: 'short'});
-        html += `<div class="list-item" onclick="runAnalysis('${escape(item.home)}', '${escape(item.away)}')">
+        html += `<div class="list-item" onclick="runAnalysis('${escape(item.home)}', '${escape(item.away)}'); closeModal();">
                     <div>
                         <div class="list-item-title">${item.home} – ${item.away}</div>
                         <div class="list-item-meta">${item.sport} - ${date}</div>
@@ -290,12 +271,12 @@ function formatDateLabel(dateStr) {
 }
 
 async function sendChatMessage() {
-    const input = document.querySelector('#chat-input');
+    const input = document.querySelector('#modal-container #chat-input');
     const message = input.value.trim();
     if (!message) return;
     addMessageToChat(message, 'user');
     input.value = '';
-    document.querySelector('#chat-thinking-indicator').style.display = 'block';
+    document.querySelector('#modal-container #chat-thinking-indicator').style.display = 'block';
 
     try {
         const response = await fetch(__gasUrl, {
@@ -312,12 +293,12 @@ async function sendChatMessage() {
     } catch (e) {
         addMessageToChat(`Hiba történt: ${e.message}`, 'ai');
     } finally {
-        document.querySelector('#chat-thinking-indicator').style.display = 'none';
+        document.querySelector('#modal-container #chat-thinking-indicator').style.display = 'none';
     }
 }
 
 function addMessageToChat(text, role) {
-    const messagesContainer = document.querySelector('#chat-messages');
+    const messagesContainer = document.querySelector('#modal-container #chat-messages');
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${role}`;
     bubble.textContent = text;
