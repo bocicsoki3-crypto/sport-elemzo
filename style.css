@@ -42,12 +42,14 @@ input:focus, .select-wrapper select:focus {outline:none;border-color:var(--prima
 .btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 20px rgba(212, 175, 55, 0.3), inset 0 0 10px rgba(212, 175, 55, 0.1); transform: translateY(-2px); }
 .btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#000; border: none; font-weight: 700;}
 .btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(212,175,55,.4)}
-.btn:disabled{background:#555;cursor:not-allowed;opacity:.7}
+.btn-special { border-color: var(--accent); color: var(--accent); }
+.btn-special:hover:not(:disabled) { border-color: var(--accent); color: #fff; background: rgba(0, 191, 255, 0.15); box-shadow: 0 0 20px rgba(0, 191, 255, 0.4); }
+.btn:disabled{background:var(--card-bg);color:var(--text-secondary);opacity:.5;cursor:not-allowed;border-color:var(--border-color)}
 .muted{color:var(--text-secondary);font-size:.9rem}
 .placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);padding:2rem;text-align:center}
 .placeholder svg{width:64px;height:64px;margin-bottom:1rem;stroke-width:1.5;opacity:.3}
 
-.controls-bar { display: flex; align-items: center; justify-content: center; gap: 3rem; padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.1); flex-shrink: 0;}
+.controls-bar { display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.1); flex-shrink: 0;}
 .main-actions { display: flex; gap: 1rem; align-items: flex-end; }
 .main-content { padding: 0; flex-grow: 1; overflow: hidden; position: relative; }
 .kanban-container { height: 100%; overflow-x: auto; padding: 2rem; display: flex; justify-content: center; }
@@ -102,12 +104,13 @@ details > summary::-webkit-details-marker { display: none; }
 @keyframes pulse-bg { 0% { background: rgba(255,255,255,0.05); } 50% { background: rgba(255,255,255,0.1); } 100% { background: rgba(255,255,255,0.05); } }
 .loading-skeleton .skeleton-line{background:rgba(255,255,255,0.1);height: 1em; border-radius:4px;margin-bottom:10px;animation:pulse-bg 1.5s infinite}
 
-.summary-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
+.at-a-glance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.summary-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: flex-start; }
 .summary-card h5 { margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; }
 .summary-card .value { font-size: 1.5rem; font-weight: 700; }
 .summary-card .details { font-size: 0.8rem; margin-top: 0.5rem; color:var(--text-secondary); }
 
-.radial-chart-container { position: relative; width: 100%; max-width: 150px; margin: 0 auto; flex-grow: 1; display: flex; align-items: center; }
+.radial-chart-container { position: relative; width: 100%; max-width: 150px; margin: 0 auto 1rem; display: flex; align-items: center; }
 .radial-chart { width: 100%; height: 100%; transform: rotate(-90deg); }
 .radial-chart circle { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dasharray 0.5s ease; }
 .radial-chart .track { stroke: rgba(255,255,255,0.05); }
@@ -147,8 +150,11 @@ details > summary::-webkit-details-marker { display: none; }
 .chat-bubble.user { background-color: var(--primary); color: #000; margin-left: auto; border-bottom-right-radius: 3px; }
 .chat-bubble.ai { background-color: rgba(255,255,255,0.1); border: 1px solid var(--border-color); border-bottom-left-radius: 3px; }
 
+.portfolio-report { white-space: pre-wrap; line-height: 1.8; }
+.portfolio-report strong { color: var(--primary); }
+
 /* --- EGYSÉGES KIEMELŐ EFFEKT --- */
-.glowing-text, .xg-value, .confidence-score, .market-card-value {
+.glowing-text, .xg-value, .confidence-score {
   color: var(--text-primary) !important;
   text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5);
   animation: pulse-glow-white 3s infinite alternate;
@@ -159,7 +165,7 @@ details > summary::-webkit-details-marker { display: none; }
   to { text-shadow: 0 0 10px var(--text-primary), 0 0 20px rgba(255, 255, 255, 0.6); }
 }
 
-.analysis-body strong, .expert-confidence-card .value {
+.analysis-body strong, .expert-confidence-card .value, .market-card-value {
   color: var(--primary) !important;
   text-shadow: 0 0 8px currentColor, 0 0 16px rgba(212, 175, 55, 0.5);
   animation: pulse-glow-orange 3s infinite alternate;
