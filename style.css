@@ -150,3 +150,22 @@ details > summary::-webkit-details-marker { display: none; }
 .chat-bubble { padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; max-width: 80%; line-height: 1.5; }
 .chat-bubble.user { background-color: var(--primary); color: #000; margin-left: auto; border-bottom-right-radius: 3px; }
 .chat-bubble.ai { background-color: rgba(255,255,255,0.1); border: 1px solid var(--border-color); border-bottom-left-radius: 3px; }
+/* --- ÚJ KIEMELŐ EFFEKT --- */
+.highlight-glow,
+.analysis-body strong,
+.summary-card .value.glowing-text,
+.expert-confidence-card .value,
+.market-card-value {
+  color: var(--primary);
+  text-shadow: 0 0 8px currentColor, 0 0 16px rgba(212, 175, 55, 0.5);
+  animation: pulse-glow 3s infinite alternate;
+}
+
+@keyframes pulse-glow {
+  from {
+    text-shadow: 0 0 6px var(--primary), 0 0 12px rgba(212, 175, 55, 0.3);
+  }
+  to {
+    text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6);
+  }
+}
