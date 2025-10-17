@@ -139,7 +139,7 @@ async function runAnalysis(home, away) {
     home = unescape(home);
     away = unescape(away);
     
-    openModal(`${home} vs ${away}`, document.getElementById('common-elements').innerHTML, 'modal-lg');
+    openModal(`${home} vs ${away}`, document.getElementById('common-elements').innerHTML, isMobile() ? 'modal-fullscreen' : 'modal-lg');
     
     const modalSkeleton = document.querySelector('#modal-container #loading-skeleton');
     const modalResults = document.querySelector('#modal-container #analysis-results');
@@ -149,7 +149,6 @@ async function runAnalysis(home, away) {
     modalChat.style.display = 'none';
     modalSkeleton.classList.add('active');
 
-    // Chat eseménykezelők újbóli hozzárendelése, mert a klónozás nem viszi át őket
     modalChat.querySelector('#chat-send-btn').onclick = sendChatMessage;
     modalChat.querySelector('#chat-input').onkeyup = (e) => e.key === "Enter" && sendChatMessage();
 
@@ -190,7 +189,7 @@ function handleSportChange() {
 
 function openModal(title, content = '', sizeClass = 'modal-sm') {
     const modalContent = document.querySelector('#modal-container .modal-content');
-    modalContent.classList.remove('modal-sm', 'modal-lg', 'modal-fullscreen');
+    modalContent.className = 'modal-content'; // Reset classes
     modalContent.classList.add(sizeClass);
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-body').innerHTML = content;
@@ -204,17 +203,18 @@ async function openHistoryModal() {
         if (url && url.startsWith('https://docs.google.com/spreadsheets/d/')) {
             __sheetUrl = url;
             localStorage.setItem('sheetUrl', url);
-        } else {
+        } else if(url) { // Csak akkor jelezzen hibát, ha a felhasználó írt be valamit
             alert('Érvénytelen URL.');
             return;
-        }
+        } else { return; }
     }
-    openModal('Előzmények', '<p class="muted">Előzmények betöltése...</p>', 'modal-lg');
+    const modalSize = isMobile() ? 'modal-fullscreen' : 'modal-lg';
+    openModal('Előzmények', '<p class="muted">Előzmények betöltése...</p>', modalSize);
     try {
         const response = await fetch(`${__gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(__sheetUrl)}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-        renderHistory(data.history, 'modal-body');
+        document.getElementById('modal-body').innerHTML = renderHistory(data.history);
     } catch (e) {
         document.getElementById('modal-body').innerHTML = `<p class="muted" style="color:var(--danger)">Hiba: ${e.message}</p>`;
     }
@@ -240,17 +240,15 @@ function runManualAnalysis() {
     runAnalysis(home, away);
 }
 
-function renderHistory(historyData, targetElementId) {
-    const targetEl = document.getElementById(targetElementId);
+function renderHistory(historyData) {
     const history = historyData.filter(item => item.home && item.away);
     if (!history || history.length === 0) {
-        targetEl.innerHTML = '<p class="muted">Nincsenek mentett előzmények.</p>';
-        return;
+        return '<p class="muted">Nincsenek mentett előzmények.</p>';
     }
     let html = '';
     history.forEach(item => {
         const date = new Date(item.date).toLocaleString('hu-HU', { timeZone: 'Europe/Budapest', dateStyle: 'short', timeStyle: 'short'});
-        html += `<div class="list-item" onclick="runAnalysis('${escape(item.home)}', '${escape(item.away)}'); closeModal();">
+        html += `<div class="list-item" onclick="runAnalysis('${escape(item.home)}', '${escape(item.away)}');">
                     <div>
                         <div class="list-item-title">${item.home} – ${item.away}</div>
                         <div class="list-item-meta">${item.sport} - ${date}</div>
@@ -258,7 +256,7 @@ function renderHistory(historyData, targetElementId) {
                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>`;
     });
-    targetEl.innerHTML = html;
+    return html;
 }
 
 function groupBy(arr, key) { return arr.reduce((acc, item) => ((acc[key(item)] = [...(acc[key(item)] || []), item]), acc), {}); }
