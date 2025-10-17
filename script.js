@@ -6,7 +6,6 @@ let __sheetUrl = '';
 let __currentAnalysisContext = '';
 let __chatHistory = [];
 
-// ÚJ, ELEMZÉS-FÓKUSZÚ KATEGÓRIÁK
 const LEAGUE_CATEGORIES = {
     soccer: {
         '🎯 Prémium Elemzés': [ 'Champions League', 'Premier League', 'Bundesliga', 'LaLiga', 'Serie A' ],
@@ -125,11 +124,12 @@ async function loadFixtures() {
 
         let html = '';
         const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
-        const sortedDates = Object.keys(groupedByDate).sort((a,b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
+        const sortedDates = Object.keys(groupedByDate).sort((a,b) => new Date(a.split('. ').join('.').split('.').reverse().join('-')) - new Date(b.split('. ').join('.').split('.').reverse().join('-')));
 
         for (const dateKey of sortedDates) {
             let dateLabel = dateKey;
-            if (dateKey === today) dateLabel = "MA";
+            const isToday = dateKey === today;
+            if (isToday) dateLabel = "MA";
             if (dateKey === tomorrow) dateLabel = "HOLNAP";
 
             html += `<h4 class="date-header">${dateLabel}</h4>`;
@@ -145,7 +145,8 @@ async function loadFixtures() {
 
             for (const masterGroup of groupOrder) {
                 if (groupedByCategory[masterGroup]) {
-                    html += `<details class="league-master-group">`;
+                    const isOpen = isToday && masterGroup === '🎯 Prémium Elemzés' ? 'open' : '';
+                    html += `<details class="league-master-group" ${isOpen}>`;
                     html += `<summary class="league-master-group-header">${masterGroup}</summary>`;
 
                     for (const leagueName in groupedByCategory[masterGroup].leagues) {
@@ -158,13 +159,9 @@ async function loadFixtures() {
                             const d = new Date(fx.utcKickoff).toLocaleString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             html += `
                                 <div class="list-item" onclick="fillAndAnalyze('${escapeHtml(fx.home)}','${escapeHtml(fx.away)}')">
-                                    <div>
-                                        <div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div>
-                                        <div class="list-item-meta">${d}</div>
-                                    </div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--text-secondary);"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                </div>
-                            `;
+                                    <div><div class="list-item-title">${escapeHtml(fx.home)} – ${escapeHtml(fx.away)}</div><div class="list-item-meta">${d}</div></div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px; color: var(--text-secondary);"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </div>`;
                         });
                         html += `</details>`;
                     }
@@ -384,7 +381,7 @@ function renderHistory(history, isFiltering = false) {
                     </div>
                     <div style="display:flex;gap:5px">
                         <a href="#" class="action-icon" onclick="loadAnalysisFromHistory('${item.id}')" title="Elemzés Megtekintése"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>
-                        <a href="#" class="action-icon delete" onclick="deleteHistoryItem('${item.id}')" title="Törlés"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></a>
+                        <a href="#" class="action-icon delete" onclick="deleteHistoryItem('${item.id}')" title="Törlés"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></a>
                     </div>
                 </div>
             `;
