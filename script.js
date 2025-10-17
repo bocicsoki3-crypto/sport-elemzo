@@ -105,7 +105,7 @@ function renderFixturesForDesktop(fixtures) {
 
         board.innerHTML += `
             <div class="kanban-column">
-                <h4 class="kanban-column-header">${group}</h4>
+                <h4 class="kanban-column-header">${group.split(' ')[0]} ${group.split(' ').slice(1).join(' ')}</h4>
                 <div class="column-content">
                     ${columnContent || '<p class="muted">Nincs meccs ebben a kategóriában.</p>'}
                 </div>
@@ -248,7 +248,7 @@ function renderHistory(historyData) {
     const groupedByDate = groupBy(history, item => new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
     
     let html = '';
-    Object.keys(groupedByDate).forEach(dateKey => {
+    Object.keys(groupedByDate).sort((a,b) => new Date(b.split('. ').join('.').split('.').reverse().join('-')) - new Date(a.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
         html += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
         groupedByDate[dateKey].forEach(item => {
             const time = new Date(item.date).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
@@ -258,7 +258,7 @@ function renderHistory(historyData) {
                         <div class="list-item-title">${item.home} – ${item.away}</div>
                         <div class="list-item-meta">${item.sport} - ${time}</div>
                     </div>
-                    <button class="btn" onclick="deleteHistoryItem('${item.id}')" title="Törlés">🗑️</button>
+                     <button class="btn" onclick="deleteHistoryItem('${item.id}'); event.stopPropagation();" title="Törlés">🗑️</button>
                 </div>`;
         });
         html += `</details>`;
@@ -267,12 +267,15 @@ function renderHistory(historyData) {
 }
 
 async function deleteHistoryItem(id) {
-    event.stopPropagation(); // Megakadályozza, hogy a háttérben lévő elemre is kattintson
     if (!__sheetUrl || !confirm("Biztosan törölni szeretnéd ezt az elemet a naplóból?")) return;
     try {
-        // Itt lenne a szerverhívás a törléshez
-        alert('Törlési funkció bemutató. A valóságban itt történne a törlés.');
-        // openHistoryModal(); // Újratölti a listát a sikeres törlés után
+        const response = await fetch(__gasUrl, {
+            method: 'POST',
+            mode: 'no-cors', // Mivel a doPost nem ad vissza JSON-t, a 'no-cors' egyszerűbb
+            body: JSON.stringify({ action: 'deleteHistoryItem', sheetUrl: __sheetUrl, id: id })
+        });
+        alert('Elem sikeresen törölve.');
+        openHistoryModal(); // Újratölti a listát
     } catch (e) {
         alert(`Hiba a törlés során: ${e.message}`);
     }
