@@ -201,13 +201,10 @@ async function runAnalysis(home, away) {
 
 function updatePortfolioButton() {
     const btn = document.getElementById('portfolioBtn');
+    if (!btn) return;
     const count = __completedAnalyses.length;
     btn.textContent = `Portfólió Építése (${count}/3)`;
-    if (count >= 3) {
-        btn.disabled = false;
-    } else {
-        btn.disabled = true;
-    }
+    btn.disabled = count < 3;
 }
 
 function extractDataForPortfolio(html, home, away) {
@@ -222,11 +219,7 @@ function extractDataForPortfolio(html, home, away) {
         const confidence = bestBetCard.nextElementSibling.nextElementSibling.querySelector('strong').textContent.trim();
         
         if (bestBet && confidence) {
-            return {
-                match: `${home} vs ${away}`,
-                bestBet: bestBet,
-                confidence: confidence
-            };
+            return { match: `${home} vs ${away}`, bestBet: bestBet, confidence: confidence };
         }
         return null;
     } catch (e) {
@@ -256,6 +249,50 @@ async function buildPortfolio() {
         document.getElementById('modal-body').innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
     }
 }
+
+async function runFinalCheck(home, away, sport) {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '...';
+
+    openModal('Végső Elme-Ellenőrzés', document.getElementById('loading-skeleton').outerHTML, 'modal-sm');
+    document.querySelector('#modal-container #loading-skeleton').classList.add('active');
+
+    try {
+        const openingOdds = JSON.parse(sessionStorage.getItem('openingOdds') || '{}');
+        const response = await fetch(__gasUrl, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'runFinalCheck', sport, home: unescape(home), away: unescape(away), openingOdds }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+        if (!response.ok) throw new Error(`Szerver hiba: ${response.statusText}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        let signalColor, signalText;
+        switch(data.signal) {
+            case 'GREEN': signalColor = 'var(--success)'; signalText = 'ZÖLD JELZÉS ✅'; break;
+            case 'YELLOW': signalColor = 'var(--primary)'; signalText = 'SÁRGA JELZÉS ⚠️'; break;
+            case 'RED': signalColor = 'var(--danger)'; signalText = 'PIROS JELZÉS ❌'; break;
+            default: signalColor = 'var(--text-secondary)'; signalText = 'ISMERETLEN JELZÉS';
+        }
+
+        const resultHtml = `
+            <div style="text-align: center;">
+                <h2 style="color: ${signalColor}; font-size: 2rem;">${signalText}</h2>
+                <p style="font-size: 1.1rem; color: var(--text-secondary); border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">${data.justification}</p>
+            </div>
+        `;
+        document.getElementById('modal-body').innerHTML = resultHtml;
+
+    } catch (e) {
+        document.getElementById('modal-body').innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '✔️';
+    }
+}
+
 
 function handleSportChange() {
     __currentSport = document.getElementById('sportSelector').value;
@@ -337,13 +374,27 @@ function renderHistory(historyData) {
         const sortedItems = groupedByDate[dateKey].sort((a,b) => new Date(b.date) - new Date(a.date));
         
         sortedItems.forEach(item => {
-            const time = new Date(item.date).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
+            const matchTime = new Date(item.date); // Feltételezzük, hogy ez a meccs kezdési ideje
+            const now = new Date();
+            const timeDiffMinutes = (matchTime - now) / (1000 * 60);
+            
+            const isCheckable = timeDiffMinutes <= 60 && timeDiffMinutes > -120; // Meccs előtt 1 órával és a meccs vége előttig aktív
+            const finalCheckButton = `
+                <button class="btn btn-final-check" 
+                        onclick="runFinalCheck('${escape(item.home)}', '${escape(item.away)}', '${item.sport}'); event.stopPropagation();" 
+                        title="Végső Ellenőrzés (meccs előtt 1 órával aktív)" 
+                        ${!isCheckable ? 'disabled' : ''}>
+                    ✔️
+                </button>`;
+
+            const time = matchTime.toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
             html += `
                 <div class="list-item">
                     <div style="flex-grow:1;" onclick="viewHistoryDetail('${item.id}')">
                         <div class="list-item-title">${item.home} – ${item.away}</div>
                         <div class="list-item-meta">${item.sport.charAt(0).toUpperCase() + item.sport.slice(1)} - ${time}</div>
                     </div>
+                     ${finalCheckButton}
                      <button class="btn" onclick="deleteHistoryItem('${item.id}'); event.stopPropagation();" title="Törlés">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                      </button>
