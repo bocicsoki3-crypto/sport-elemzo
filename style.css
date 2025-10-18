@@ -122,9 +122,9 @@ details > summary::-webkit-details-marker { display: none; }
 .at-a-glance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
 .summary-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: flex-start; }
 .summary-card h5 { margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; }
-.summary-card .value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+.summary-card .value { font-size: 1.5rem; font-weight: 700; }
 .summary-card .details { font-size: 0.8rem; margin-top: 0.5rem; color:var(--text-secondary); }
-.summary-card .details strong { color: var(--text-primary); font-weight: 600; }
+.summary-card .details strong { font-weight: 600; }
 
 .radial-chart-container { position: relative; width: 100%; max-width: 150px; margin: 0 auto 1rem; display: flex; align-items: center; }
 .radial-chart { width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -140,47 +140,22 @@ details > summary::-webkit-details-marker { display: none; }
 .expert-confidence-card { grid-column: 1 / -1; margin-bottom: 1rem; border: 1px solid var(--primary); background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15)); }
 .expert-confidence-card .details { font-size: 0.9rem; max-width: 600px; margin: 0.5rem auto 0; }
 
-.xg-chart-container {
+.xg-value-container {
     display: flex;
-    justify-content: space-around;
-    align-items: flex-end;
-    height: 120px;
+    align-items: center;
+    justify-content: center;
     width: 100%;
-    margin-top: 1rem;
-    gap: 1.5rem;
-    padding: 0 1rem;
+    flex-grow: 1;
+    gap: 1rem;
 }
-.chart-bar-wrapper {
+.xg-team {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    flex-grow: 1;
-    height: 100%;
-    justify-content: flex-end;
 }
-.chart-value {
-    font-size: 0.8rem;
-    font-weight: 600;
+.xg-separator {
+    font-size: 1.5rem;
     color: var(--text-secondary);
-    margin-bottom: 4px;
-}
-.chart-bar {
-    width: 100%;
-    border-radius: 4px 4px 0 0;
-    transition: height 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-    animation: riseUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-@keyframes riseUp { from { height: 0; } }
-.home-bar { background: var(--primary); }
-.away-bar { background: var(--accent); }
-.chart-label {
-    font-size: 0.75rem;
-    margin-top: 8px;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 80px;
+    font-weight: 700;
 }
 
 .market-data-section { margin-bottom: 2rem; }
@@ -188,12 +163,10 @@ details > summary::-webkit-details-marker { display: none; }
 .market-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; }
 .market-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 0.5rem; text-align: center; }
 .market-card-title { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem; min-height: 30px; }
-.market-card-value { color: var(--text-primary); }
 
 .micromodel-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
-.micromodel-card h5 { color: var(--accent); margin-bottom: 0.8rem; font-size: 1rem; }
-.micromodel-card p { color: var(--text-secondary); margin: 0; }
-.micromodel-card strong { color: var(--primary); }
+.micromodel-card h5 { color: var(--primary); margin-bottom: 0.8rem; font-size: 1rem; }
+.micromodel-card p { margin: 0; }
 
 .totals-breakdown { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; gap: 0.75rem; font-size: 1.2rem; flex-grow: 1;}
 .analysis-accordion details { border-bottom: 1px solid var(--border-color); }
@@ -216,8 +189,6 @@ details > summary::-webkit-details-marker { display: none; }
 .chat-bubble.ai { background-color: rgba(255,255,255,0.1); border: 1px solid var(--border-color); border-bottom-left-radius: 3px; }
 
 .portfolio-report { white-space: pre-wrap; line-height: 1.8; }
-.portfolio-report strong { color: var(--primary); }
-
 .btn-final-check { padding: 8px 12px; font-size: 1rem; color: var(--success); border-color: var(--success); }
 .btn-final-check:hover:not(:disabled) { background: rgba(57, 255, 20, 0.1); box-shadow: 0 0 15px rgba(57, 255, 20, 0.4); }
 .btn-final-check:disabled { color: var(--text-secondary); border-color: var(--border-color); cursor: help; }
@@ -230,15 +201,16 @@ details > summary::-webkit-details-marker { display: none; }
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes fadeOut { to { opacity: 0; } }
 
-.glowing-text, .xg-value, .confidence-score, .summary-card .value, .market-card-value, .diagram-legend .glowing-text, .total-value {
+.glowing-text, .summary-card .value {
   color: var(--text-primary) !important;
   text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5);
   animation: pulse-glow-white 3s infinite alternate;
 }
 @keyframes pulse-glow-white { from { text-shadow: 0 0 6px var(--text-primary), 0 0 12px rgba(255, 255, 255, 0.3); } to { text-shadow: 0 0 10px var(--text-primary), 0 0 20px rgba(255, 255, 255, 0.6); } }
-.analysis-body strong, .expert-confidence-card .value, .list-item strong, .micromodel-card strong, .portfolio-report strong {
+
+strong, .micromodel-card strong, .portfolio-report strong {
   color: var(--primary) !important;
-  text-shadow: 0 0 8px currentColor, 0 0 16px rgba(212, 175, 55, 0.5);
+  text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
   animation: pulse-glow-orange 3s infinite alternate;
 }
 @keyframes pulse-glow-orange { from { text-shadow: 0 0 6px var(--primary), 0 0 12px rgba(212, 175, 55, 0.3); } to { text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); } }
