@@ -225,3 +225,19 @@ strong, .micromodel-card strong, .portfolio-report strong {
   animation: pulse-glow-orange 3s infinite alternate;
 }
 @keyframes pulse-glow-orange { from { text-shadow: 0 0 6px var(--primary), 0 0 12px rgba(212, 175, 55, 0.3); } to { text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); } }
+
+/* --- JAVÍTÁS (1. KÉP) --- */
+/* Biztosítja, hogy a "Pontok/Gólok Összesen" kártya */
+/* helyesen jelenítse meg a címkét és az értéket. */
+.total-line {
+    display: flex;
+    justify-content: space-between; /* Szétválasztja a címkét és az értéket */
+    align-items: center;
+    width: 90%; /* Kicsit keskenyebb, hogy jól nézzen ki */
+    margin: 0 auto; /* Középre igazítja a sort */
+    font-size: 1.1rem;
+}
+.total-label {
+    color: var(--text-secondary); /* A címke halványabb */
+}
+/* A .total-value-ra már érvényes a .glowing-text szabály, így az világítani fog. */
