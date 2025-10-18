@@ -107,8 +107,9 @@ details > summary::-webkit-details-marker { display: none; }
 .at-a-glance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
 .summary-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: flex-start; }
 .summary-card h5 { margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; }
-.summary-card .value { font-size: 1.5rem; font-weight: 700; }
+.summary-card .value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); } /* Alapértelmezett szín itt */
 .summary-card .details { font-size: 0.8rem; margin-top: 0.5rem; color:var(--text-secondary); }
+.summary-card .details strong { color: var(--text-primary); font-weight: 600; } /* Bizalmi szint értéke */
 
 .radial-chart-container { position: relative; width: 100%; max-width: 150px; margin: 0 auto 1rem; display: flex; align-items: center; }
 .radial-chart { width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -129,6 +130,12 @@ details > summary::-webkit-details-marker { display: none; }
 .market-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; }
 .market-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 0.5rem; text-align: center; }
 .market-card-title { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem; min-height: 30px; }
+.market-card-value { color: var(--text-primary); } /* Alapértelmezett szín */
+
+.micromodel-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+.micromodel-card h5 { color: var(--accent); margin-bottom: 0.8rem; font-size: 1rem; }
+.micromodel-card p { color: var(--text-secondary); margin: 0; }
+.micromodel-card strong { color: var(--primary); }
 
 .totals-breakdown { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; gap: 0.75rem; font-size: 1.2rem; flex-grow: 1;}
 .analysis-accordion details { border-bottom: 1px solid var(--border-color); }
@@ -165,8 +172,8 @@ details > summary::-webkit-details-marker { display: none; }
 }
 .btn-final-check:disabled { color: var(--text-secondary); border-color: var(--border-color); }
 
-/* --- EGYSÉGES KIEMELŐ EFFEKT --- */
-.glowing-text, .xg-value, .confidence-score {
+/* --- EGYSÉGES KIEMELŐ EFFEKT (JAVÍTOTT) --- */
+.glowing-text, .xg-value, .confidence-score, .summary-card .value, .market-card-value, .diagram-legend .glowing-text, .total-value {
   color: var(--text-primary) !important;
   text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5);
   animation: pulse-glow-white 3s infinite alternate;
@@ -177,7 +184,8 @@ details > summary::-webkit-details-marker { display: none; }
   to { text-shadow: 0 0 10px var(--text-primary), 0 0 20px rgba(255, 255, 255, 0.6); }
 }
 
-.analysis-body strong, .expert-confidence-card .value, .market-card-value {
+/* Külön a narancs ragyogás elemeknek */
+.analysis-body strong, .expert-confidence-card .value, .list-item strong, .micromodel-card strong, .portfolio-report strong {
   color: var(--primary) !important;
   text-shadow: 0 0 8px currentColor, 0 0 16px rgba(212, 175, 55, 0.5);
   animation: pulse-glow-orange 3s infinite alternate;
