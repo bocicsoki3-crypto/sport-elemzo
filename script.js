@@ -33,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     appState.sheetUrl = localStorage.getItem('sheetUrl');
     
-    // Toast container hozzáadása a body-hoz
     const toastContainer = document.createElement('div');
     toastContainer.id = 'toast-notification-container';
     toastContainer.className = 'toast-notification-container';
@@ -57,7 +56,7 @@ async function loadFixtures() {
         sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
 
         if (isMobile()) {
-            openModal('Mérkőzések', renderFixturesForMobile(appState.fixtures), 'modal-fullscreen');
+            renderFixturesForMobileList(appState.fixtures);
         } else {
             renderFixturesForDesktop(appState.fixtures);
         }
@@ -157,7 +156,7 @@ async function deleteHistoryItem(id) {
         if (data.error) throw new Error(data.error);
         
         showToast('Elem sikeresen törölve.', 'success');
-        openHistoryModal(); // Refresh history
+        openHistoryModal();
     } catch (e) {
         showToast(`Hiba a törlés során: ${e.message}`, 'error');
     }
@@ -228,17 +227,13 @@ async function runFinalCheck(home, away, sport) {
     }
 }
 
-
-// --- ESEMÉNYKEZELŐK ÉS UI FRISSÍTÉSEK ---
-
 function handleSportChange() {
     appState.currentSport = document.getElementById('sportSelector').value;
     appState.completedAnalyses = [];
     updatePortfolioButton();
-    if (!isMobile()) {
-        document.getElementById('kanban-board').innerHTML = '';
-        document.getElementById('placeholder').style.display = 'flex';
-    }
+    document.getElementById('kanban-board').innerHTML = '';
+    document.getElementById('mobile-list-container').innerHTML = '';
+    document.getElementById('placeholder').style.display = 'flex';
 }
 
 function updatePortfolioButton() {
@@ -268,9 +263,6 @@ function runManualAnalysis() {
     closeModal();
     runAnalysis(home, away);
 }
-
-
-// --- SEGÉDFÜGGVÉNYEK ÉS RENDERELŐK ---
 
 function isMobile() { return window.innerWidth <= 1024; }
 
@@ -326,25 +318,35 @@ function renderFixturesForDesktop(fixtures) {
     });
 }
 
-function renderFixturesForMobile(fixtures) {
-    const groupedByDate = groupBy(fixtures, fx => new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
-    let html = '';
+function renderFixturesForMobileList(fixtures) {
+    const container = document.getElementById('mobile-list-container');
+    document.getElementById('placeholder').style.display = 'none';
+    container.innerHTML = '';
 
-    Object.keys(groupedByDate).sort((a,b) => new Date(a.split('. ').join('.').split('.').reverse().join('-')) - new Date(b.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
-        html += `<h4 class="date-header" style="padding: 1rem; border-bottom: 1px solid var(--border-color);">${formatDateLabel(dateKey)}</h4>`;
-        groupedByDate[dateKey].forEach(fx => {
-            const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
-            html += `
-                <div class="list-item" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}')">
-                    <div>
-                        <div class="list-item-title">${fx.home} – ${fx.away}</div>
-                        <div class="list-item-meta">${fx.league} - ${time}</div>
-                    </div>
-                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </div>`;
-        });
+    const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
+    const groupedByCategory = groupBy(fixtures, fx => getLeagueGroup(fx.league));
+    
+    let html = '';
+    groupOrder.forEach(group => {
+        if (groupedByCategory[group]) {
+            const [icon, ...titleParts] = group.split(' ');
+            const title = titleParts.join(' ');
+            html += `<h4 class="league-header-mobile">${icon} ${title}</h4>`;
+            
+            groupedByCategory[group].forEach(fx => {
+                const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
+                html += `
+                    <div class="list-item" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}')">
+                        <div>
+                            <div class="list-item-title">${fx.home} – ${fx.away}</div>
+                            <div class="list-item-meta">${fx.league} - ${time}</div>
+                        </div>
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>`;
+            });
+        }
     });
-    return html;
+    container.innerHTML = html || '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek elérhető mérkőzések.</p>';
 }
 
 function extractDataForPortfolio(html, home, away) {
@@ -403,7 +405,7 @@ function renderHistory(historyData) {
                     </div>
                      ${finalCheckButton}
                      <button class="btn" onclick="deleteHistoryItem('${item.id}'); event.stopPropagation();" title="Törlés">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                      </button>
                 </div>`;
         });
@@ -503,8 +505,7 @@ function addMessageToChat(text, role) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// --- ÚJ TOAST ÉRTESÍTÉSI RENDSZER ---
-function showToast(message, type = 'info') { // Típusok: 'info', 'success', 'error'
+function showToast(message, type = 'info') {
     const container = document.getElementById('toast-notification-container');
     const toast = document.createElement('div');
     toast.className = `toast-notification ${type}`;
@@ -518,7 +519,6 @@ function showToast(message, type = 'info') { // Típusok: 'info', 'success', 'er
     }, 4000);
 }
 
-// --- TÉMA VÁLTÓ ---
 function setupThemeSwitcher() {
     const themeSwitcher = document.getElementById('theme-switcher');
     const htmlEl = document.documentElement;
