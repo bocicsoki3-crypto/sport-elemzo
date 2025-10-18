@@ -37,6 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
     toastContainer.id = 'toast-notification-container';
     toastContainer.className = 'toast-notification-container';
     document.body.appendChild(toastContainer);
+
+    // Portfólió adatainak betöltése a sessionStorage-ből
+    const savedAnalyses = sessionStorage.getItem('completedAnalyses');
+    if (savedAnalyses) {
+        appState.completedAnalyses = JSON.parse(savedAnalyses);
+        updatePortfolioButton();
+    }
 });
 
 // --- FŐ FUNKCIÓK ---
@@ -71,6 +78,10 @@ async function loadFixtures() {
 async function runAnalysis(home, away) {
     home = unescape(home);
     away = unescape(away);
+
+    if (isMobile()) {
+        showToast("Elemzés folyamatban... A folyamat megszakadásának elkerülése érdekében ne váltson másik alkalmazásra.", 'info', 6000); // Hosszabb ideig látható
+    }
     
     openModal(`${home} vs ${away}`, document.getElementById('common-elements').innerHTML, isMobile() ? 'modal-fullscreen' : 'modal-lg');
     
@@ -109,6 +120,7 @@ async function runAnalysis(home, away) {
         const portfolioData = extractDataForPortfolio(data.html, home, away);
         if (portfolioData && !appState.completedAnalyses.some(a => a.match === portfolioData.match)) {
             appState.completedAnalyses.push(portfolioData);
+            sessionStorage.setItem('completedAnalyses', JSON.stringify(appState.completedAnalyses));
             updatePortfolioButton();
         }
 
@@ -230,6 +242,7 @@ async function runFinalCheck(home, away, sport) {
 function handleSportChange() {
     appState.currentSport = document.getElementById('sportSelector').value;
     appState.completedAnalyses = [];
+    sessionStorage.removeItem('completedAnalyses');
     updatePortfolioButton();
     document.getElementById('kanban-board').innerHTML = '';
     document.getElementById('mobile-list-container').innerHTML = '';
@@ -505,7 +518,7 @@ function addMessageToChat(text, role) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', duration = 4000) {
     const container = document.getElementById('toast-notification-container');
     const toast = document.createElement('div');
     toast.className = `toast-notification ${type}`;
@@ -516,7 +529,7 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.style.animation = 'fadeOut 0.5s forwards';
         setTimeout(() => toast.remove(), 500);
-    }, 4000);
+    }, duration);
 }
 
 function setupThemeSwitcher() {
