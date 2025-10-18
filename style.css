@@ -125,6 +125,51 @@ details > summary::-webkit-details-marker { display: none; }
 .expert-confidence-card { grid-column: 1 / -1; margin-bottom: 1rem; border: 1px solid var(--primary); background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15)); }
 .expert-confidence-card .details { font-size: 0.9rem; max-width: 600px; margin: 0.5rem auto 0; }
 
+.xg-chart-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 120px;
+    width: 100%;
+    margin-top: 1rem;
+    gap: 1.5rem;
+    padding: 0 1rem;
+}
+.chart-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-grow: 1;
+    height: 100%;
+    justify-content: flex-end;
+}
+.chart-value {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+.chart-bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    animation: riseUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+@keyframes riseUp {
+    from { height: 0; }
+}
+.home-bar { background: var(--primary); }
+.away-bar { background: var(--accent); }
+.chart-label {
+    font-size: 0.75rem;
+    margin-top: 8px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px;
+}
+
 .market-data-section { margin-bottom: 2rem; }
 .market-data-section h4 { font-size: 1.1rem; color: var(--secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
 .market-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; }
@@ -162,9 +207,8 @@ details > summary::-webkit-details-marker { display: none; }
 
 .btn-final-check { padding: 8px 12px; font-size: 1rem; color: var(--success); border-color: var(--success); }
 .btn-final-check:hover:not(:disabled) { background: rgba(57, 255, 20, 0.1); box-shadow: 0 0 15px rgba(57, 255, 20, 0.4); }
-.btn-final-check:disabled { color: var(--text-secondary); border-color: var(--border-color); cursor: help; } /* UX JAVÍTÁS */
+.btn-final-check:disabled { color: var(--text-secondary); border-color: var(--border-color); cursor: help; }
 
-/* --- TOAST ÉRTESÍTÉSI RENDSZER --- */
 .toast-notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
 .toast-notification { padding: 15px 20px; border-radius: 10px; color: #fff; font-weight: 500; font-size: 0.9rem; box-shadow: 0 5px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); animation: slideIn 0.3s ease forwards; }
 .toast-notification.info { background: linear-gradient(135deg, #00BFFF, #0077B6); }
@@ -173,7 +217,6 @@ details > summary::-webkit-details-marker { display: none; }
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes fadeOut { to { opacity: 0; } }
 
-/* --- EGYSÉGES KIEMELŐ EFFEKT --- */
 .glowing-text, .xg-value, .confidence-score, .summary-card .value, .market-card-value, .diagram-legend .glowing-text, .total-value {
   color: var(--text-primary) !important;
   text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5);
