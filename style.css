@@ -119,7 +119,18 @@ details > summary::-webkit-details-marker { display: none; }
 @keyframes pulse-bg { 0% { background: rgba(255,255,255,0.05); } 50% { background: rgba(255,255,255,0.1); } 100% { background: rgba(255,255,255,0.05); } }
 .loading-skeleton .skeleton-line{background:rgba(255,255,255,0.1);height: 1em; border-radius:4px;margin-bottom:10px;animation:pulse-bg 1.5s infinite}
 
-.at-a-glance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.at-a-glance-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* JAVÍTÁS: Fix 5 oszlopos rács */
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+@media (max-width: 1200px) { /* Visszaáll a reszponzív viselkedésre kisebb képernyőn */
+    .at-a-glance-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+}
+
 .summary-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: flex-start; }
 .summary-card h5 { margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; }
 .summary-card .value { font-size: 1.5rem; font-weight: 700; }
