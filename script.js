@@ -1,5 +1,6 @@
 // --- ALKALMAZÁS ÁLLAPOT ---
 const appState = {
+    // !!! KRITIKUS: CSERÉLD KI A SAJÁT KÖZZÉTETT GOOGLE APPS SCRIPT URL-EDRE !!!
     gasUrl: 'https://script.google.com/macros/s/AKfycbyN99ot1yzv4Na9nq0rTIsCSQ2DUlMMCzSKQmtM8fg7qDMAaFzHW8n_2Y8eNxnsFdabvg/exec',
     fixtures: [],
     currentSport: 'soccer',
@@ -362,13 +363,22 @@ function renderFixturesForMobileList(fixtures) {
     container.innerHTML = html || '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek elérhető mérkőzések.</p>';
 }
 
+// --- JAVÍTOTT FUNKCIÓ ---
 function extractDataForPortfolio(html, home, away) {
     try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
 
-        const bestBetCard = Array.from(doc.querySelectorAll('.summary-card h5')).find(h5 => h5.textContent.includes('AI Legjobb Tipp') || h5.textContent.includes('Legvalószínűbb kimenetel') || h5.textContent.includes('Értéket Rejtő Tipp'));
-        if (!bestBetCard) return null;
+        // A keresési feltételek javítva, hogy megfeleljenek a HTML_Builder.gs-ben generált címkéknek
+        const bestBetCard = Array.from(doc.querySelectorAll('.summary-card h5')).find(h5 => 
+            h5.textContent.includes('Értéket Rejtő Tipp') || 
+            h5.textContent.includes('Legvalószínűbb kimenetel')
+        );
+        
+        if (!bestBetCard) {
+            console.error("Nem található 'Best Bet' kártya a portfólióhoz.");
+            return null;
+        }
 
         const bestBet = bestBetCard.nextElementSibling.textContent.trim();
         const confidence = bestBetCard.nextElementSibling.nextElementSibling.querySelector('strong').textContent.trim();
@@ -398,8 +408,10 @@ function renderHistory(historyData) {
         sortedItems.forEach(item => {
             const matchTime = new Date(item.date);
             const now = new Date();
-            const timeDiffMinutes = (matchTime - now) / (1000 * 60);
+            // Az elemzés idejéhez képest (nem a meccs idejéhez)
+            const timeDiffMinutes = (matchTime - now) / (1000 * 60); 
 
+            // Aktív: meccs előtt 1 órával, és utána 2 óráig
             const isCheckable = timeDiffMinutes <= 60 && timeDiffMinutes > -120;
             const finalCheckButton = `
                 <button class="btn btn-final-check" 
@@ -518,7 +530,7 @@ function addMessageToChat(text, role) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-function showToast(message, type = 'info') {
+// --- JAVÍTOTT FUNKCIÓ (Duplikáció eltávolítva) ---
 function showToast(message, type = 'info', duration = 4000) {
     const container = document.getElementById('toast-notification-container');
     const toast = document.createElement('div');
@@ -530,7 +542,6 @@ function showToast(message, type = 'info', duration = 4000) {
     setTimeout(() => {
         toast.style.animation = 'fadeOut 0.5s forwards';
         setTimeout(() => toast.remove(), 500);
-    }, 4000);
     }, duration);
 }
 
