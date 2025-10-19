@@ -531,33 +531,45 @@ function renderFixturesForDesktop(fixtures) {
 
                 sortedFixtures.forEach((fx, index) => {
                     let displayHome = "N/A", displayAway = "N/A", displayLeague = "N/A", displayTime = "N/A";
-                    let safeHome = "", safeAway = ""; // Ezek már kódoltak lesznek
-                    let leagueShort = "N/A"; // <-- JAVÍTÁS: Hiányzó változó deklarálása
-                    let fixtureId = `fixture-${index}-${Date.now()}`; // Egyedi ID hibakereséshez
+                    let safeHome = "", safeAway = "";
+                    
+                    // ---> JAVÍTÁS 1: leagueShort deklarálása <---
+                    let leagueShort = "N/A"; 
+                    let fixtureId = `fixture-${index}-${Date.now()}`;
                     let isValidFixture = false;
 
                     try {
-                        // SZIGORÚ ELLENŐRZÉS
-                        if (!fx || typeof fx.home !== 'string' || !fx.home.trim() || typeof fx.away !== 'string' || !fx.away.trim() || typeof fx.league !== 'string' || !fx.league.trim() || !fx.id) { throw new Error("Hiányzó alap adatok."); }
-                        displayHome = fx.home.trim(); displayAway = fx.away.trim(); displayLeague = fx.league.trim(); fixtureId = fx.id || fixtureId;
-                        if (!fx.utcKickoff) throw new Error("Hiányzó utcKickoff.");
+                        // ---> JAVÍTÁS 2: Robusztus "szupertisztítás" és ellenőrzés <---
+                        const cleanHome = (fx.home || "").replace(/[\s\u00A0]/g, '');
+                        const cleanAway = (fx.away || "").replace(/[\s\u00A0]/g, '');
+                        const cleanLeague = (fx.league || "").replace(/[\s\u00A0]/g, '');
+
+                        if (!fx || !fx.id || !fx.utcKickoff || cleanHome.length === 0 || cleanAway.length === 0 || cleanLeague.length === 0) {
+                            throw new Error("Hiányzó vagy érvénytelen alap adatok (pl. üres nevek).");
+                        }
+                        
+                        displayHome = fx.home.trim(); 
+                        displayAway = fx.away.trim(); 
+                        displayLeague = fx.league.trim();
+                        fixtureId = fx.id;
+                        
                         const kickoffDate = new Date(fx.utcKickoff); if (isNaN(kickoffDate.getTime())) throw new Error("Érvénytelen utcKickoff.");
                         displayTime = kickoffDate.toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
 
-                        // Biztonságos kódolás
                         safeHome = encodeURIComponent(displayHome);
                         safeAway = encodeURIComponent(displayAway);
                         leagueShort = displayLeague.substring(0, 25) + (displayLeague.length > 25 ? '...' : '');
                         isValidFixture = true;
 
-                    } catch (validationError) { console.warn(`Meccs kihagyva (desktop, ${group} #${index + 1}) - Hiba: ${validationError.message}. Adat:`, JSON.stringify(fx)); }
+                    } catch (validationError) { 
+                        console.warn(`Meccs kihagyva (desktop, ${group} #${index + 1}) - Hiba: ${validationError.message}. Adat:`, JSON.stringify(fx)); 
+                    }
 
                     if (isValidFixture) {
-                        // ---> ONCLICK JAVÍTÁS: JSON.stringify használata <---
                         contentHTML += `
                             <div class="match-card" data-id="${fixtureId}">
                                 <input type="checkbox" class="fixture-checkbox" data-home="${safeHome}" data-away="${safeAway}" onchange="updateSummaryButtonCount()">
-                                <div class="match-content" onclick='runAnalysis(${JSON.stringify(safeHome)}, ${JSON.stringify(safeAway)})'> {/* JAVÍTÁS ITT */}
+                                <div class="match-content" onclick='runAnalysis(${JSON.stringify(safeHome)}, ${JSON.stringify(safeAway)})'>
                                     <div class="match-card-teams">${displayHome} – ${displayAway}</div>
                                     <div class="match-card-meta">
                                         <span title="${displayLeague}">${leagueShort}</span>
@@ -565,7 +577,6 @@ function renderFixturesForDesktop(fixtures) {
                                     </div>
                                 </div>
                             </div>`;
-                        // ---> JAVÍTÁS VÉGE <---
                     }
                 });
                 contentHTML += `</details>`;
@@ -591,34 +602,48 @@ function renderFixturesForMobileList(fixtures) {
             sortedFixtures.forEach((fx, index) => {
                 let displayHome = "N/A", displayAway = "N/A", displayLeague = "N/A", displayTime = "N/A", displayDateLabel = "N/A";
                 let safeHome = "", safeAway = "";
-                let leagueShort = "N/A"; // <-- JAVÍTÁS: Hiányzó változó deklarálása (konzisztencia)
+                
+                // ---> JAVÍTÁS 1: leagueShort deklarálása <---
+                let leagueShort = "N/A"; // (Itt nincs használva, de a következetesség miatt)
                 let isValidFixture = false;
                 let fixtureId = `fixture-mobile-${index}-${Date.now()}`;
 
                 try {
-                    // SZIGORÚ ELLENŐRZÉS
-                    if (!fx || typeof fx.home !== 'string' || !fx.home.trim() || typeof fx.away !== 'string' || !fx.away.trim() || typeof fx.league !== 'string' || !fx.league.trim() || !fx.id) { throw new Error("Hiányzó alap adatok."); }
-                    displayHome = fx.home.trim(); displayAway = fx.away.trim(); displayLeague = fx.league.trim(); fixtureId = fx.id || fixtureId;
-                    if (!fx.utcKickoff) throw new Error("Hiányzó utcKickoff.");
+                    // ---> JAVÍTÁS 2: Robusztus "szupertisztítás" és ellenőrzés <---
+                    const cleanHome = (fx.home || "").replace(/[\s\u00A0]/g, '');
+                    const cleanAway = (fx.away || "").replace(/[\s\u00A0]/g, '');
+                    const cleanLeague = (fx.league || "").replace(/[\s\u00A0]/g, '');
+
+                    if (!fx || !fx.id || !fx.utcKickoff || cleanHome.length === 0 || cleanAway.length === 0 || cleanLeague.length === 0) {
+                        throw new Error("Hiányzó vagy érvénytelen alap adatok (pl. üres nevek).");
+                    }
+
+                    displayHome = fx.home.trim(); 
+                    displayAway = fx.away.trim(); 
+                    displayLeague = fx.league.trim();
+                    fixtureId = fx.id;
+
                     const kickoffDate = new Date(fx.utcKickoff); if (isNaN(kickoffDate.getTime())) throw new Error("Érvénytelen utcKickoff.");
                     displayTime = kickoffDate.toLocaleTimeString('hu-HU',{timeZone:'Europe/Budapest',hour:'2-digit',minute:'2-digit'});
                     displayDateLabel = formatDateLabel(kickoffDate.toLocaleDateString('hu-HU',{timeZone:'Europe/Budapest'}));
-                    safeHome = encodeURIComponent(displayHome); safeAway = encodeURIComponent(displayAway);
+                    safeHome = encodeURIComponent(displayHome); 
+                    safeAway = encodeURIComponent(displayAway);
                     isValidFixture = true;
-                } catch (validationError) { console.warn(`Meccs kihagyva (mobil, ${group} #${index + 1}) - Hiba: ${validationError.message}. Adat:`, JSON.stringify(fx)); }
+
+                } catch (validationError) { 
+                    console.warn(`Meccs kihagyva (mobil, ${group} #${index + 1}) - Hiba: ${validationError.message}. Adat:`, JSON.stringify(fx)); 
+                }
 
                 if (isValidFixture) {
-                    // ---> ONCLICK JAVÍTÁS: JSON.stringify használata <---
                     html += `
                         <div class="list-item mobile" data-id="${fixtureId}">
                             <input type="checkbox" class="fixture-checkbox" data-home="${safeHome}" data-away="${safeAway}" onchange="updateSummaryButtonCount()">
-                            <div class="match-content" onclick='runAnalysis(${JSON.stringify(safeHome)}, ${JSON.stringify(safeAway)})'> {/* JAVÍTÁS ITT */}
+                            <div class="match-content" onclick='runAnalysis(${JSON.stringify(safeHome)}, ${JSON.stringify(safeAway)})'>
                                 <div class="list-item-title">${displayHome} – ${displayAway}</div>
                                 <div class="list-item-meta">${displayLeague} - ${displayDateLabel} ${displayTime}</div>
                             </div>
                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </div>`;
-                    // ---> JAVÍTÁS VÉGE <---
                 }
             });
         }
