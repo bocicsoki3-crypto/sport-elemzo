@@ -34,10 +34,11 @@ function groupBy(arr, keyFn) {
     return arr.reduce((acc, item) => {
         try {
             const key = keyFn(item);
+            // Csak akkor adjuk hozzá, ha a kulcs érvényes (nem undefined/null)
             if (key !== undefined && key !== null) {
                 (acc[key] = acc[key] || []).push(item);
             } else {
-                 // console.warn("groupBy: Érvénytelen kulcs:", item); // Csökkentett naplózás
+                 // console.warn("groupBy: Érvénytelen kulcs generálva egy elemhez:", item); // Csökkentett naplózás
             }
         } catch (e) {
             console.error("Hiba a csoportosítás során (groupBy):", item, e);
@@ -47,6 +48,7 @@ function groupBy(arr, keyFn) {
 }
 
 function formatDateLabel(dateStr) {
+    // Input dateStr is expected as 'YYYY. MM. DD.' from toLocaleDateString
     try {
         const today = new Date(); const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
         const todayStr = today.toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
@@ -55,7 +57,7 @@ function formatDateLabel(dateStr) {
         return dateStr;
     } catch (e) {
         console.error("Hiba a dátumcímke formázásakor:", dateStr, e);
-        return dateStr || "Ismeretlen Dátum";
+        return dateStr || "Ismeretlen Dátum"; // Fallback
     }
 }
 
@@ -64,7 +66,7 @@ function getLeagueGroup(leagueName) {
     // console.log(`getLeagueGroup START - Liga: "${leagueName}", Sport: "${currentSport}"`);
     if (!currentSport || !LEAGUE_CATEGORIES[currentSport]) {
         console.error(`getLeagueGroup HIBA: Érvénytelen sport ("${currentSport}") vagy hiányzó kategóriák!`);
-        return '❔ Változékony Mezőny';
+        return '❔ Változékony Mezőny'; // Biztonságos alapértelmezett
     }
     const sportGroups = LEAGUE_CATEGORIES[currentSport];
     if (!leagueName || typeof leagueName !== 'string') {
@@ -77,7 +79,7 @@ function getLeagueGroup(leagueName) {
             try {
                 if (sportGroups[groupName].some(l => typeof l === 'string' && lowerLeagueName.includes(l.toLowerCase()))) {
                     // console.log(`getLeagueGroup TALÁLAT - Liga: "${leagueName}" -> Kategória: "${groupName}"`);
-                    return groupName;
+                    return groupName; // Találat!
                 }
             } catch (e) {
                 console.error(`getLeagueGroup hiba (${groupName}): ${e}`);
@@ -256,48 +258,113 @@ async function runFinalCheck(home, away, sport) {
 function handleSportChange() {
     const sportSelector = document.getElementById('sportSelector'); if (sportSelector) { appState.currentSport = sportSelector.value; } else { appState.currentSport = 'soccer'; } console.log(`Sportág váltva: ${appState.currentSport}`);
     appState.completedAnalyses = []; sessionStorage.removeItem('completedAnalyses'); updatePortfolioButton();
-    const kanbanBoard=document.getElementById('kanban-board'); if(kanbanBoard) kanbanBoard.innerHTML=''; const mobileList=document.getElementById('mobile-list-container'); if(mobileList) mobileList.innerHTML=''; const placeholder=document.getElementById('placeholder'); if(placeholder){ placeholder.style.display='flex'; placeholder.innerHTML=`<svg>...</svg><h3>Válassz...</h3><p>...</p>`; }
+    const kanbanBoard=document.getElementById('kanban-board'); if(kanbanBoard) kanbanBoard.innerHTML=''; const mobileList=document.getElementById('mobile-list-container'); if(mobileList) mobileList.innerHTML=''; const placeholder=document.getElementById('placeholder'); if(placeholder){ placeholder.style.display='flex'; placeholder.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20v-10M18 20V4"/></svg><h3>Válassz sportágat...</h3><p>...</p>`; }
     updateSummaryButtonCount(); loadFixtures();
 }
 
+function updatePortfolioButton(){const btn=document.getElementById('portfolioBtn');if(!btn)return;const count=appState.completedAnalyses.length;btn.textContent=`Portfólió Építése (${count}/3)`;btn.disabled=count<3}
+function openManualAnalysisModal(){let content=`<p class="muted"...</p><div class="control-group"><label...>Hazai...</label><input id="manual-home".../></div><div class="control-group"...><label...>Vendég...</label><input id="manual-away".../></div><button onclick="runManualAnalysis()" ...>Elemzés...</button>`;openModal('Kézi Elemzés...',content,'modal-sm')}
+function runManualAnalysis(){const homeInput=document.getElementById('manual-home');const awayInput=document.getElementById('manual-away');const home=homeInput?.value?.trim();const away=awayInput?.value?.trim();if(!home||!away){showToast('Mindkét név kell.','error');return}closeModal();runAnalysis(home,away)}
 function handleCheckboxChange() { updateSummaryButtonCount(); }
 function updateSummaryButtonCount() { const count = document.querySelectorAll('.fixture-checkbox:checked').length; const summaryBtn = document.getElementById('summaryBtn'); if (summaryBtn) { summaryBtn.textContent = `Kiválasztottak Összegzése (${count})`; summaryBtn.disabled = count === 0; } }
 
-// --- RENDER FUNCTIONS (Szigorúbb ellenőrzéssel) ---
+// --- RENDER FUNCTIONS (Bombabiztos) ---
 function renderFixturesForDesktop(fixtures) {
     const board = document.getElementById('kanban-board'); if (!board) return; board.innerHTML = '';
     const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
     let groupedByCategory; try { groupedByCategory = groupBy(fixtures, fx => getLeagueGroup(fx.league)); } catch (e) { console.error("Csoportosítási hiba (desktop):", e); board.innerHTML = `<p style="color:var(--danger)">Hiba a csoportosításkor.</p>`; return; }
-    groupOrder.forEach(group => { const column = document.createElement('div'); column.className = 'kanban-column'; const [icon, ...titleParts] = group.split(' '); const title = titleParts.join(' '); let headHTML = `<h4 class="kanban-column-header">${icon} ${title}</h4>`; let contentHTML = '<div class="column-content">'; const categoryFixtures = groupedByCategory ? groupedByCategory[group] : undefined;
-        if (categoryFixtures?.length > 0) { const groupedByDate = groupBy(categoryFixtures, fx => { try { return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); } catch { return "Ismeretlen Dátum"; } }); const sortedDates = Object.keys(groupedByDate).sort((a, b)=>{ try { const dA=new Date(a.split('. ').join('.').split('.').reverse().join('-')); const dB=new Date(b.split('. ').join('.').split('.').reverse().join('-')); return dA - dB; } catch { return 0; } });
-            sortedDates.forEach(dateKey => { contentHTML += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`; const sortedFixtures = groupedByDate[dateKey].sort((a, b) => new Date(a.utcKickoff) - new Date(b.utcKickoff));
-                sortedFixtures.forEach(fx => { if (!fx || typeof fx.home !== 'string' || !fx.home.trim() || typeof fx.away !== 'string' || !fx.away.trim() || typeof fx.league !== 'string' || !fx.league.trim() || !fx.utcKickoff || isNaN(new Date(fx.utcKickoff).getTime()) || !fx.id) { console.warn('Hibás meccs adat (desktop):', fx); return; } let time='N/A'; try{time=new Date(fx.utcKickoff).toLocaleTimeString('hu-HU',{timeZone:'Europe/Budapest',hour:'2-digit',minute:'2-digit'})}catch{} const safeHome=encodeURIComponent(fx.home); const safeAway=encodeURIComponent(fx.away); const leagueShort=(fx.league || '').substring(0,25)+((fx.league || '').length>25?'...':'');
-                    contentHTML += `<div class="match-card" data-id="${fx.id}"><input type="checkbox" class="fixture-checkbox" data-home="${safeHome}" data-away="${safeAway}" onchange="updateSummaryButtonCount()"><div class="match-content" onclick="runAnalysis('${safeHome}', '${safeAway}')"><div class="match-card-teams">${fx.home} – ${fx.away}</div><div class="match-card-meta"><span title="${fx.league}">${leagueShort}</span><span>${time}</span></div></div></div>`; });
-                contentHTML += `</details>`; });
+
+    groupOrder.forEach(group => {
+        const column = document.createElement('div'); column.className = 'kanban-column';
+        const [icon, ...titleParts] = group.split(' '); const title = titleParts.join(' ');
+        let headHTML = `<h4 class="kanban-column-header">${icon} ${title}</h4>`;
+        let contentHTML = '<div class="column-content">';
+        const categoryFixtures = groupedByCategory ? groupedByCategory[group] : undefined;
+
+        if (categoryFixtures?.length > 0) {
+            const groupedByDate = groupBy(categoryFixtures, fx => { try { return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); } catch { return "Ismeretlen Dátum"; } });
+            const sortedDates = Object.keys(groupedByDate).sort((a, b)=>{ try { const dA=new Date(a.split('. ').join('.').split('.').reverse().join('-')); const dB=new Date(b.split('. ').join('.').split('.').reverse().join('-')); return dA - dB; } catch { return 0; } });
+
+            sortedDates.forEach(dateKey => {
+                contentHTML += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
+                const sortedFixtures = groupedByDate[dateKey].sort((a, b) => new Date(a.utcKickoff) - new Date(b.utcKickoff));
+
+                sortedFixtures.forEach((fx, index) => {
+                    let displayHome = "N/A", displayAway = "N/A", displayLeague = "N/A", displayTime = "N/A";
+                    let safeHome = "", safeAway = "";
+                    let leagueShort = "N/A";
+                    let isValidFixture = false;
+
+                    try {
+                        if (!fx || typeof fx.home !== 'string' || !fx.home.trim() || typeof fx.away !== 'string' || !fx.away.trim() || typeof fx.league !== 'string' || !fx.league.trim() || !fx.id) { throw new Error("Hiányzó alap adatok."); }
+                        displayHome = fx.home.trim(); displayAway = fx.away.trim(); displayLeague = fx.league.trim();
+                        if (!fx.utcKickoff) throw new Error("Hiányzó utcKickoff.");
+                        const kickoffDate = new Date(fx.utcKickoff); if (isNaN(kickoffDate.getTime())) throw new Error("Érvénytelen utcKickoff.");
+                        displayTime = kickoffDate.toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
+                        safeHome = encodeURIComponent(displayHome); safeAway = encodeURIComponent(displayAway);
+                        leagueShort = displayLeague.substring(0, 25) + (displayLeague.length > 25 ? '...' : '');
+                        isValidFixture = true;
+                    } catch (validationError) { console.warn(`Meccs kihagyva (desktop, ${group} #${index + 1}) - Hiba: ${validationError.message}. Adat:`, JSON.stringify(fx)); }
+
+                    if (isValidFixture) {
+                        contentHTML += `<div class="match-card" data-id="${fx.id}"><input type="checkbox" class="fixture-checkbox" data-home="${safeHome}" data-away="${safeAway}" onchange="updateSummaryButtonCount()"><div class="match-content" onclick="runAnalysis('${safeHome}', '${safeAway}')"><div class="match-card-teams">${displayHome} – ${displayAway}</div><div class="match-card-meta"><span title="${displayLeague}">${leagueShort}</span><span>${displayTime}</span></div></div></div>`;
+                    }
+                }); // End sortedFixtures.forEach
+                contentHTML += `</details>`;
+            }); // End sortedDates.forEach
         } else { contentHTML += '<p class="muted" style="text-align: center; padding-top: 2rem;">Nincs meccs.</p>'; }
-        contentHTML += '</div>'; column.innerHTML = headHTML + contentHTML; board.appendChild(column); });
+        contentHTML += '</div>'; column.innerHTML = headHTML + contentHTML; board.appendChild(column);
+    }); // End groupOrder.forEach
 }
+
 function renderFixturesForMobileList(fixtures) {
     const container = document.getElementById('mobile-list-container'); if (!container) return; container.innerHTML = '';
     const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
     let groupedByCategory; try { groupedByCategory = groupBy(fixtures, fx => getLeagueGroup(fx.league)); } catch (e) { console.error("Csoportosítási hiba (mobil):", e); container.innerHTML = `<p style="color:var(--danger)">Hiba a csoportosításkor.</p>`; return; }
     let html = ''; let hasFixtures = false;
-    groupOrder.forEach(group => { const categoryFixtures = groupedByCategory ? groupedByCategory[group] : undefined;
-        if (categoryFixtures?.length > 0) { hasFixtures = true; const [icon, ...titleParts] = group.split(' '); const title = titleParts.join(' '); html += `<h4 class="league-header-mobile">${icon} ${title}</h4>`; const sortedFixtures = categoryFixtures.sort((a, b) => new Date(a.utcKickoff) - new Date(b.utcKickoff));
-            sortedFixtures.forEach(fx => { if (!fx || typeof fx.home !== 'string' || !fx.home.trim() || typeof fx.away !== 'string' || !fx.away.trim() || typeof fx.league !== 'string' || !fx.league.trim() || !fx.utcKickoff || isNaN(new Date(fx.utcKickoff).getTime()) || !fx.id) { console.warn('Hibás meccs adat (mobil):', fx); return; } let time='N/A', dateLabel='N/A'; try{const kickoffDate=new Date(fx.utcKickoff); time=kickoffDate.toLocaleTimeString('hu-HU',{timeZone:'Europe/Budapest',hour:'2-digit',minute:'2-digit'}); dateLabel=formatDateLabel(kickoffDate.toLocaleDateString('hu-HU',{timeZone:'Europe/Budapest'}))}catch{} const safeHome=encodeURIComponent(fx.home); const safeAway=encodeURIComponent(fx.away);
-                html += `<div class="list-item mobile" data-id="${fx.id}"><input type="checkbox" class="fixture-checkbox" data-home="${safeHome}" data-away="${safeAway}" onchange="updateSummaryButtonCount()"><div class="match-content" onclick="runAnalysis('${safeHome}', '${safeAway}')"><div class="list-item-title">${fx.home} – ${fx.away}</div><div class="list-item-meta">${fx.league} - ${dateLabel} ${time}</div></div> <svg ...>...</svg> </div>`; });
-        } });
-    if (!hasFixtures) { container.innerHTML = '<p class="muted"...>Nincsenek meccsek.</p>'; } else { container.innerHTML = html; }
+
+    groupOrder.forEach(group => {
+        const categoryFixtures = groupedByCategory ? groupedByCategory[group] : undefined;
+        if (categoryFixtures?.length > 0) {
+            hasFixtures = true; const [icon, ...titleParts] = group.split(' '); const title = titleParts.join(' ');
+            html += `<h4 class="league-header-mobile">${icon} ${title}</h4>`;
+            const sortedFixtures = categoryFixtures.sort((a, b) => new Date(a.utcKickoff) - new Date(b.utcKickoff));
+
+            sortedFixtures.forEach((fx, index) => {
+                let displayHome = "N/A", displayAway = "N/A", displayLeague = "N/A", displayTime = "N/A", displayDateLabel = "N/A";
+                let safeHome = "", safeAway = "";
+                let isValidFixture = false;
+
+                try {
+                    if (!fx || typeof fx.home !== 'string' || !fx.home.trim() || typeof fx.away !== 'string' || !fx.away.trim() || typeof fx.league !== 'string' || !fx.league.trim() || !fx.id) { throw new Error("Hiányzó alap adatok."); }
+                    displayHome = fx.home.trim(); displayAway = fx.away.trim(); displayLeague = fx.league.trim();
+                    if (!fx.utcKickoff) throw new Error("Hiányzó utcKickoff.");
+                    const kickoffDate = new Date(fx.utcKickoff); if (isNaN(kickoffDate.getTime())) throw new Error("Érvénytelen utcKickoff.");
+                    displayTime = kickoffDate.toLocaleTimeString('hu-HU',{timeZone:'Europe/Budapest',hour:'2-digit',minute:'2-digit'});
+                    displayDateLabel = formatDateLabel(kickoffDate.toLocaleDateString('hu-HU',{timeZone:'Europe/Budapest'}));
+                    safeHome = encodeURIComponent(displayHome); safeAway = encodeURIComponent(displayAway);
+                    isValidFixture = true;
+                } catch (validationError) { console.warn(`Meccs kihagyva (mobil, ${group} #${index + 1}) - Hiba: ${validationError.message}. Adat:`, JSON.stringify(fx)); }
+
+                if (isValidFixture) {
+                    html += `<div class="list-item mobile" data-id="${fx.id}"><input type="checkbox" class="fixture-checkbox" data-home="${safeHome}" data-away="${safeAway}" onchange="updateSummaryButtonCount()"><div class="match-content" onclick="runAnalysis('${safeHome}', '${safeAway}')"><div class="list-item-title">${displayHome} – ${displayAway}</div><div class="list-item-meta">${displayLeague} - ${displayDateLabel} ${displayTime}</div></div> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg> </div>`;
+                }
+            }); // End sortedFixtures.forEach
+        }
+    }); // End groupOrder.forEach
+
+    if (!hasFixtures) { container.innerHTML = '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek elérhető mérkőzések.</p>'; }
+    else { container.innerHTML = html; }
 }
 
 // --- MODAL KEZELÉS ---
-function openModal(title, content = '', sizeClass = 'modal-sm') { const modalContainer = document.getElementById('modal-container'); const modalContent = modalContainer?.querySelector('.modal-content'); const modalTitleEl = document.getElementById('modal-title'); const modalBodyEl = document.getElementById('modal-body'); if (!modalContainer || !modalContent || !modalTitleEl || !modalBodyEl) { console.error("Modal elemek hiányoznak."); return; } modalContent.className = 'modal-content'; modalContent.classList.add(sizeClass); modalTitleEl.textContent = title; modalBodyEl.innerHTML = content; modalContainer.classList.add('open'); }
+function openModal(title, content = '', sizeClass = 'modal-sm') { const modalContainer=document.getElementById('modal-container'); const modalContent=modalContainer?.querySelector('.modal-content'); const modalTitleEl=document.getElementById('modal-title'); const modalBodyEl=document.getElementById('modal-body'); if(!modalContainer||!modalContent||!modalTitleEl||!modalBodyEl){console.error("Modal hiba."); return;} modalContent.className='modal-content'; modalContent.classList.add(sizeClass); modalTitleEl.textContent=title; modalBodyEl.innerHTML=content; modalContainer.classList.add('open'); }
 function closeModal() { const modalContainer = document.getElementById('modal-container'); if (modalContainer) modalContainer.classList.remove('open'); }
-function openSummaryModal(title, content = '') { const modalContainer = document.getElementById('summary-modal-container'); const modalTitleEl = document.getElementById('summary-modal-title'); const modalBodyEl = document.getElementById('summary-modal-body'); if (!modalContainer || !modalTitleEl || !modalBodyEl) { console.error("Összegző modal elemek hiányoznak."); return; } modalTitleEl.textContent = title; modalBodyEl.innerHTML = content; modalContainer.classList.add('open'); }
+function openSummaryModal(title, content = '') { const modalContainer=document.getElementById('summary-modal-container'); const modalTitleEl=document.getElementById('summary-modal-title'); const modalBodyEl=document.getElementById('summary-modal-body'); if(!modalContainer||!modalTitleEl||!modalBodyEl){console.error("Összegző modal hiba."); return;} modalTitleEl.textContent=title; modalBodyEl.innerHTML=content; modalContainer.classList.add('open'); }
 function closeSummaryModal() { const modalContainer = document.getElementById('summary-modal-container'); if (modalContainer) modalContainer.classList.remove('open'); appState.isAnalysisRunning = false; appState.analysisQueue = []; const summaryBtn = document.getElementById('summaryBtn'); if (summaryBtn?.textContent.includes('...')) { summaryBtn.disabled = false; updateSummaryButtonCount(); } }
 
 // --- CHAT FUNKCIÓK ---
-async function sendChatMessage() { const modal = document.getElementById('modal-container'); if (!modal?.classList.contains('open')) return; const input = modal.querySelector('#chat-input'); const thinkingIndicator = modal.querySelector('#chat-thinking-indicator'); const sendButton = modal.querySelector('#chat-send-btn'); if (!input || !thinkingIndicator || !sendButton) { return; } const message = input.value.trim(); if (!message) return; addMessageToChat(message,'user'); input.value=''; input.disabled=true; sendButton.disabled=true; thinkingIndicator.style.display='block'; try { if (!appState.currentAnalysisContext) { throw new Error("Nincs kontextus."); } const response = await fetch(appState.gasUrl, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({ action:'askChat', context:appState.currentAnalysisContext, history:appState.chatHistory, question:message }) }); if (!response.ok) throw new Error(`Szerver hiba: ${response.statusText}`); const data = await response.json(); if (data.error) throw new Error(data.error); if (!data.answer) throw new Error("Hiányzó válasz."); addMessageToChat(data.answer,'ai'); appState.chatHistory.push({role:'user',parts:[{text:message}]}); appState.chatHistory.push({role:'model',parts:[{text:data.answer}]}); if(appState.chatHistory.length>20) {appState.chatHistory = appState.chatHistory.slice(-20);} } catch (e) { console.error("Chat hiba:", e); addMessageToChat(`Hiba: ${e.message}`,'ai'); } finally { thinkingIndicator.style.display='none'; input.disabled=false; sendButton.disabled=false; input.focus(); } }
+async function sendChatMessage() { const modal=document.getElementById('modal-container'); if(!modal?.classList.contains('open'))return; const input=modal.querySelector('#chat-input'); const thinkingIndicator=modal.querySelector('#chat-thinking-indicator'); const sendButton=modal.querySelector('#chat-send-btn'); if(!input||!thinkingIndicator||!sendButton){return} const message=input.value.trim(); if(!message)return; addMessageToChat(message,'user'); input.value=''; input.disabled=true; sendButton.disabled=true; thinkingIndicator.style.display='block'; try{if(!appState.currentAnalysisContext){throw new Error("Nincs kontextus.")} const response=await fetch(appState.gasUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'askChat',context:appState.currentAnalysisContext,history:appState.chatHistory,question:message})}); if(!response.ok)throw new Error(`Szerver hiba: ${response.statusText}`); const data=await response.json(); if(data.error)throw new Error(data.error); if(!data.answer)throw new Error("Hiányzó válasz."); addMessageToChat(data.answer,'ai'); appState.chatHistory.push({role:'user',parts:[{text:message}]}); appState.chatHistory.push({role:'model',parts:[{text:data.answer}]}); if(appState.chatHistory.length>20){appState.chatHistory=appState.chatHistory.slice(-20)}}catch(e){console.error("Chat hiba:",e);addMessageToChat(`Hiba: ${e.message}`,'ai')}finally{thinkingIndicator.style.display='none';input.disabled=false;sendButton.disabled=false;input.focus()}}
 function addMessageToChat(text,role){const messagesContainer=document.querySelector('#modal-container.open #chat-messages');if(!messagesContainer){return}const bubble=document.createElement('div');bubble.className=`chat-bubble ${role}`;bubble.textContent=text;messagesContainer.appendChild(bubble);messagesContainer.scrollTo({top:messagesContainer.scrollHeight,behavior:'smooth'})}
 
 // --- TOAST ÉRTESÍTÉSEK ---
@@ -306,7 +373,7 @@ function showToast(message,type='info',duration=4000){const container=document.g
 // --- TÉMAVÁLTÓ ---
 function setupThemeSwitcher(){const themeSwitcher=document.getElementById('theme-switcher');const htmlEl=document.documentElement;if(!themeSwitcher||!htmlEl)return;const setIcon=(theme)=>{themeSwitcher.innerHTML=theme==='dark'?'<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>':'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';themeSwitcher.setAttribute('width','24');themeSwitcher.setAttribute('height','24');themeSwitcher.setAttribute('viewBox','0 0 24 24');themeSwitcher.setAttribute('fill','none');themeSwitcher.setAttribute('stroke','currentColor');themeSwitcher.setAttribute('stroke-width','2');themeSwitcher.setAttribute('stroke-linecap','round');themeSwitcher.setAttribute('stroke-linejoin','round');themeSwitcher.style.cursor='pointer'};const currentTheme=localStorage.getItem('theme')||'dark';htmlEl.className=`${currentTheme}-theme`;setIcon(currentTheme);themeSwitcher.addEventListener('click',()=>{let newTheme=htmlEl.classList.contains('dark-theme')?'light':'dark';htmlEl.classList.remove('dark-theme','light-theme');htmlEl.classList.add(`${newTheme}-theme`);localStorage.setItem('theme',newTheme);setIcon(newTheme)})}
 
-// --- MARADÉK FÜGGVÉNYEK (Kivonatolt változatosság kedvéért) ---
-function extractDataForPortfolio(html, home, away) { /*...*/ try{/*...*/}catch(e){return null} }
-function renderHistory(historyData) { /*...*/ return html || '<p>Nincs előzmény.</p>'; }
-async function viewHistoryDetail(id) { /*...*/ try{/*...*/}catch(e){/*...*/} }
+// --- MARADÉK FÜGGVÉNYEK (Teljes definíciók) ---
+function extractDataForPortfolio(html, home, away) { try { const parser = new DOMParser(); const doc = parser.parseFromString(html, 'text/html'); let bestBetCard = Array.from(doc.querySelectorAll('.summary-card h5')).find(h5 => h5.textContent.includes('Értéket Rejtő Tipp')); let isValueBet = true; if (!bestBetCard) { bestBetCard = Array.from(doc.querySelectorAll('.summary-card h5')).find(h5 => h5.textContent.includes('Legvalószínűbb kimenetel')); isValueBet = false; } if (!bestBetCard) { return null; } const card = bestBetCard.closest('.summary-card'); if (!card) return null; const bestBet = card.querySelector('.value')?.textContent?.trim(); const confidenceText = card.querySelector('.details strong')?.textContent?.trim(); if (bestBet && confidenceText) { return { match: `${home} vs ${away}`, bestBet: bestBet, confidence: confidenceText, }; } return null; } catch (e) { console.error("Hiba portfólió adatok kinyerésekor:", e); return null; } }
+function renderHistory(historyData) { if (!historyData || !Array.isArray(historyData) || historyData.length === 0) { return '<p class="muted"...>Nincs előzmény.</p>'; } const history = historyData.filter(item => item?.id && item.home && item.away && item.sport && item.date); if (history.length === 0) { return '<p class="muted"...>Nincs megjeleníthető előzmény.</p>'; } const groupedByDate = groupBy(history, item => { try { return new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); } catch { return "?"; } }); let html = ''; Object.keys(groupedByDate).sort((a, b)=>{ try{ const dA=new Date(a.split('. ').join('.').split('.').reverse().join('-')); const dB=new Date(b.split('. ').join('.').split('.').reverse().join('-')); return dB - dA; } catch { return 0; } }).forEach(dateKey => { html += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`; const sortedItems = groupedByDate[dateKey].sort((a, b) => new Date(b.date) - new Date(a.date)); sortedItems.forEach(item => { let matchTime, timeDiffMinutes=NaN, time='N/A'; try{matchTime=new Date(item.date); time=matchTime.toLocaleTimeString('hu-HU',{timeZone:'Europe/Budapest',hour:'2-digit',minute:'2-digit'}); const now=new Date(); timeDiffMinutes=(matchTime-now)/(1000*60)}catch{} const isCheckable=!isNaN(timeDiffMinutes) && timeDiffMinutes<=60 && timeDiffMinutes>-120; const safeHome=encodeURIComponent(item.home); const safeAway=encodeURIComponent(item.away); const finalCheckButton=` <button class="btn btn-final-check" onclick="runFinalCheck('${safeHome}', '${safeAway}', '${item.sport}'); event.stopPropagation();" title="..." ${!isCheckable ? 'disabled' : ''}> ✔️ </button>`; html += ` <div class="list-item" data-id="${item.id}"> <div style="..." onclick="viewHistoryDetail('${item.id}')"> <div class="list-item-title">${item.home} – ${item.away}</div> <div class="list-item-meta">${item.sport.charAt(0).toUpperCase()+item.sport.slice(1)} - ${time}</div> </div> ${finalCheckButton} <button class="btn" onclick="deleteHistoryItem('${item.id}'); event.stopPropagation();" title="Törlés"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> </button> </div>`; }); html += `</details>`; }); return html; }
+async function viewHistoryDetail(id) { if (!appState.sheetUrl) { showToast('URL szükséges.','error'); return; } const loadingHTML = document.getElementById('loading-skeleton')?.outerHTML || '<p>...</p>'; openModal('Elemzés...', loadingHTML, isMobile() ? 'modal-fullscreen' : 'modal-lg'); const modalSkeleton = document.querySelector('#modal-container #loading-skeleton'); if (modalSkeleton) modalSkeleton.classList.add('active'); try { const response = await fetch(`${appState.gasUrl}?action=getAnalysisDetail&sheetUrl=${encodeURIComponent(appState.sheetUrl)}&id=${id}`); if (!response.ok) throw new Error(`Hiba: ${response.status}`); const data = await response.json(); if (data.error) throw new Error(data.error); if (!data.record?.html) throw new Error("Hiányos adat."); const { record } = data; const modalTitleEl = document.getElementById('modal-title'); if (modalTitleEl) modalTitleEl.textContent = `${record.home||'?'} vs ${record.away||'?'}`; const modalBody = document.getElementById('modal-body'); const commonElements = document.getElementById('common-elements'); if (!modalBody || !commonElements) throw new Error("UI hiba."); modalBody.innerHTML = commonElements.innerHTML; const bodySkeleton = modalBody.querySelector('#loading-skeleton'); const bodyResults = modalBody.querySelector('#analysis-results'); const bodyChat = modalBody.querySelector('#chat-container'); const chatMessages = bodyChat?.querySelector('#chat-messages'); const chatSendBtn = bodyChat?.querySelector('#chat-send-btn'); const chatInput = bodyChat?.querySelector('#chat-input'); if (bodySkeleton) bodySkeleton.style.display = 'none'; if (bodyResults) bodyResults.innerHTML = `<div class="analysis-body">${record.html}</div>`; if (bodyChat && chatMessages && chatSendBtn && chatInput) { bodyChat.style.display = 'block'; appState.currentAnalysisContext = record.html; appState.chatHistory = []; chatMessages.innerHTML = ''; chatSendBtn.onclick = sendChatMessage; chatInput.onkeyup = (e)=>{if(e.key==="Enter") sendChatMessage();}; } else { if (bodyChat) bodyChat.style.display = 'none'; } } catch(e) { console.error("...", e); const modalBody = document.getElementById('modal-body'); if (modalBody) modalBody.innerHTML = `<p style="color:var(--danger)...">Hiba: ${e.message}</p>`; if (modalSkeleton) modalSkeleton.classList.remove('active'); const bodySkeleton = modalBody?.querySelector('#loading-skeleton'); if (bodySkeleton) bodySkeleton.style.display = 'none'; } }
