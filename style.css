@@ -50,6 +50,8 @@ input:focus, .select-wrapper select:focus {outline:none;border-color:var(--prima
 .btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(212,175,55,.4)}
 .btn-special { border-color: var(--accent); color: var(--accent); }
 .btn-special:hover:not(:disabled) { border-color: var(--accent); color: #fff; background: rgba(0, 191, 255, 0.15); box-shadow: 0 0 20px rgba(0, 191, 255, 0.4); }
+.btn-accent { border-color: var(--accent); color: var(--accent); } /* Added accent button style */
+.btn-accent:hover:not(:disabled) { border-color: var(--accent); color: #fff; background: rgba(0, 191, 255, 0.15); box-shadow: 0 0 20px rgba(0, 191, 255, 0.4); }
 .btn:disabled{background:var(--card-bg);color:var(--text-secondary);opacity:.5;cursor:not-allowed;border-color:var(--border-color)}
 .muted{color:var(--text-secondary);font-size:.9rem}
 .placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);padding:2rem;text-align:center}
@@ -67,12 +69,14 @@ input:focus, .select-wrapper select:focus {outline:none;border-color:var(--prima
 .kanban-column { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 30px var(--shadow-color); backdrop-filter: blur(5px); height: max-content; }
 .kanban-column-header { font-family: var(--font-family-header); font-size: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: var(--text-primary); text-align: center; }
 .column-content { overflow-y: auto; max-height: calc(100vh - 200px); padding-right: 5px; }
-.match-card { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0)); border-radius: 12px; padding: 1rem; cursor: pointer; transition: all .2s ease; border: 1px solid var(--border-color); position: relative; overflow: hidden; }
+.match-card { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0)); border-radius: 12px; padding: 1rem; border: 1px solid var(--border-color); position: relative; overflow: hidden; display: flex; /* Flex for checkbox */ align-items: center; gap: 1rem; }
 .match-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.1), transparent); transition: left 0.4s ease; }
 .match-card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 8px 25px rgba(212,175,55,0.15); }
 .match-card:hover::before { left: 100%; }
+.match-content { flex-grow: 1; cursor: pointer; } /* Allow content to grow and be clickable */
 .match-card-teams { font-weight: 600; font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--text-primary); }
 .match-card-meta { font-size: 0.8rem; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center; }
+.fixture-checkbox { flex-shrink: 0; margin: 0; accent-color: var(--primary); cursor: pointer; transform: scale(1.2); } /* Checkbox style */
 .date-section { border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
 .date-section:last-of-type { border-bottom: none; margin-bottom: 0; }
 details > summary { list-style: none; }
@@ -93,21 +97,26 @@ details > summary::-webkit-details-marker { display: none; }
 .modal-close-btn:hover { color: var(--primary); }
 .modal-body { padding: 1.5rem; overflow-y: auto; flex-grow: 1; }
 .modal-content.modal-sm { width: 500px; max-width: 90vw; }
-/* --- MODAL WIDTH ADJUSTMENT --- */
-.modal-content.modal-lg {
-    width: 90vw; /* Default width for smaller large screens */
-    max-width: 90vw; /* Keep max-width same as width initially */
-}
-@media (min-width: 1200px) { /* Apply wider max-width only on larger screens */
-    .modal-content.modal-lg {
-        max-width: 1400px; /* Wider max width */
-    }
-}
-/* --- MODAL WIDTH ADJUSTMENT END --- */
+.modal-content.modal-lg { width: 90vw; max-width: 90vw; } /* Adjusted width */
+@media (min-width: 1200px) { .modal-content.modal-lg { max-width: 1400px; } } /* Wider on large screens */
 .modal-content.modal-fullscreen { width: 100%; height: 100%; max-height: 100vh; max-width: 100vw; border-radius: 0; }
-.list-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border-color);cursor:pointer; transition: background-color 0.2s ease;}
+.list-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border-color);transition: background-color 0.2s ease;} /* Removed cursor pointer from whole item */
 .list-item:hover { background-color: rgba(212, 175, 55, 0.05); }
+.list-item .match-content { cursor: pointer; flex-grow: 1; margin-left: 1rem; /* Space between checkbox and content */ } /* Make content clickable */
+.list-item.mobile { gap: 1rem; } /* Add gap for mobile list items */
 .list-item-title{font-weight:600}.list-item-meta{font-size:.8rem;color:var(--text-secondary)}
+
+/* --- Summary Modal Specific Styles --- */
+.summary-results-list { list-style: none; padding: 0; margin: 0; }
+.summary-results-list li { padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+.summary-results-list li:last-child { border-bottom: none; }
+.summary-results-list strong { color: var(--text-primary); }
+.recommendation-pill { display: inline-block; padding: 0.3em 0.8em; border-radius: 15px; font-size: 0.9em; font-weight: 600; margin: 0 0.5em; }
+.recommendation-pill.high { background-color: rgba(57, 255, 20, 0.2); color: var(--success); border: 1px solid var(--success); }
+.recommendation-pill.medium { background-color: rgba(212, 175, 55, 0.2); color: var(--primary); border: 1px solid var(--primary); }
+.recommendation-pill.low { background-color: rgba(255, 71, 71, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+.summary-results-list em.muted { display: block; margin-top: 0.3rem; font-size: 0.85em; }
+/* --- End Summary Modal Styles --- */
 
 @media (max-width: 1024px) {
   body { overflow-y: auto; }
