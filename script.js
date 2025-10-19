@@ -533,24 +533,23 @@ function renderFixturesForDesktop(fixtures) {
                     let displayHome = "N/A", displayAway = "N/A", displayLeague = "N/A", displayTime = "N/A";
                     let safeHome = "", safeAway = "";
                     
-                    // ---> JAVÍTÁS 1: leagueShort deklarálása <---
                     let leagueShort = "N/A"; 
                     let fixtureId = `fixture-${index}-${Date.now()}`;
                     let isValidFixture = false;
 
                     try {
-                        // ---> JAVÍTÁS 2: Robusztus "szupertisztítás" és ellenőrzés <---
-                        const cleanHome = (fx.home || "").replace(/[\s\u00A0]/g, '');
-                        const cleanAway = (fx.away || "").replace(/[\s\u00A0]/g, '');
-                        const cleanLeague = (fx.league || "").replace(/[\s\u00A0]/g, '');
+                        // ---> VIZUÁLIS HIBA JAVÍTÁSA (ALATTOMOS SZÓKÖZ HIBA) <---
+                        // Közvetlenül a .trim()-elt értéket ellenőrizzük, nem a "szupertisztítottat"
+                        displayHome = (fx.home || "").trim();
+                        displayAway = (fx.away || "").trim();
+                        displayLeague = (fx.league || "").trim();
 
-                        if (!fx || !fx.id || !fx.utcKickoff || cleanHome.length === 0 || cleanAway.length === 0 || cleanLeague.length === 0) {
+                        // Ha bármelyik név a tisztítás után üres (pl. csak szóköz volt), kihagyjuk
+                        if (!fx || !fx.id || !fx.utcKickoff || displayHome.length === 0 || displayAway.length === 0 || displayLeague.length === 0) {
                             throw new Error("Hiányzó vagy érvénytelen alap adatok (pl. üres nevek).");
                         }
+                        // ---> JAVÍTÁS VÉGE <---
                         
-                        displayHome = fx.home.trim(); 
-                        displayAway = fx.away.trim(); 
-                        displayLeague = fx.league.trim();
                         fixtureId = fx.id;
                         
                         const kickoffDate = new Date(fx.utcKickoff); if (isNaN(kickoffDate.getTime())) throw new Error("Érvénytelen utcKickoff.");
@@ -603,24 +602,22 @@ function renderFixturesForMobileList(fixtures) {
                 let displayHome = "N/A", displayAway = "N/A", displayLeague = "N/A", displayTime = "N/A", displayDateLabel = "N/A";
                 let safeHome = "", safeAway = "";
                 
-                // ---> JAVÍTÁS 1: leagueShort deklarálása <---
-                let leagueShort = "N/A"; // (Itt nincs használva, de a következetesség miatt)
                 let isValidFixture = false;
                 let fixtureId = `fixture-mobile-${index}-${Date.now()}`;
 
                 try {
-                    // ---> JAVÍTÁS 2: Robusztus "szupertisztítás" és ellenőrzés <---
-                    const cleanHome = (fx.home || "").replace(/[\s\u00A0]/g, '');
-                    const cleanAway = (fx.away || "").replace(/[\s\u00A0]/g, '');
-                    const cleanLeague = (fx.league || "").replace(/[\s\u00A0]/g, '');
+                    // ---> VIZUÁLIS HIBA JAVÍTÁSA (ALATTOMOS SZÓKÖZ HIBA) <---
+                    // Közvetlenül a .trim()-elt értéket ellenőrizzük
+                    displayHome = (fx.home || "").trim();
+                    displayAway = (fx.away || "").trim();
+                    displayLeague = (fx.league || "").trim();
 
-                    if (!fx || !fx.id || !fx.utcKickoff || cleanHome.length === 0 || cleanAway.length === 0 || cleanLeague.length === 0) {
+                    // Ha bármelyik név a tisztítás után üres (pl. csak szóköz volt), kihagyjuk
+                    if (!fx || !fx.id || !fx.utcKickoff || displayHome.length === 0 || displayAway.length === 0 || displayLeague.length === 0) {
                         throw new Error("Hiányzó vagy érvénytelen alap adatok (pl. üres nevek).");
                     }
+                    // ---> JAVÍTÁS VÉGE <---
 
-                    displayHome = fx.home.trim(); 
-                    displayAway = fx.away.trim(); 
-                    displayLeague = fx.league.trim();
                     fixtureId = fx.id;
 
                     const kickoffDate = new Date(fx.utcKickoff); if (isNaN(kickoffDate.getTime())) throw new Error("Érvénytelen utcKickoff.");
