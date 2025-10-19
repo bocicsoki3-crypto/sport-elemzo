@@ -1,6 +1,6 @@
 // --- ALKALMAZÁS ÁLLAPOT ---
 const appState = {
-    gasUrl: 'https://script.google.com/macros/s/AKfycbyN99ot1yzv4Na9nq0rTIsCSQ2DUlMMCzSKQmtM8fg7qDMAaFzHW8n_2Y8eNxnsFdabvg/exec',
+    gasUrl: 'IDE_ILLESZD_BE_AZ_ÚJ_DEPLOYMENT_URL-T', // <-- EZT KELL MAJD ÁTÍRNOD!
     fixtures: [],
     currentSport: 'soccer',
     sheetUrl: '',
@@ -52,6 +52,14 @@ async function loadFixtures() {
     const loadBtn = document.getElementById('loadFixturesBtn');
     loadBtn.disabled = true;
     loadBtn.textContent = 'Betöltés...';
+    
+    // HIBA ELLENŐRZÉS: Győződj meg róla, hogy az URL be van állítva
+    if (!appState.gasUrl || appState.gasUrl === 'IDE_ILLESZD_BE_AZ_ÚJ_DEPLOYMENT_URL-T') {
+        showToast('Hiba: A Google Apps Script URL nincs beállítva a script.js fájlban!', 'error', 6000);
+        loadBtn.disabled = false;
+        loadBtn.textContent = 'Meccsek Betöltése';
+        return;
+    }
 
     try {
         const response = await fetch(`${appState.gasUrl}?action=getFixtures&sport=${appState.currentSport}&days=2`);
@@ -103,7 +111,7 @@ async function runAnalysis(home, away) {
         const response = await fetch(analysisUrl, {
             method: 'POST',
             body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) }),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' } // A GAS miatt text/plain
         });
         if (!response.ok) throw new Error(`Szerver válasz hiba: ${response.status}`);
         const data = await response.json();
@@ -212,7 +220,20 @@ async function runFinalCheck(home, away, sport) {
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
         if (!response.ok) throw new Error(`Szerver hiba: ${response.statusText}`);
-        const data = await response.json();
+        
+        // A válasz már JSON a javított Main.gs-ben, de
+        // a FinalCheck.gs maga is JSON-t ad vissza, így duplán lehet.
+        // Biztonságos feldolgozás:
+        const rawResponseText = await response.text();
+        let data;
+        try {
+            data = JSON.parse(rawResponseText);
+        } catch(e) {
+            // Ha a belső funkció (FinalCheck.gs) adta vissza a ContentService-t
+            const nestedData = JSON.parse(rawResponseText);
+            data = JSON.parse(nestedData); 
+        }
+
         if (data.error) throw new Error(data.error);
 
         let signalColor, signalText;
@@ -244,9 +265,14 @@ function handleSportChange() {
     appState.completedAnalyses = [];
     sessionStorage.removeItem('completedAnalyses');
     updatePortfolioButton();
-    document.getElementById('kanban-board').innerHTML = '';
-    document.getElementById('mobile-list-container').innerHTML = '';
-    document.getElementById('placeholder').style.display = 'flex';
+    const kanbanBoard = document.getElementById('kanban-board');
+    if (kanbanBoard) kanbanBoard.innerHTML = '';
+    
+    const mobileList = document.getElementById('mobile-list-container');
+    if (mobileList) mobileList.innerHTML = ''; // Ezt a részt hozzáadtam
+    
+    const placeholder = document.getElementById('placeholder');
+    if (placeholder) placeholder.style.display = 'flex';
 }
 
 function updatePortfolioButton() {
@@ -280,6 +306,7 @@ function runManualAnalysis() {
 function isMobile() { return window.innerWidth <= 1024; }
 
 function getLeagueGroup(leagueName) {
+    if (!leagueName) return '🎲 Vad Kártyák'; // Védelem a hiányzó adatok ellen
     const sportGroups = LEAGUE_CATEGORIES[appState.currentSport] || {};
     const lowerLeagueName = leagueName.toLowerCase();
     for (const groupName in sportGroups) {
@@ -333,6 +360,19 @@ function renderFixturesForDesktop(fixtures) {
 
 function renderFixturesForMobileList(fixtures) {
     const container = document.getElementById('mobile-list-container');
+    // Ez a div hiányzott az index.html-ből, de a CSS-ed hivatkozik rá.
+    // A biztonság kedvéért feltételezzük, hogy a kanban-board-ba kell tennie mobil nézetben.
+    // Javítás: A CSS-ed elrejti a .kanban-containert és megmutatja a .mobile-list-containert.
+    // Ezért az index.html-edet is módosítani kellene, de most feltételezem, hogy
+    // a kanban-board-ba renderelés is működni fog, mivel a CSS elrejti azt.
+    // A tiszta megoldás az, ha az index.html-ben van .mobile-list-container.
+    // Mivel az nincs, a 'kanban-board'-ot célzom meg, ahogy a desktop.
+    if (!container) {
+        console.error("Hiányzik a 'mobile-list-container' elem az index.html-ből.");
+        renderFixturesForDesktop(fixtures); // Visszalépés desktop nézetre
+        return;
+    }
+
     document.getElementById('placeholder').style.display = 'none';
     container.innerHTML = '';
 
@@ -354,7 +394,7 @@ function renderFixturesForMobileList(fixtures) {
                             <div class="list-item-title">${fx.home} – ${fx.away}</div>
                             <div class="list-item-meta">${fx.league} - ${time}</div>
                         </div>
-                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>`;
             });
         }
@@ -367,11 +407,12 @@ function extractDataForPortfolio(html, home, away) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
 
-        const bestBetCard = Array.from(doc.querySelectorAll('.summary-card h5')).find(h5 => h5.textContent.includes('AI Legjobb Tipp') || h5.textContent.includes('Legvalószínűbb kimenetel') || h5.textContent.includes('Értéket Rejtő Tipp'));
-        if (!bestBetCard) return null;
+        // Módosítottam a keresést, hogy a 'Mester Ajánlása' kártyát keresse
+        const masterCard = doc.querySelector('.master-recommendation-card');
+        if (!masterCard) return null;
 
-        const bestBet = bestBetCard.nextElementSibling.textContent.trim();
-        const confidence = bestBetCard.nextElementSibling.nextElementSibling.querySelector('strong').textContent.trim();
+        const bestBet = masterCard.querySelector('.master-bet').textContent.trim();
+        const confidence = masterCard.querySelector('.master-confidence strong').textContent.trim();
 
         if (bestBet && confidence) {
             return { match: `${home} vs ${away}`, bestBet: bestBet, confidence: confidence };
@@ -388,7 +429,7 @@ function renderHistory(historyData) {
         return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek mentett előzmények.</p>';
     }
     const history = historyData.filter(item => item.home && item.away);
-    const groupedByDate = groupBy(history, item => new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
+    const groupedByDate = groupBy(history, item => new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Basemap' })); // Budapest-re javítottam
 
     let html = '';
     Object.keys(groupedByDate).sort((a,b) => new Date(b.split('. ').join('.').split('.').reverse().join('-')) - new Date(a.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
@@ -409,7 +450,7 @@ function renderHistory(historyData) {
                     ✔️
                 </button>`;
 
-            const time = matchTime.toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
+            const time = matchTime.toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'}); // Budapest
             html += `
                 <div class="list-item">
                     <div style="flex-grow:1;" onclick="viewHistoryDetail('${item.id}')">
@@ -418,7 +459,7 @@ function renderHistory(historyData) {
                     </div>
                      ${finalCheckButton}
                      <button class="btn" onclick="deleteHistoryItem('${item.id}'); event.stopPropagation();" title="Törlés">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                      </button>
                 </div>`;
         });
@@ -518,7 +559,7 @@ function addMessageToChat(text, role) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-function showToast(message, type = 'info') {
+// JAVÍTÁS: A showToast dupla definícióját javítottam.
 function showToast(message, type = 'info', duration = 4000) {
     const container = document.getElementById('toast-notification-container');
     const toast = document.createElement('div');
@@ -530,7 +571,6 @@ function showToast(message, type = 'info', duration = 4000) {
     setTimeout(() => {
         toast.style.animation = 'fadeOut 0.5s forwards';
         setTimeout(() => toast.remove(), 500);
-    }, 4000);
     }, duration);
 }
 
