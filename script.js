@@ -1,6 +1,6 @@
 // --- ALKALMAZÁS ÁLLAPOT ---
 const appState = {
-    gasUrl: 'IDE_ILLESZD_BE_AZ_ÚJ_DEPLOYMENT_URL-T', // <-- EZT KELL MAJD ÁTÍRNOD!
+    gasUrl: 'https://script.google.com/macros/s/AKfycbyN99ot1yzv4Na9nq0rTIsCSQ2DUlMMCzSKQmtM8fg7qDMAaFzHW8n_2Y8eNxnsFdabvg/exec', // <-- EZT KELL MAJD ÁTÍRNOD!
     fixtures: [],
     currentSport: 'soccer',
     sheetUrl: '',
