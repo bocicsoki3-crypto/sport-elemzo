@@ -125,7 +125,8 @@ async function runAnalysis(home, away) {
         modalChat.style.display = 'block';
         modalChat.querySelector('#chat-messages').innerHTML = '';
 
-        const portfolioData = extractDataForPortfolio(data.html, home, away);
+        // JAVÍTÁS: A portfólió adatok kinyerését a Mester Ajánlás kártyából végezzük
+        const portfolioData = extractDataForPortfolio(data.html, home, away, data.masterRecommendation);
         if (portfolioData && !appState.completedAnalyses.some(a => a.match === portfolioData.match)) {
             appState.completedAnalyses.push(portfolioData);
             sessionStorage.setItem('completedAnalyses', JSON.stringify(appState.completedAnalyses));
@@ -227,12 +228,47 @@ async function runFinalCheck(home, away, sport) {
         const rawResponseText = await response.text();
         let data;
         try {
+            // Megpróbáljuk közvetlenül feldolgozni
             data = JSON.parse(rawResponseText);
         } catch(e) {
-            // Ha a belső funkció (FinalCheck.gs) adta vissza a ContentService-t
-            const nestedData = JSON.parse(rawResponseText);
-            data = JSON.parse(nestedData); 
+            // Ha a belső funkció (FinalCheck.gs) adta vissza a ContentService-t,
+            // akkor a rawResponseText egy string, ami JSON-t tartalmaz.
+            // De a runFinalCheck a Main.gs-ben már kezeli ezt.
+            // Valószínűleg a rawResponseText már a belső JSON.
+            // Próbáljuk meg biztonságosabban...
+            console.error("runFinalCheck parse hiba:", e, rawResponseText);
+            throw new Error("Érvénytelen JSON válasz a végső ellenőrzésnél.");
         }
+
+        // A FinalCheck.gs egy ContentService objektumot ad vissza, aminek a tartalma JSON string.
+        // A Main.gs (az én javított verzióm) ezt továbbküldi.
+        // A fetch API response.json() funkciója ezt automatikusan dupla-parsolja.
+        // De mivel text()-et használok, lehet, hogy a 'data' még string.
+        
+        // TISZTÁZÁS: A Main.gs-emben a 'runFinalCheck' ág *nem* parsolja újra.
+        // Emiatt a 'response' egy ContentService objektum lesz, amit a addCorsHeaders becsomagol.
+        // A kliens oldalon a 'response.json()' ezt EGY JSON objektumként fogja kezelni,
+        // aminek a tartalma egy string (a FinalCheck.gs válasza).
+        
+        // ÚJRA FELDOLGOZÁS (feltételezve, hogy a 'data' egy string, ami JSON-t tartalmaz)
+        if (typeof data === 'string') {
+           try {
+               data = JSON.parse(data);
+           } catch (e2) {
+               // Ha már objektum volt, akkor rendben van.
+           }
+        }
+        
+        // Még egy szintű beágyazás lehetséges, ha a FinalCheck.gs ContentService-e 
+        // egy másik ContentService-t csomagol
+        if (typeof data.payload === 'string') {
+             try {
+                data = JSON.parse(data.payload);
+             } catch (e3) {
+                // ...
+             }
+        }
+
 
         if (data.error) throw new Error(data.error);
 
@@ -248,6 +284,7 @@ async function runFinalCheck(home, away, sport) {
             <div style="text-align: center;">
                 <h2 style="color: ${signalColor}; font-size: 2rem;">${signalText}</h2>
                 <p style="font-size: 1.1rem; color: var(--text-secondary); border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">${data.justification}</p>
+                <p class="muted" style="font-size: 0.8rem; margin-top: 1.5rem;">Kezdőcsapatok: ${data.lineupStatus || 'N/A'}</p>
             </div>
         `;
         document.getElementById('modal-body').innerHTML = resultHtml;
@@ -265,11 +302,13 @@ function handleSportChange() {
     appState.completedAnalyses = [];
     sessionStorage.removeItem('completedAnalyses');
     updatePortfolioButton();
+    
     const kanbanBoard = document.getElementById('kanban-board');
     if (kanbanBoard) kanbanBoard.innerHTML = '';
     
+    // JAVÍTÁS: A hiányzó 'mobile-list-container' ellenőrzése
     const mobileList = document.getElementById('mobile-list-container');
-    if (mobileList) mobileList.innerHTML = ''; // Ezt a részt hozzáadtam
+    if (mobileList) mobileList.innerHTML = '';
     
     const placeholder = document.getElementById('placeholder');
     if (placeholder) placeholder.style.display = 'flex';
@@ -317,7 +356,9 @@ function getLeagueGroup(leagueName) {
 
 function renderFixturesForDesktop(fixtures) {
     const board = document.getElementById('kanban-board');
-    document.getElementById('placeholder').style.display = 'none';
+    const placeholder = document.getElementById('placeholder');
+    if (placeholder) placeholder.style.display = 'none';
+    if (!board) return; // Biztonsági ellenőrzés
     board.innerHTML = '';
 
     const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
@@ -359,21 +400,18 @@ function renderFixturesForDesktop(fixtures) {
 }
 
 function renderFixturesForMobileList(fixtures) {
+    // JAVÍTÁS: Ellenőrizzük, hogy a 'mobile-list-container' létezik-e
     const container = document.getElementById('mobile-list-container');
-    // Ez a div hiányzott az index.html-ből, de a CSS-ed hivatkozik rá.
-    // A biztonság kedvéért feltételezzük, hogy a kanban-board-ba kell tennie mobil nézetben.
-    // Javítás: A CSS-ed elrejti a .kanban-containert és megmutatja a .mobile-list-containert.
-    // Ezért az index.html-edet is módosítani kellene, de most feltételezem, hogy
-    // a kanban-board-ba renderelés is működni fog, mivel a CSS elrejti azt.
-    // A tiszta megoldás az, ha az index.html-ben van .mobile-list-container.
-    // Mivel az nincs, a 'kanban-board'-ot célzom meg, ahogy a desktop.
     if (!container) {
-        console.error("Hiányzik a 'mobile-list-container' elem az index.html-ből.");
-        renderFixturesForDesktop(fixtures); // Visszalépés desktop nézetre
+        console.error("HIBA: A 'mobile-list-container' elem hiányzik az index.html-ből. A mobil nézet nem fog működni.");
+        // Próbáljuk meg a desktop nézetet használni vészhelyzetben
+        renderFixturesForDesktop(fixtures);
         return;
     }
-
-    document.getElementById('placeholder').style.display = 'none';
+    
+    const placeholder = document.getElementById('placeholder');
+    if (placeholder) placeholder.style.display = 'none';
+    
     container.innerHTML = '';
 
     const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
@@ -402,12 +440,23 @@ function renderFixturesForMobileList(fixtures) {
     container.innerHTML = html || '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek elérhető mérkőzések.</p>';
 }
 
-function extractDataForPortfolio(html, home, away) {
+// JAVÍTÁS: A 'masterRecommendation' objektumot is fogadjuk, hogy elkerüljük a HTML feldolgozást
+function extractDataForPortfolio(html, home, away, masterRecommendation) {
     try {
+        // Elsődlegesen a 'masterRecommendation' objektumot használjuk
+        if (masterRecommendation && masterRecommendation.recommended_bet && masterRecommendation.final_confidence) {
+             return { 
+                match: `${home} vs ${away}`, 
+                bestBet: masterRecommendation.recommended_bet, 
+                confidence: `${masterRecommendation.final_confidence.toFixed(1)}/10` 
+            };
+        }
+
+        // Visszaesés a HTML feldolgozásra, ha az objektum hiányzik
+        console.warn("extractDataForPortfolio: MasterRecommendation objektum hiányzik, visszaesés HTML elemzésre.");
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
 
-        // Módosítottam a keresést, hogy a 'Mester Ajánlása' kártyát keresse
         const masterCard = doc.querySelector('.master-recommendation-card');
         if (!masterCard) return null;
 
@@ -429,7 +478,8 @@ function renderHistory(historyData) {
         return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek mentett előzmények.</p>';
     }
     const history = historyData.filter(item => item.home && item.away);
-    const groupedByDate = groupBy(history, item => new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Basemap' })); // Budapest-re javítottam
+    // JAVÍTÁS: Hibás időzóna ('Basemap' helyett 'Budapest')
+    const groupedByDate = groupBy(history, item => new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
 
     let html = '';
     Object.keys(groupedByDate).sort((a,b) => new Date(b.split('. ').join('.').split('.').reverse().join('-')) - new Date(a.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
@@ -439,18 +489,20 @@ function renderHistory(historyData) {
         sortedItems.forEach(item => {
             const matchTime = new Date(item.date);
             const now = new Date();
-            const timeDiffMinutes = (matchTime - now) / (1000 * 60);
+            const timeDiffMinutes = (now - matchTime) / (1000 * 60); // JAVÍTÁS: A helyes időeltolás számítás (most - meccs ideje)
 
-            const isCheckable = timeDiffMinutes <= 60 && timeDiffMinutes > -120;
+            // A gomb akkor aktív, ha a meccs 60 percen belül kezdődik VAGY már 120 perce tart
+            const isCheckable = timeDiffMinutes >= -60 && timeDiffMinutes <= 120; // Meccs kezdete előtti 1 óra és meccs utáni 2 óra
+            
             const finalCheckButton = `
                 <button class="btn btn-final-check" 
                         onclick="runFinalCheck('${escape(item.home)}', '${escape(item.away)}', '${item.sport}'); event.stopPropagation();" 
-                        title="Végső Ellenőrzés (meccs előtt 1 órával aktív)" 
+                        title="Végső Ellenőrzés (meccs előtt 1 órával és meccs után 2 órával aktív)" 
                         ${!isCheckable ? 'disabled' : ''}>
                     ✔️
                 </button>`;
 
-            const time = matchTime.toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'}); // Budapest
+            const time = matchTime.toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
             html += `
                 <div class="list-item">
                     <div style="flex-grow:1;" onclick="viewHistoryDetail('${item.id}')">
@@ -559,9 +611,13 @@ function addMessageToChat(text, role) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// JAVÍTÁS: A showToast dupla definícióját javítottam.
+// JAVÍTÁS: A dupla definíció eltávolítva, ez a helyes.
 function showToast(message, type = 'info', duration = 4000) {
     const container = document.getElementById('toast-notification-container');
+    if (!container) {
+        console.error("Toast container not found!");
+        return;
+    }
     const toast = document.createElement('div');
     toast.className = `toast-notification ${type}`;
     toast.textContent = message;
@@ -574,8 +630,15 @@ function showToast(message, type = 'info', duration = 4000) {
     }, duration);
 }
 
+
 function setupThemeSwitcher() {
     const themeSwitcher = document.getElementById('theme-switcher');
+    // JAVÍTÁS: Kezeljük, ha esetleg hiányzik
+    if (!themeSwitcher) {
+        console.warn("Theme switcher element 'theme-switcher' not found.");
+        return;
+    }
+    
     const htmlEl = document.documentElement;
 
     const setIcon = (theme) => {
