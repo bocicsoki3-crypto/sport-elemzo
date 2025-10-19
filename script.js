@@ -1,6 +1,6 @@
 // --- ALKALMAZÁS ÁLLAPOT ---
 const appState = {
-    gasUrl: 'https://script.google.com/macros/s/AKfycbyN99ot1yzv4Na9nq0rTIsCSQ2DUlMMCzSKQmtM8fg7qDMAaFzHW8n_2Y8eNxnsFdabvg/exec', // <-- Ellenőrizd!
+    gasUrl: '[https://script.google.com/macros/s/AKfycbyN99ot1yzv4Na9nq0rTIsCSQ2DUlMMCzSKQmtM8fg7qDMAaFzHW8n_2Y8eNxnsFdabvg/exec](https://script.google.com/macros/s/AKfycbyN99ot1yzv4Na9nq0rTIsCSQ2DUlMMCzSKQmtM8fg7qDMAaFzHW8n_2Y8eNxnsFdabvg/exec)', // <-- Ellenőrizd!
     fixtures: [],
     currentSport: 'soccer',
     sheetUrl: '',
@@ -68,7 +68,7 @@ function getLeagueGroup(leagueName) {
 document.addEventListener('DOMContentLoaded', () => {
     appState.currentSport = document.getElementById('sportSelector')?.value || 'soccer';
     setupThemeSwitcher();
-    if (!appState.gasUrl || !appState.gasUrl.startsWith('https://script.google.com')) { document.getElementById('userInfo').textContent='HIBA: GAS URL nincs beállítva!'; document.getElementById('userInfo').style.color = 'var(--danger)'; }
+    if (!appState.gasUrl || !appState.gasUrl.startsWith('[https://script.google.com](https://script.google.com)')) { document.getElementById('userInfo').textContent='HIBA: GAS URL nincs beállítva!'; document.getElementById('userInfo').style.color = 'var(--danger)'; }
     else { document.getElementById('userInfo').textContent = `Csatlakozva`; }
     appState.sheetUrl = localStorage.getItem('sheetUrl');
     if (appState.sheetUrl) { document.getElementById('userInfo').textContent += ` | Napló: Beállítva`; } else { document.getElementById('userInfo').textContent += ` | Napló: Nincs beállítva`; }
@@ -151,9 +151,9 @@ function renderFixturesForDesktop(fixtures) {
                 sortedFixtures.forEach((fx, index) => {
                     let displayHome = "N/A", displayAway = "N/A", displayLeague = "N/A", displayTime = "N/A";
                     let safeHome = "", safeAway = ""; // Ezek már kódoltak lesznek
-                    let leagueShort = "N/A";
-                    let isValidFixture = false;
+                    let leagueShort = "N/A"; // <-- JAVÍTÁS: Hiányzó változó deklarálása
                     let fixtureId = `fixture-${index}-${Date.now()}`; // Egyedi ID hibakereséshez
+                    let isValidFixture = false;
 
                     try {
                         // SZIGORÚ ELLENŐRZÉS
@@ -210,6 +210,7 @@ function renderFixturesForMobileList(fixtures) {
             sortedFixtures.forEach((fx, index) => {
                 let displayHome = "N/A", displayAway = "N/A", displayLeague = "N/A", displayTime = "N/A", displayDateLabel = "N/A";
                 let safeHome = "", safeAway = "";
+                let leagueShort = "N/A"; // <-- JAVÍTÁS: Hiányzó változó deklarálása (konzisztencia)
                 let isValidFixture = false;
                 let fixtureId = `fixture-mobile-${index}-${Date.now()}`;
 
@@ -234,7 +235,7 @@ function renderFixturesForMobileList(fixtures) {
                                 <div class="list-item-title">${displayHome} – ${displayAway}</div>
                                 <div class="list-item-meta">${displayLeague} - ${displayDateLabel} ${displayTime}</div>
                             </div>
-                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                             <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </div>`;
                     // ---> JAVÍTÁS VÉGE <---
                 }
