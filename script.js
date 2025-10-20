@@ -289,6 +289,7 @@ function getLeagueGroup(leagueName) {
     return '🎲 Vad Kártyák';
 }
 
+// === MÓDOSÍTOTT FUNKCIÓ (renderFixturesForDesktop) ===
 function renderFixturesForDesktop(fixtures) {
     const board = document.getElementById('kanban-board');
     document.getElementById('placeholder').style.display = 'none';
@@ -299,6 +300,8 @@ function renderFixturesForDesktop(fixtures) {
 
     groupOrder.forEach(group => {
         let columnContent = '';
+        let cardIndex = 0; // Index a késleltetéshez
+        
         if (groupedByCategory[group]) {
             const groupedByDate = groupBy(groupedByCategory[group], fx => new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
 
@@ -306,14 +309,19 @@ function renderFixturesForDesktop(fixtures) {
                 columnContent += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
                 groupedByDate[dateKey].forEach(fx => {
                     const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
+                    
+                    // === SOR MÓDOSÍTVA: style="animation-delay:..." hozzáadva ===
                     columnContent += `
-                        <div class="match-card" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}')">
+                        <div class="match-card" 
+                             onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}')"
+                             style="animation-delay: ${cardIndex * 0.05}s">
                             <div class="match-card-teams">${fx.home} – ${fx.away}</div>
                             <div class="match-card-meta">
                                 <span>${fx.league}</span>
                                 <span>${time}</span>
                             </div>
                         </div>`;
+                    cardIndex++; // Növeld az indexet
                 });
                 columnContent += `</details>`;
             });
@@ -331,6 +339,7 @@ function renderFixturesForDesktop(fixtures) {
             </div>`;
     });
 }
+// === MÓDOSÍTÁS VÉGE ===
 
 function renderFixturesForMobileList(fixtures) {
     const container = document.getElementById('mobile-list-container');
