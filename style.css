@@ -71,12 +71,40 @@ input:focus, .select-wrapper select:focus {outline:none;border-color:var(--prima
 .kanban-column { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 30px var(--shadow-color); backdrop-filter: blur(5px); height: max-content; }
 .kanban-column-header { font-family: var(--font-family-header); font-size: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: var(--text-primary); text-align: center; }
 .column-content { overflow-y: auto; max-height: calc(100vh - 200px); padding-right: 5px; }
-.match-card { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0)); border-radius: 12px; padding: 1rem; cursor: pointer; transition: all .2s ease; border: 1px solid var(--border-color); position: relative; overflow: hidden; }
+.match-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+    border-radius: 12px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all .2s ease;
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
 .match-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.1), transparent); transition: left 0.4s ease; }
-.match-card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 8px 25px rgba(212,175,55,0.15); }
+.match-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--primary);
+    box-shadow: 0 12px 30px rgba(212, 175, 55, 0.25);
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
+}
 .match-card:hover::before { left: 100%; }
-.match-card-teams { font-weight: 600; font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--text-primary); }
-.match-card-meta { font-size: 0.8rem; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center; }
+.match-card-teams {
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+.match-card-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
 .date-section { border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
 .date-section:last-of-type { border-bottom: none; margin-bottom: 0; }
 details > summary { list-style: none; }
@@ -183,7 +211,12 @@ details > summary::-webkit-details-marker { display: none; }
 .micromodel-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
 .micromodel-card h5 { color: var(--primary); margin-bottom: 0.8rem; font-size: 1rem; }
 .micromodel-card p { margin: 0; color: var(--text-secondary); line-height: 1.6; }
-.micromodel-card strong { color: var(--text-primary) !important; text-shadow: none !important; animation: none !important; font-weight: 600; }
+.micromodel-card p strong {
+    color: var(--primary) !important;
+    text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
+    animation: pulse-glow-orange 3s infinite alternate;
+    font-weight: 600;
+}
 
 .totals-breakdown { display: flex; flex-direction: column; justify-content: center; align-items: stretch; height: 100%; gap: 0.75rem; font-size: 1.2rem; flex-grow: 1; padding: 1rem 0; }
 .total-line { display: flex; justify-content: space-between; align-items: center; width: 95%; margin: 0 auto; font-size: 1.1rem; }
@@ -281,6 +314,18 @@ strong { color: var(--primary) !important; text-shadow: 0 0 8px var(--primary), 
 .gauge-text { position: relative; font-size: 1.6rem; font-weight: 700; color: var(--text-primary); text-shadow: 0 0 8px var(--text-primary); z-index: 1; margin-top: 15px; line-height: 1; }
 .gauge-label { position: relative; font-size: 0.75rem; color: var(--text-secondary); z-index: 1; margin-top: 2px; }
 .expert-confidence-card .gauge-container { margin-bottom: 0.5rem; height: 120px; }
+
+/* ÚJ SZABÁLY: Modell Magabiztosság /10 kijelzéséhez */
+.gauge-text .gauge-label-inline {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: inherit;
+    text-shadow: inherit;
+    margin-left: 1px;
+    opacity: 0.9;
+    vertical-align: middle;
+}
+
 
 /* === ÚJ: Idővonal Konténer Stílusa === */
 .timeline-visualization-container {
