@@ -1,410 +1,361 @@
-/**************************************************************
-* HTML_Builder.gs - HTML Nézet Generátor (V13.6 - Idővonal Javítás)
-* Feladata: A HTML kód előállítása.
-* V13.6 VÁLTOZÁSOK: A "Prophetic Timeline" vizualizációja külön konténert kapott
-* a jobb elrendezés és a szövegtől való elválasztás érdekében.
-* V13.5 VÁLTOZÁSOK: Hozzáadva a bizalmi szint szöveges értelmezése
-* a Fő Elemző Ajánlása kártyához.
-* V13.4 VÁLTOZÁSOK: Véglegesen eltávolítva a felesleges fejlesztői kommentek.
-* A szakértői bizalom mérőműszer hibakezelése javítva.
-**************************************************************/
+:root {
+    --bg-dark: #101010; --card-bg-dark: #181818; --text-primary-dark: #EAEAEA; --text-secondary-dark: #A0A0A0;
+    --border-color-dark: rgba(212, 175, 55, 0.2); --shadow-color: rgba(0, 0, 0, 0.5);
+    --bg-light: #F0F2F5; --card-bg-light: #FFFFFF; --text-primary-light: #1c1e21; --text-secondary-light: #606770;
+    --border-color-light: #DCE1E4; --shadow-color: rgba(0, 0, 0, 0.1);
+    --primary: #D4AF37; --secondary: #B8860B; --accent: #00BFFF; --danger: #FF4747; --success: #39FF14;
+    --font-family-header: 'Poppins', system-ui, sans-serif; --font-family-body: 'Inter', system-ui, sans-serif;
 
-// A buildAnalysisHtml funkció definíciója fogadja a masterRecommendation paramétert
-function buildAnalysisHtml(committeeResults, matchData, oddsData, valueBets, modelConfidence, sim, masterRecommendation) {
-    const { home, away, sport, mainTotalsLine, mu_h, mu_a, propheticTimeline } = matchData;
-    const { generalAnalysis, tacticalBriefing, propheticScenario, expertConfidence, playerMarkets, riskAssessment, keyQuestions, strategicClosingThoughts, microAnalyses } = committeeResults;
-    let html = '';
-    try {
-        // Determine Best Bet display logic (Value vs. Most Likely)
-        let bestBet, betConfidence, betType;
-        if (valueBets && Array.isArray(valueBets) && valueBets.length > 0 && valueBets[0].value > 1.0) { // Value threshold > 1%
-            bestBet = valueBets[0].market;
-            betConfidence = Math.min(10.0, (valueBets[0].value / 5) + 5.0).toFixed(1) + "/10";
-            betType = "Értéket Rejtő Tipp ⭐";
-        } else {
-            // Find highest probability outcome among main markets
-            const mainMarketOutcomes = [
-                { name: `Hazai`, prob: sim.pHome || 0 },
-                { name: `Vendég`, prob: sim.pAway || 0 },
-                { name: `Over ${mainTotalsLine}`, prob: sim.pOver || 0 },
-                { name: `Under ${mainTotalsLine}`, prob: sim.pUnder || 0 }
-            ];
-            if (sport !== 'basketball' && (sim.pDraw || 0) > 0.1) { // Check sim.pDraw exists
-                mainMarketOutcomes.push({ name: `Döntetlen`, prob: sim.pDraw });
-            }
-            const highestProbOutcome = mainMarketOutcomes.reduce((a, b) => (a.prob > b.prob ? a : b), { prob: -1 });
-            bestBet = highestProbOutcome.prob > -1 ? highestProbOutcome.name : "N/A";
-            betConfidence = `${modelConfidence?.toFixed(1) || 'N/A'}/10`;
-            betType = "Legvalószínűbb kimenetel";
-        }
+    --card-bg-dark-rgb: 24, 24, 24;
+    --card-bg-light-rgb: 255, 255, 255;
+}
+.dark-theme { --bg: var(--bg-dark); --card-bg: var(--card-bg-dark); --text-primary: var(--text-primary-dark); --text-secondary: var(--text-secondary-dark); --border-color: var(--border-color-dark); --card-bg-rgb: var(--card-bg-dark-rgb); }
+.light-theme { --bg: var(--bg-light); --card-bg: var(--card-bg-light); --text-primary: var(--text-primary-light); --text-secondary: var(--text-secondary-light); --border-color: var(--border-color-light); --card-bg-rgb: var(--card-bg-light-rgb); }
 
-        // Format probabilities safely
-        const pHome = sim.pHome || 0;
-        const pDraw = sim.pDraw || 0;
-        const pAway = sim.pAway || 0;
-        const pOver = sim.pOver || 0;
-        const pUnder = sim.pUnder || 0;
+*{box-sizing:border-box}
+::selection{background-color:var(--primary);color:#000}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
-        // Totals card content generator
-        const totalsContent = () => {
-            const line = mainTotalsLine ?? (SPORT_CONFIG[sport]?.totals_line || 2.5);
-            return `
-                <div class="totals-breakdown">
-                    <div class="total-line"><span class="total-label">Over ${line}</span><span class="total-value glowing-text">${pOver.toFixed(1)}%</span></div>
-                    <div class="total-line"><span class="total-label">Under ${line}</span><span class="total-value glowing-text">${pUnder.toFixed(1)}%</span></div>
-                </div>`;
-        }; // <<<<----- Itt volt a hiba valószínűleg a korábbi verziókban (most javítva)
+body{margin:0;font-family:var(--font-family-body);color:var(--text-primary);background-color:var(--bg);background-image:radial-gradient(circle at 1px 1px,rgba(212,175,55,0.05) 1px,transparent 0);background-size:25px 25px;min-height:100vh;overflow:hidden;transition: background-color 0.3s, color 0.3s;}
+h1,h2,h3,h4,h5,h6{font-family:var(--font-family-header);font-weight: 600; color:var(--text-primary);margin-top:0}
+p{line-height:1.7;color:var(--text-secondary)}
+.app-container { display: flex; flex-direction: column; height: 100vh; }
 
-        // Parse Expert Confidence safely
-        let expertConfidenceScore = "N/A", expertConfidenceJustification = "Értékelés hiányzik.";
-        if (expertConfidence && typeof expertConfidence === 'string') {
-            const parts = expertConfidence.split(' - ');
-            if (parts.length >= 2) {
-                expertConfidenceScore = parts[0].replace(/\*+/g, '').trim();
-                expertConfidenceJustification = parts.slice(1).join(' - ').trim();
-            } else {
-                const scoreMatch = expertConfidence.match(/(\d{1,2}\.?\d?\/10)/);
-                if (scoreMatch) {
-                    expertConfidenceScore = scoreMatch[1];
-                    expertConfidenceJustification = expertConfidence.replace(scoreMatch[0], '').replace(/^[\s-]+|[\s-]+$/g, '').trim();
-                } else {
-                     expertConfidenceJustification = expertConfidence.trim() || "Indoklás hiányzik.";
-                }
-            }
-        }
+.app-header{padding:0 2rem;border-bottom:1px solid var(--border-color);display:flex;justify-content:center;align-items:center;flex-shrink: 0; height: 80px; position: relative;}
+.header-title-container { position: relative; display: flex; align-items: center; justify-content: center; }
+.main-title { font-weight: 700; margin:0; font-size: 2.5rem; color: var(--primary); text-shadow: 0 0 15px rgba(212, 175, 55, 0.5), 0 0 30px rgba(212, 175, 55, 0.3); animation: title-glow 5s infinite alternate; }
+@keyframes title-glow { from { text-shadow: 0 0 15px rgba(212, 175, 55, 0.4), 0 0 30px rgba(212, 175, 55, 0.2); } to { text-shadow: 0 0 25px rgba(212, 175, 55, 0.7), 0 0 50px rgba(212, 175, 55, 0.5); } }
+.spotlight { position: absolute; top: 50%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0) 60%); transform: translateY(-50%) rotate(-30deg); pointer-events: none; }
+.spotlight.left { left: -100px; }
+.spotlight.right { right: -100px; transform: translateY(-50%) rotate(30deg); }
+.header-status{font-size:.9rem;opacity:.8;display:flex;align-items:center;gap:1.5rem; position: absolute; right: 2rem;}
+#theme-switcher { cursor: pointer; }
+#userInfo { /* Opcionális */ }
 
+.control-group { /* Vezérlőelem */ }
+.control-group label{display:flex; align-items:center; gap: 0.5rem; font-weight:500;margin-bottom:.5rem;font-size:.9rem;color:var(--text-secondary); text-shadow: 0 0 8px rgba(212, 175, 55, 0.4); }
+.control-group label svg { width: 16px; height: 16px; stroke: var(--primary); opacity: 0.7; }
+input, .select-wrapper select {width:100%;padding:10px 14px;border:1px solid var(--border-color);border-radius:10px;background:var(--card-bg);color:var(--text-primary);font-size:.9rem;font-family:inherit;transition:all .2s ease}
+input:focus, .select-wrapper select:focus {outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(212,175,55,.3)}
+.select-wrapper { position: relative; width: auto; min-width: 200px; }
+.select-wrapper::after { content: '›'; font-weight: 700; font-size: 1.5rem; color: var(--text-secondary); position: absolute; right: 14px; top: 48%; transform: translateY(-50%) rotate(90deg); pointer-events: none; transition: transform 0.2s ease; }
+.select-wrapper:hover::after { transform: translateY(-50%) rotate(90deg) scale(1.1); }
+.select-wrapper select { -webkit-appearance: none; -moz-appearance: none; appearance: none; padding-right: 34px; cursor: pointer; }
 
-        // Bizalmi szint értékelő szöveg generálása
-        const getConfidenceInterpretation = (score) => {
-            if (typeof score !== 'number' || isNaN(score)) {
-                return '<p class="confidence-interpretation low">A bizalmi szint nem értékelhető.</p>';
-            }
-            if (score >= 9.0) {
-                return '<p class="confidence-interpretation very-high">💎 **Nagyon Magas Bizalom (9.0-10.0):** Kivételesen erős jelzés. Az elemzés legtöbb eleme egy irányba mutat. Megfontolandó magasabb téttel.</p>';
-            } else if (score >= 7.0) {
-                return '<p class="confidence-interpretation high">✅ **Magas Bizalom (7.0-8.9):** Erős jelzés. Az adatok és kontextus nagyrészt összhangban. Megbízható opciónak tűnik szokásos téttel.</p>';
-            } else if (score >= 5.0) {
-                return '<p class="confidence-interpretation medium">🤔 **Közepes Bizalom (5.0-6.9):** Megfontolandó. Lehet érték, de vannak kockázatok/ellentmondások. Csak mérsékelt téttel javasolt.</p>';
-            } else if (score >= 3.0) {
-                return '<p class="confidence-interpretation low">⚠️ **Alacsony Bizalom (3.0-4.9):** Magas Kockázat! Jelentős ellentmondások vagy kockázati tényezők. Csak spekulatív, alacsony téttel vagy kerülendő.</p>';
-            } else {
-                return '<p class="confidence-interpretation very-low">❌ **Nagyon Alacsony Bizalom (1.0-2.9):** Kerülendő! Kritikus ellentmondások. Az AI csak kényszerből adott tippet.</p>';
-            }
-        };
-        const confidenceTextHtml = getConfidenceInterpretation(masterRecommendation?.final_confidence);
+.btn{display:inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding:12px 24px;border:1px solid var(--border-color);border-radius:10px;font-weight:600;font-size: 1rem; cursor:pointer;transition:all .2s ease;font-family:var(--font-family-header);text-align:center;text-decoration:none;background: transparent; color: var(--text-secondary);}
+.btn.btn-lg { padding: 14px 28px; font-size: 1.1rem; }
+.btn svg { width: 1.1em; height: 1.1em; }
+.btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: rgba(212,175,55,0.1); box-shadow: 0 0 20px rgba(212,175,55,0.3), inset 0 0 10px rgba(212,175,55,0.1); transform: translateY(-2px); }
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#000; border: none; font-weight: 700;}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(212,175,55,.4)}
+.btn-special { border-color: var(--accent); color: var(--accent); }
+.btn-special:hover:not(:disabled) { border-color: var(--accent); color: #fff; background: rgba(0, 191, 255, 0.15); box-shadow: 0 0 20px rgba(0, 191, 255, 0.4); }
+.btn:disabled{background:var(--card-bg);color:var(--text-secondary);opacity:.5;cursor:not-allowed;border-color:var(--border-color)}
 
-        // --- Build HTML ---
-        html += `
-            <div class="at-a-glance-grid">
-                <div class="summary-card">
-                    <h5>Végeredmény (1X2)</h5>
-                    <div class="radial-chart-container">
-                       <svg class="radial-chart" viewBox="0 0 120 120">
-                           <circle class="track" cx="60" cy="60" r="54" /><circle class="progress away" cx="60" cy="60" r="54" style="--value: ${pAway}; --circumference: 339.29" />
-                            ${pDraw > 0.1 ? `<circle class="track" cx="60" cy="60" r="44" /><circle class="progress draw" cx="60" cy="60" r="44" style="--value: ${pDraw}; --circumference: 276.46" />` : ''}
-                            <circle class="track" cx="60" cy="60" r="34" /><circle class="progress home" cx="60" cy="60" r="34" style="--value: ${pHome}; --circumference: 213.62" />
-                        </svg>
-                    </div>
-                    <div class="diagram-legend">
-                        <div class="legend-item"><span class="legend-color-box" style="background:var(--primary);"></span>Hazai (<span class="glowing-text">${pHome.toFixed(1)}%</span>)</div>
-                        <div class="legend-item"><span class="legend-color-box" style="background:var(--accent);"></span>Vendég (<span class="glowing-text">${pAway.toFixed(1)}%</span>)</div>
-                        ${pDraw > 0.1 ? `<div class="legend-item"><span class="legend-color-box" style="background:var(--text-secondary);"></span>Döntetlen (<span class="glowing-text">${pDraw.toFixed(1)}%</span>)</div>` : ''}
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <h5>Várható Gólok (xG)</h5>
-                    <div class="xg-value-container">
-                        <div class="xg-team">
-                            <div class="value glowing-text">${(mu_h || 0).toFixed(2)}</div>
-                            <div class="details">${home || 'Hazai'}</div>
-                        </div>
-                        <div class="xg-separator">-</div>
-                        <div class="xg-team">
-                             <div class="value glowing-text">${(mu_a || 0).toFixed(2)}</div>
-                             <div class="details">${away || 'Vendég'}</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                   <h5>${sport === 'basketball' ? 'Pontok' : 'Gólok'} Összesen</h5>
-                    ${totalsContent()}
-                 </div>
-                <div class="summary-card">
-                    <h5>${betType}</h5>
-                     <div class="value glowing-text">${bestBet}</div>
-                     <div class="details">Bizalmi szint: <strong class="glowing-text">${betConfidence}</strong></div>
-                </div>
-                <div class="summary-card">
-                    <h5>Modell Magabiztossága 🎯</h5>
-                    <div class="gauge-container">
-                        <svg class="gauge-svg" viewBox="0 0 120 120">
-                           <path class="gauge-track" d="M 30 90 A 50 50 0 1 1 90 90" />
-                            <path class="gauge-value" d="M 30 90 A 50 50 0 1 1 90 90" style="stroke-dashoffset: calc(235.6 * (1 - (${modelConfidence || 0} / 10)))" />
-                        </svg>
-                        <div class="gauge-text glowing-text">
-                            ${(modelConfidence || 0).toFixed(1)}<span class="gauge-label-inline">/10</span>
-                        </div>
-                    </div>
-                    <div class="details">Adatkonzisztencia</div>
-                </div>
-            </div>
+.muted{color:var(--text-secondary);font-size:.9rem}
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);padding:2rem;text-align:center}
+.placeholder svg{width:64px;height:64px;margin-bottom:1rem;stroke-width:1.5;opacity:.3}
 
-            <div class="summary-card expert-confidence-card">
-                <h5>Szakértői Magabiztosság 🧠</h5>
-                <div class="gauge-container">
-                    <svg class="gauge-svg" viewBox="0 0 120 120">
-                        <path class="gauge-track" d="M 30 90 A 50 50 0 1 1 90 90" />
-                        <path class="gauge-value" d="M 30 90 A 50 50 0 1 1 90 90" style="stroke-dashoffset: calc(235.6 * (1 - (${parseFloat(expertConfidenceScore) || 0} / 10)))" />
-                    </svg>
-                    <div class="gauge-text">${expertConfidenceScore}</div>
-                </div>
-                <div class="details" style="margin-top: 1rem;">${expertConfidenceJustification}</div>
-             </div>
-        `;
+.controls-bar { display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-color); background: rgba(var(--card-bg-dark-rgb, 24, 24, 24), 0.5); backdrop-filter: blur(5px); flex-shrink: 0; }
+.main-actions { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: center; }
+.main-content { padding: 0; flex-grow: 1; overflow: hidden; position: relative; }
+.kanban-container { height: 100%; overflow-x: auto; padding: 2rem; display: flex; justify-content: flex-start; align-items: flex-start; }
+.kanban-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(320px, 360px); gap: 1.5rem; min-height: calc(100% - 4rem); padding-bottom: 2rem; }
+.mobile-list-container { display: none; height: 100%; overflow-y: auto; padding: 1rem; }
+.league-header-mobile { font-size: 1.2rem; font-family: var(--font-family-header); padding: 1rem; border-bottom: 2px solid var(--primary); margin-top: 1.5rem; margin-bottom: 1rem; color: var(--primary); }
+.league-header-mobile:first-child { margin-top: 0; }
 
-        // Value Bets Section
-        if (valueBets && Array.isArray(valueBets) && valueBets.length > 0) {
-            html += `<div class="market-data-section"><h4>Értéket Rejtő Fogadások (Value Bets)</h4>`;
-            valueBets.forEach(bet => {
-                 if (bet?.market && bet.odd && bet.stake && bet.value) {
-                     const betData = { date: new Date().toISOString(), sport: bet.sport || sport, home: bet.home || home, away: bet.away || away, market: bet.market, odd: bet.odd, stake: bet.stake };
-                     html += `<div class="list-item">
-                                <div style="flex-grow:1;">
-                                    <div class="list-item-title">${bet.market} @ ${bet.odd.toFixed(2)}</div>
-                                    <div class="list-item-meta">Javasolt tét (Kelly): ${bet.stake.toFixed(2)}% | Érték: +${bet.value.toFixed(2)}%</div>
-                                </div>
-                                <button class="btn btn-primary" onclick='logBet(${JSON.stringify(betData)})'>Naplózás</button>
-                           </div>`;
-                }
-            });
-            html += `</div>`;
-        }
+.kanban-column { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 30px var(--shadow-color); backdrop-filter: blur(5px); height: max-content; }
+.kanban-column-header { font-family: var(--font-family-header); font-size: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: var(--text-primary); text-align: center; }
+.column-content { overflow-y: auto; max-height: calc(100vh - 200px); padding-right: 5px; }
+.match-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+    border-radius: 12px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all .2s ease;
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+.match-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.1), transparent); transition: left 0.4s ease; }
+.match-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--primary);
+    box-shadow: 0 12px 30px rgba(212, 175, 55, 0.25);
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
+}
+.match-card:hover::before { left: 100%; }
+.match-card-teams {
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+.match-card-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.date-section { border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
+.date-section:last-of-type { border-bottom: none; margin-bottom: 0; }
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+.date-section summary { cursor: pointer; font-family: var(--font-family-header); font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; padding: 0.5rem 0; display: flex; align-items: center; justify-content: space-between; }
+.date-section summary::before { content: '▶'; margin-right: 10px; font-size: 0.8em; transition: transform 0.2s; }
+.date-section[open] > summary::before { transform: rotate(90deg); }
+.date-section .match-card { margin-top: 1rem; }
 
-        // Player Markets Section
-        if (playerMarkets && typeof playerMarkets === 'string' && playerMarkets.trim() && !playerMarkets.toLowerCase().includes("nincsenek kiemelt")) {
-          html += `<div class="market-data-section"><h4>Kulcsjátékosok Piacai</h4><p>${playerMarkets.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p></div>`;
-        }
+/* --- MODÁLIS ABLAK JAVÍTÁSA --- */
+.modal-container {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px); z-index: 2000; justify-content: center;
+    align-items: center; animation: fadeIn .3s; padding: 1rem;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-container.open { display: flex; }
 
-        // Key Questions Section
-        if (keyQuestions && typeof keyQuestions === 'string' && keyQuestions.trim()) {
-            const cleanedQuestions = keyQuestions.replace(/^- /gm, '').trim();
-            html += `<div class="analysis-section"><h4>Kulcskérdések</h4><p>- ${cleanedQuestions.replace(/\n/g, '<br>- ')}</p></div>`;
-        }
+.modal-content {
+    background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color);
+    display: flex; flex-direction: column; box-shadow: 0 10px 50px var(--shadow-color);
+    overflow: hidden; width: 100%; height: 100%;
+    max-width: 1600px; max-height: 95vh; animation: slideUp 0.4s ease-out;
+}
+@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        // Market Data Sections (Probabilities)
-        const renderDataSection = (title, data) => {
-            if (!data || typeof data !== 'object' || Object.keys(data).length === 0 || Object.values(data).every(v => typeof v !== 'number' || v < 0.1)) return '';
-            let content = Object.keys(data)
-                .filter(key => typeof data[key] === 'number' && data[key] >= 0.1)
-                .map(key => {
-                    let displayKey = String(key)
-                        .replace(/o(\d+(\.\d+)?)/g, 'Over $1')
-                        .replace(/u(\d+(\.\d+)?)/g, 'Under $1');
-                    return `<div class="market-card">
-                                <div class="market-card-title">${displayKey}</div>
-                                <div class="market-card-value glowing-text">${data[key].toFixed(1)}%</div>
-                           </div>`;
-               }).join('');
-            if (!content) return '';
-            return `<div class="market-data-section"><h4>${title}</h4><div class="market-card-grid">${content}</div></div>`;
-        };
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); flex-shrink: 0; background: rgba(var(--card-bg-rgb), 0.7); }
+.modal-header h3 { margin: 0; font-size: 1.2rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.modal-close-btn { background: none; border: none; color: var(--text-secondary); font-size: 2rem; line-height: 1; cursor: pointer; padding: 0; transition: color 0.2s; }
+.modal-close-btn svg { width: 24px; height: 24px; }
+.modal-close-btn:hover { color: var(--primary); }
 
-        // Top Scores Section
-        const top5scores = sim.scores ?
-            Object.entries(sim.scores)
-                            .sort(([,a],[,b]) => b-a)
-                            .slice(0, 5)
-                            .reduce((obj, [key, value]) => {
-                                const simsCount = 50000;
-                                if (typeof value === 'number' && simsCount > 0) {
-                                    obj[key] = (value / simsCount) * 100;
-                                }
-                                return obj;
-                            }, {}) : {};
-        html += `<div class="market-data-grid-container">`;
-        html += renderDataSection('Végeredmény Piacok (1X2)', { 'Hazai': pHome, 'Döntetlen': pDraw > 0.1 ? pDraw : 0, 'Vendég': pAway });
-        if(sim.pBTTS > 1) html += renderDataSection('Gól Piacok', { 'BTTS: Igen': sim.pBTTS });
-        if (sport === 'soccer') {
-             if (sim.corners && Object.keys(sim.corners).length > 0 && Object.values(sim.corners).some(v => v >= 0.1)) html += renderDataSection('Szöglet Piacok', sim.corners);
-             if (sim.cards && Object.keys(sim.cards).length > 0 && Object.values(sim.cards).some(v => v >= 0.1)) html += renderDataSection('Lap Piacok', sim.cards);
-        }
-        if (Object.keys(top5scores).length > 0) html += renderDataSection('Legvalószínűbb Eredmények', top5scores);
-        html += `</div>`;
+.modal-body { padding: 1.5rem; overflow-y: auto; flex-grow: 1; }
 
-        // Specialist Micro-Analyses Section
-        if (microAnalyses && typeof microAnalyses === 'object' && Object.keys(microAnalyses).length > 0) {
-            html += '<div class="market-data-section"><h4>Specialista Elemzések</h4>';
-            Object.keys(microAnalyses).forEach(key => {
-                 const analysisText = microAnalyses[key];
-                 if (typeof analysisText !== 'string' || !analysisText.trim() || analysisText.toLowerCase().includes("adatok hiányosak")) return;
+/* Méretosztályok */
+.modal-content.modal-sm { max-width: 500px; max-height: 90vh; width: 95%; }
+.modal-content.modal-lg { max-width: 1100px; max-height: 95vh; width: 95%; }
+.modal-content.modal-xl { max-width: 1600px; max-height: 95vh; width: 95%; }
+.modal-content.modal-fullscreen { width: 100%; height: 100%; max-height: 100vh; max-width: 100vw; border-radius: 0; }
 
-                let title = key;
-                switch(key) {
-                    case 'btts': title = 'Gólváltás (BTTS)'; break;
-                    case 'goalsOU': title = `Gólok Összesen (O/U ${mainTotalsLine ?? 'N/A'})`; break;
-                    case 'corners': title = 'Szögletek'; break;
-                    case 'cards': title = 'Lapok'; break;
-                    case 'winner': title = 'Meccs Győztese (Végső)'; break;
-                    case 'pointsOU': title = `Pontok Összesen (O/U ${mainTotalsLine ?? 'N/A'})`; break;
-                    default: title = key.charAt(0).toUpperCase() + key.slice(1);
-                }
-                 html += `<div class="micromodel-card"><h5>${title}</h5><p>${analysisText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p></div>`;
-            });
-            html += '</div>';
-        }
+/* --- MODÁLIS ABLAK JAVÍTÁS VÉGE --- */
 
-        // Accordion Section for Detailed Analyses
-        html += '<div class="analysis-accordion">';
-        const renderAccordionSection = (title, content, icon, isOpen = false) => {
-            // Külön kezeljük a Prófétai forgatókönyvet (az idővonal eltávolításra került)
-            if (title === 'Prófétai Forgatókönyv') {
-                const scenarioTextPart = content ? String(content).trim() : ''; // Biztonságos stringgé alakítás
-                if (!scenarioTextPart || scenarioTextPart.toLowerCase().includes("adatok hiányosak") || scenarioTextPart.toLowerCase().includes("nem érhető el")) return '';
-                const formattedScenario = scenarioTextPart
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n{2,}/g, '</p><p>')
-                    .replace(/\n/g, '<br>')
-                    .replace(/### (.*?)(<br>|$)/g, '<h4>$1</h4>')
-                    .replace(/^- /gm, '&bull; ');
+.list-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border-color);cursor:pointer; transition: background-color 0.2s ease;}
+.list-item:hover { background-color: rgba(212, 175, 55, 0.05); }
+.list-item-title{font-weight:600}.list-item-meta{font-size:.8rem;color:var(--text-secondary)}
 
-                return `<details ${isOpen ? 'open' : ''}>
-                            <summary>
-                               <span class="section-title">
-                                   <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>
-                                   ${title}
-                               </span>
-                            </summary>
-                            <div class="accordion-content">
-                                <p>${formattedScenario}</p> {/* Csak a szöveg P tagben */}
-                            </div>
-                        </details>`;
-            } else { // Normál renderelés a többi szekcióhoz
-                if (!content || typeof content !== 'string' || !content.trim() || content.toLowerCase().includes("adatok hiányosak") || content.toLowerCase().includes("nem érhető el")) return '';
-                const formattedContent = content
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n{2,}/g, '</p><p>')
-                    .replace(/\n/g, '<br>')
-                    .replace(/### (.*?)(<br>|$)/g, '<h4>$1</h4>')
-                    .replace(/^- /gm, '&bull; ');
+.loading-skeleton { display: none; }
+.loading-skeleton.active { display: block; }
+.loading-skeleton .skeleton-card{background:rgba(255,255,255,0.05);padding:1.5rem;border-radius:12px;margin-bottom:1.5rem}
+@keyframes pulse-bg { 0% { background: rgba(255,255,255,0.05); } 50% { background: rgba(255,255,255,0.1); } 100% { background: rgba(255,255,255,0.05); } }
+.loading-skeleton .skeleton-line{background:rgba(255,255,255,0.1);height: 1em; border-radius:4px;margin-bottom:10px;animation:pulse-bg 1.5s infinite}
 
-                return `<details ${isOpen ? 'open' : ''}>
-                            <summary>
-                               <span class="section-title">
-                                   <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>
-                                   ${title}
-                               </span>
-                            </summary>
-                            <div class="accordion-content"><p>${formattedContent}</p></div>
-                        </details>`;
-            }
-        };
+/* --- Elemzés Specifikus Stílusok --- */
 
+.at-a-glance-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; margin-bottom: 2rem;
+}
+@media (min-width: 1200px) { .at-a-glance-grid { grid-template-columns: repeat(5, 1fr); } }
 
-        html += renderAccordionSection('Általános Elemzés', generalAnalysis, '<path d="M12 20v-6M6 20v-10M18 20V4"/>', true);
+.summary-card {
+    background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;
+    padding: 1.5rem; text-align: center; display: flex; flex-direction: column;
+    justify-content: space-between; min-height: 200px; transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.summary-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
 
-        // --- VIZUÁLIS IDŐVONAL TELJESEN ELTÁVOLÍTVA ---
-        // A combinedPropheticHtml most már csak a scenario szövegét tartalmazza
-        const combinedPropheticHtml = `${propheticScenario || ''}`;
-        html += renderAccordionSection('Prófétai Forgatókönyv', combinedPropheticHtml, '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="3" x2="9" y2="21"></line>', true);
+.summary-card h5 { margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.summary-card .value { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; line-height: 1.3; }
+.summary-card .details { font-size: 0.8rem; margin-top: auto; color:var(--text-secondary); }
+.summary-card .details strong { font-weight: 600; }
 
-        html += renderAccordionSection('Taktikai Mélyelemzés', tacticalBriefing, '<polyline points="12 5 12 19 5 12 19 12 12 5"/>');
-        html += renderAccordionSection('Kockázatkezelői Jelentés', riskAssessment, '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>');
-        html += renderAccordionSection('Stratégiai Zárógondolatok', strategicClosingThoughts, '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>');
-        html += '</div>'; // End of analysis-accordion
+.radial-chart-container { position: relative; width: 100%; max-width: 130px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; flex-grow: 1; }
+.radial-chart { width: 100%; height: 100%; transform: rotate(-90deg); }
+.radial-chart circle { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease-out; }
+.radial-chart .track { stroke: rgba(255,255,255,0.05); }
+.radial-chart .progress { stroke-dasharray: var(--circumference); stroke-dashoffset: calc(var(--circumference) * (1 - var(--value, 0) / 100)); filter: drop-shadow(0 0 3px currentColor); }
+.radial-chart .home { stroke: var(--primary); }
+.radial-chart .draw { stroke: var(--text-secondary); }
+.radial-chart .away { stroke: var(--accent); }
+.diagram-legend { display: flex; flex-direction: column; align-items: flex-start; margin: 1rem auto 0; font-size: 0.8rem; gap: 0.4rem; padding-left: 10px; }
+.legend-item { display: flex; align-items: center; gap: 0.5rem; }
+.legend-color-box { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 
+.expert-confidence-card {
+    grid-column: 1 / -1; margin-bottom: 1rem; border: 1px solid var(--primary);
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15));
+    min-height: auto; padding: 1.5rem; display: flex; flex-direction: column;
+}
+.expert-confidence-card .value { display: none; }
+.expert-confidence-card .details { font-size: 0.9rem; max-width: 800px; margin: 1rem auto 0; flex-grow: 1; text-align: center; }
 
-        // --- Mester Ajánlás Kártya ---
-        if (masterRecommendation?.recommended_bet && typeof masterRecommendation.final_confidence === 'number') {
-             html += `
-                <div class="master-recommendation-card">
-                    <h5>👑 Fő Elemző Ajánlása 👑</h5>
-                    <div class="master-bet glowing-text">${masterRecommendation.recommended_bet}</div>
-                    <div class="master-confidence">Végső Bizalom: <strong class="glowing-text">${masterRecommendation.final_confidence.toFixed(1)}/10</strong></div>
-                    <div class="master-reasoning">${masterRecommendation.brief_reasoning || ''}</div>
-                    <div class="confidence-interpretation-container">${confidenceTextHtml}</div>
-                </div>
-            `;
-        } else {
-             Logger.log(`Hiányzó vagy érvénytelen Mester Ajánlás objektum a HTML generálásakor.`);
-             html += `<div class="master-recommendation-card" style="border-color: var(--danger); animation: none; box-shadow: none;"><p style="color: var(--danger);">A Fő Elemző ajánlása hiba miatt jelenleg nem elérhető.</p></div>`;
-        }
+.xg-value-container { display: flex; align-items: center; justify-content: space-around; width: 100%; flex-grow: 1; gap: 1rem; padding: 1rem 0; }
+.xg-team { display: flex; flex-direction: column; align-items: center; }
+.xg-separator { font-size: 1.5rem; color: var(--text-secondary); font-weight: 700; }
 
+.market-data-section { margin-bottom: 2rem; }
+.market-data-section h4 { font-size: 1.1rem; color: var(--secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+.market-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; }
+.market-card { background: rgba(var(--card-bg-rgb), 0.7); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 0.5rem; text-align: center; }
+.market-card-title { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem; min-height: 30px; display: flex; align-items: center; justify-content: center; }
+.market-card-value { font-size: 1.2rem; }
 
-    } catch (e) {
-        const matchInfo = `${matchData?.home || 'N/A'} vs ${matchData?.away || 'N/A'}`;
-        Logger.log(`Hiba a HTML generálás során (${matchInfo}): ${e.message} \nStack: ${e.stack}`);
-        html = `<p style="padding: 2rem; text-align: center; color: var(--danger);">Hiba történt az elemzés HTML nézetének generálása közben: ${e.message}</p>`;
-    }
-    return html;
+.micromodel-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+.micromodel-card h5 { color: var(--primary); margin-bottom: 0.8rem; font-size: 1rem; }
+.micromodel-card p { margin: 0; color: var(--text-secondary); line-height: 1.6; }
+.micromodel-card p strong {
+    color: var(--primary) !important;
+    text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
+    animation: pulse-glow-orange 3s infinite alternate;
+    font-weight: 600;
 }
 
-// --- Value Calculation & Kelly Stake ---
+.totals-breakdown { display: flex; flex-direction: column; justify-content: center; align-items: stretch; height: 100%; gap: 0.75rem; font-size: 1.2rem; flex-grow: 1; padding: 1rem 0; }
+.total-line { display: flex; justify-content: space-between; align-items: center; width: 95%; margin: 0 auto; font-size: 1.1rem; }
+.total-label { color: var(--text-secondary); margin-right: 10px; }
 
-function calculateValue(simulation, oddsData, sport, home, away) {
-    if (!simulation || !oddsData?.current || !Array.isArray(oddsData.current)) { return null; }
-    let valueBets = [];
-    try {
-        const markets = [];
-        const simProbs = simulation;
+/* Harmonika (Accordion) */
+.analysis-accordion { margin-top: 2rem; }
+.analysis-accordion details { background: transparent; border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; margin-bottom: 0; overflow: visible; }
+.analysis-accordion details:last-of-type { border-bottom: none; }
+.analysis-accordion summary { font-size: 1.2rem; font-weight: 600; padding: 1.5rem 0; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; transition: color 0.2s ease; position: relative; color: var(--text-secondary); }
+.analysis-accordion summary:hover, .analysis-accordion details[open] summary { color: var(--text-primary); }
+.analysis-accordion summary::-webkit-details-marker { display: none; }
+.analysis-accordion summary .section-title { display: flex; align-items: center; gap: 0.75rem; }
+.analysis-accordion summary .section-icon { stroke: currentColor; flex-shrink: 0; }
+.analysis-accordion summary::after { content: '+'; font-size: 1.5rem; color: var(--text-secondary); transition: transform 0.3s ease, color 0.2s ease; position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+.analysis-accordion details[open] summary::after { transform: translateY(-50%) rotate(45deg); color: var(--primary); }
+.analysis-accordion .accordion-content { padding: 0 0 1.5rem 0; animation: fadeIn .5s; line-height: 1.7; }
+/* === MÓDOSÍTVA: Nagyobb felső margó a szövegnek az idővonal miatt === */
+.analysis-accordion .accordion-content p { color: var(--text-secondary); margin-bottom: 1rem; margin-top: 1.5rem; }
+.analysis-accordion .accordion-content p:first-child { margin-top: 0; } /* Az első bekezdésnek ne legyen felső margója */
+.analysis-accordion .accordion-content p:last-child { margin-bottom: 0; }
+.analysis-accordion .accordion-content h4 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--secondary); font-size: 1rem; }
+.analysis-accordion .accordion-content strong { color: var(--primary) !important; text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; font-weight: 600; }
 
-        const findOdds = (names) => {
-            const validNames = Array.isArray(names) ? names.filter(n => typeof n === 'string') : [];
-            if (validNames.length === 0) return null;
-            const outcome = oddsData.current.find(o => o && validNames.includes(o.name) && typeof o.price === 'number' && o.price > 1);
-            return outcome ? outcome.price : null;
-        };
+.chat-container { border-radius: 12px; margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); }
+.chat-messages { max-height: 300px; overflow-y: auto; margin-bottom: 1rem; padding-right: 1rem; }
+.chat-input-container { display: flex; gap: 1rem; }
+.chat-input-container input { flex-grow: 1; margin-top: 0; }
+.chat-bubble { padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; max-width: 80%; line-height: 1.5; word-wrap: break-word; }
+.chat-bubble.user { background-color: var(--primary); color: #000; margin-left: auto; border-bottom-right-radius: 3px; }
+.chat-bubble.ai { background-color: rgba(255,255,255,0.1); border: 1px solid var(--border-color); border-bottom-left-radius: 3px; }
 
-        const homeName = sport === 'basketball' ? home : 'Hazai győzelem';
-        const awayName = sport === 'basketball' ? away : 'Vendég győzelem';
-        const drawName = 'Döntetlen';
-        const mainLine = simProbs.mainTotalsLine;
-        const overName = `Over ${mainLine}`;
-        const underName = `Under ${mainLine}`;
-        const odds = {
-            home: findOdds([home, homeName]),
-            away: findOdds([away, awayName]),
-            draw: (sport !== 'basketball') ? findOdds([drawName]) : null,
-            over: findOdds([overName]),
-            under: findOdds([underName])
-        };
-        if (typeof simProbs.pHome === 'number' && odds.home) markets.push({ name: homeName, probability: simProbs.pHome, odds: odds.home });
-        if (typeof simProbs.pAway === 'number' && odds.away) markets.push({ name: awayName, probability: simProbs.pAway, odds: odds.away });
-        if (odds.draw && typeof simProbs.pDraw === 'number') markets.push({ name: drawName, probability: simProbs.pDraw, odds: odds.draw });
-        if (odds.over && typeof simProbs.pOver === 'number') markets.push({ name: overName, probability: simProbs.pOver, odds: odds.over });
-        if (odds.under && typeof simProbs.pUnder === 'number') markets.push({ name: underName, probability: simProbs.pUnder, odds: odds.under });
+.portfolio-report { white-space: pre-wrap; line-height: 1.8; }
 
-        markets.forEach(market => {
-            if (market.probability >= 0 && market.probability <= 100 && market.odds > 1) {
-                const value = ((market.probability / 100) * market.odds - 1) * 100;
-                if (value > 1.0) { // Value threshold
-                    const stake = calculateKellyStake(market.probability, market.odds);
+/* Toast értesítések */
+.toast-notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.toast-notification { padding: 15px 20px; border-radius: 10px; color: #fff; font-weight: 500; font-size: 0.9rem; box-shadow: 0 5px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); animation: slideIn 0.3s ease forwards; }
+.toast-notification.info { background: linear-gradient(135deg, #00BFFF, #0077B6); }
+.toast-notification.success { background: linear-gradient(135deg, #39FF14, #28a745); }
+.toast-notification.error { background: linear-gradient(135deg, #FF4747, #dc3545); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { to { opacity: 0; transform: translateX(100%); } }
 
-                    if (stake > 0.1) { // Stake threshold
-                      if(home && away && sport && market.name && market.odds) {
-                        valueBets.push({ home, away, sport, market: market.name, odd: market.odds, probability: market.probability, value, stake });
-                      }
-                    }
-                }
-            }
-        });
-    } catch (e) {
-      Logger.log(`Érték számítási hiba (${home} vs ${away}): ${e.message}`);
-      return null;
-    }
+/* Fény effekt */
+.glowing-text {
+  color: var(--text-primary) !important; text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5);
+  animation: pulse-glow-white 3s infinite alternate;
+}
+@keyframes pulse-glow-white { from { text-shadow: 0 0 6px var(--text-primary), 0 0 12px rgba(255, 255, 255, 0.3); } to { text-shadow: 0 0 10px var(--text-primary), 0 0 20px rgba(255, 255, 255, 0.6); } }
+.glowing-text strong { color: inherit !important; text-shadow: inherit !important; animation: inherit !important; }
 
-    return valueBets.length > 0 ? valueBets.sort((a, b) => b.value - a.value) : null;
+strong { color: var(--primary) !important; text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; font-weight: 600; }
+@keyframes pulse-glow-orange { from { text-shadow: 0 0 6px var(--primary), 0 0 12px rgba(212, 175, 55, 0.3); } to { text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); } }
+
+/* Mester Ajánlás Kártya Stílus */
+.master-recommendation-card { margin-top: 2rem; padding: 2rem; border-radius: 16px; text-align: center; background: linear-gradient(145deg, rgba(30, 30, 30, 0.8), rgba(10, 10, 10, 0.9)), radial-gradient(circle at top left, rgba(212, 175, 55, 0.15), transparent 50%), radial-gradient(circle at bottom right, rgba(0, 191, 255, 0.1), transparent 50%); background-blend-mode: normal; border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1); animation: pulse-border-white 4s infinite alternate; position: relative; overflow: hidden; }
+@keyframes pulse-border-white { from { border-color: rgba(255, 255, 255, 0.3); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1); } to { border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.3); } }
+.master-recommendation-card h5 { font-size: 1.3rem; color: var(--text-primary); margin-bottom: 1.5rem; text-shadow: 0 0 10px rgba(255, 255, 255, 0.7); }
+.master-bet { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--primary); text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; }
+.master-confidence { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
+.master-confidence strong.glowing-text { color: var(--text-primary) !important; text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5); animation: pulse-glow-white 3s infinite alternate; }
+.master-reasoning { font-size: 0.95rem; color: var(--text-secondary); font-style: italic; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+
+/* Elemzés Törzs Stílus */
+.analysis-body { line-height: 1.7; color: var(--text-secondary); }
+.analysis-body h4 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+.analysis-body strong { color: var(--primary) !important; text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; font-weight: 600; }
+.analysis-section { margin-bottom: 1.5rem; padding: 1.5rem; background: rgba(var(--card-bg-rgb), 0.5); border: 1px solid var(--border-color); border-radius: 12px; }
+.analysis-section h4 { margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem; color: var(--primary); }
+.analysis-section p { margin-bottom: 0; }
+
+/* Reszponzivitás finomítása */
+@media (max-width: 768px) {
+  body { overflow-y: auto; } .kanban-container { display: none !important; } .mobile-list-container { display: block !important; }
+  #placeholder { display: none !important; } .main-content { overflow-y: auto; }
+  .app-header { flex-direction: column; height: auto; gap: 1rem; padding-bottom: 1rem; } .header-status { position: static; }
+  .controls-bar { flex-direction: column; align-items: stretch; padding: 1rem; } .main-actions { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+  .modal-content { width: 98vw; max-height: 95vh; max-width: 98vw; &.modal-xl, &.modal-lg { max-width: 98vw; } }
+  .modal-body { padding: 1rem; } .modal-header h3 { font-size: 1rem; }
+  .at-a-glance-grid { grid-template-columns: 1fr 1fr; } .expert-confidence-card { grid-column: span 2; }
+  .market-card-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); } .summary-card { min-height: 180px; padding: 1rem; }
+  .radial-chart-container { max-width: 110px; } .master-recommendation-card { padding: 1.5rem; } .master-bet { font-size: 1.6rem; }
+  .analysis-accordion summary { font-size: 1.1rem; padding: 1.2rem 0; } .analysis-accordion .accordion-content { padding: 0 0 1.2rem 0; }
 }
 
-function calculateKellyStake(probability, odds) {
-  if (typeof probability !== 'number' || typeof odds !== 'number' || probability < 0 || probability > 100 || odds <= 1) { return 0; }
-  try {
-    const p = probability / 100;
-    const b = odds - 1;
-    const q = 1 - p;
-    if ((p * b - q) <= 0) { return 0; }
-    const kellyFraction = (p * b - q) / b;
-    const fractionalKelly = kellyFraction * 0.25; // Quarter Kelly
-    const stakePercentage = Math.max(0, fractionalKelly * 100);
-    return stakePercentage;
-  } catch (e) { Logger.log(`Kelly hiba: ${e.message}`); return 0; }
+/* === ÚJ MÓDOSÍTÁSOK KEZDETE (Javítások + Bizalmi Szint Értelmező + Idővonal Konténer) === */
+
+@keyframes cardFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.match-card { opacity: 0; animation: cardFadeIn 0.4s ease-out forwards; }
+
+.gauge-container { width: 100%; max-width: 120px; margin: 0 auto; position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.gauge-svg { width: 100%; height: auto; transform: rotate(-90deg); overflow: visible; position: absolute; top: 0; left: 0; }
+.gauge-track { fill: none; stroke: rgba(255, 255, 255, 0.05); stroke-width: 12; }
+.gauge-value { fill: none; stroke: var(--primary); stroke-width: 12; stroke-linecap: round; stroke-dasharray: 235.6; stroke-dashoffset: 235.6; transition: stroke-dashoffset 1s ease-out; filter: drop-shadow(0 0 4px var(--primary)); }
+.gauge-text { position: relative; font-size: 1.6rem; font-weight: 700; color: var(--text-primary); text-shadow: 0 0 8px var(--text-primary); z-index: 1; margin-top: 15px; line-height: 1; }
+.gauge-label { position: relative; font-size: 0.75rem; color: var(--text-secondary); z-index: 1; margin-top: 2px; }
+.expert-confidence-card .gauge-container { margin-bottom: 0.5rem; height: 120px; }
+
+/* ÚJ SZABÁLY: Modell Magabiztosság /10 kijelzéséhez */
+.gauge-text .gauge-label-inline {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: inherit;
+    text-shadow: inherit;
+    margin-left: 1px;
+    opacity: 0.9;
+    vertical-align: middle;
 }
+
+
+/* === ÚJ: Idővonal Konténer Stílusa === */
+.timeline-visualization-container {
+    padding: 1rem 0; /* Térköz a konténeren belül */
+    margin-bottom: 1rem; /* Térköz a szöveg előtt */
+    /* Opcionális: háttér vagy keret a jobb elkülönítéshez */
+    /* background: rgba(var(--card-bg-rgb), 0.5); */
+    /* border-radius: 8px; */
+    /* border: 1px solid var(--border-color); */
+}
+
+.prophetic-timeline-bar { width: 100%; height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; position: relative; border: 1px solid var(--border-color); margin: 0; /* Margót a konténer kezeli */ }
+.timeline-event { position: absolute; top: 50%; transform: translateX(-50%) translateY(-50%); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1; cursor: help; border: 2px solid var(--card-bg); z-index: 2; transition: transform 0.2s ease; }
+.timeline-event:hover { transform: translateX(-50%) translateY(-50%) scale(1.15); z-index: 3; /* Hoverelt elem legyen legfelül */ }
+.timeline-event.home { background-color: var(--primary); color: #000; }
+.timeline-event.away { background-color: var(--accent); color: #000; }
+.timeline-event.event { background-color: var(--text-secondary); color: #fff; }
+
+.timeline-event[data-tooltip] { position: relative; }
+.timeline-event[data-tooltip]::after { content: attr(data-tooltip); position: absolute; bottom: 150%; left: 50%; transform: translateX(-50%); background: var(--bg-dark); color: var(--text-primary); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; white-space: nowrap; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; z-index: 10; pointer-events: none; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.timeline-event[data-tooltip]::before { content: ''; position: absolute; bottom: calc(150% - 5px); left: 50%; transform: translateX(-50%); border-width: 5px; border-style: solid; border-color: var(--bg-dark) transparent transparent transparent; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; z-index: 9; pointer-events: none; }
+.timeline-event[data-tooltip]:hover::after, .timeline-event[data-tooltip]:hover::before { opacity: 1; visibility: visible; }
+
+.confidence-interpretation-container { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1); max-width: 700px; margin-left: auto; margin-right: auto; }
+.confidence-interpretation { font-size: 0.9rem; line-height: 1.6; margin: 0; color: var(--text-secondary); }
+.confidence-interpretation.very-high strong { color: var(--success); text-shadow: 0 0 8px var(--success); animation: none; }
+.confidence-interpretation.high strong { color: #A0FFA0; text-shadow: 0 0 8px #A0FFA0; animation: none; }
+.confidence-interpretation.medium strong { color: var(--primary); text-shadow: 0 0 8px var(--primary); animation: none; }
+.confidence-interpretation.low strong { color: #FFA500; text-shadow: 0 0 8px #FFA500; animation: none; }
+.confidence-interpretation.very-low strong { color: var(--danger); text-shadow: 0 0 8px var(--danger); animation: none; }
+.confidence-interpretation strong { font-weight: 700; }
+
+/* === ÚJ MÓDOSÍTÁSOK VÉGE === */
