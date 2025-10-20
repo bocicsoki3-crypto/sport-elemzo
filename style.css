@@ -91,13 +91,14 @@ details > summary::-webkit-details-marker { display: none; }
 .modal-container { 
     display: none; 
     position: fixed; 
-    inset: 0; /* top, right, bottom, left = 0 */
+    inset: 0; 
     background: rgba(0,0,0,0.7); 
     backdrop-filter: blur(10px); 
     z-index: 2000; 
     justify-content: center; 
     align-items: center; 
     animation: fadeIn .3s; 
+    padding: 1rem; /* Kis padding körbe */
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .modal-container.open { display: flex; }
@@ -109,21 +110,18 @@ details > summary::-webkit-details-marker { display: none; }
     display: flex; 
     flex-direction: column; 
     box-shadow: 0 10px 50px var(--shadow-color); 
-    overflow: hidden; /* Fontos a belső görgetéshez */
-
-    /* **** MÉRET NÖVELÉSE **** */
-    max-width: 1100px; /* Nagyobb szélesség */
-    width: 95%;        /* De max 95% */
-    max-height: 95vh;  /* Magasság korlát */
-    /* **** MÉRET NÖVELÉSE VÉGE **** */
+    overflow: hidden; 
+    /* === MÉRETEZÉS MÓDOSÍTVA === */
+    width: 100%; 
+    height: 100%;
+    max-width: 1600px; /* Nagyobb maximum szélesség */
+    max-height: 95vh; /* Maradhat 95% magasság */
     
-    /* === ÚJ: Modális "beúszás" animáció === */
     animation: slideUp 0.4s ease-out;
 }
 @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-
-.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); flex-shrink: 0; background: rgba(var(--card-bg-rgb), 0.7); /* Enyhén áttetsző fejléc */ }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); flex-shrink: 0; background: rgba(var(--card-bg-rgb), 0.7); }
 .modal-header h3 { margin: 0; font-size: 1.2rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .modal-close-btn { background: none; border: none; color: var(--text-secondary); font-size: 2rem; line-height: 1; cursor: pointer; padding: 0; transition: color 0.2s; }
 .modal-close-btn svg { width: 24px; height: 24px; }
@@ -131,15 +129,15 @@ details > summary::-webkit-details-marker { display: none; }
 
 .modal-body { 
     padding: 1.5rem; 
-    overflow-y: auto; /* **** FÜGGŐLEGES GÖRGETÉS **** */
-    flex-grow: 1;     /* **** KITÖLTI A HELYET **** */
+    overflow-y: auto; 
+    flex-grow: 1;     
 }
 
-/* Kisebb modális (pl. előzményekhez, ha kell) */
-.modal-content.modal-sm { max-width: 500px; width: 90vw; }
-/* Nagyobb (ez az alapértelmezett az elemzéshez a fenti szabály miatt) */
-.modal-content.modal-lg { max-width: 1100px; width: 95%; } 
-/* Teljes képernyős (ha kellene) */
+/* Méretosztályok */
+.modal-content.modal-sm { max-width: 500px; max-height: 90vh; width: 95%; }
+.modal-content.modal-lg { max-width: 1100px; max-height: 95vh; width: 95%; } 
+/* === ÚJ MÉRETOSZTÁLY === */
+.modal-content.modal-xl { max-width: 1600px; max-height: 95vh; width: 95%; } 
 .modal-content.modal-fullscreen { width: 100%; height: 100%; max-height: 100vh; max-width: 100vw; border-radius: 0; }
 
 /* --- MODÁLIS ABLAK JAVÍTÁS VÉGE --- */
@@ -154,16 +152,14 @@ details > summary::-webkit-details-marker { display: none; }
 @keyframes pulse-bg { 0% { background: rgba(255,255,255,0.05); } 50% { background: rgba(255,255,255,0.1); } 100% { background: rgba(255,255,255,0.05); } }
 .loading-skeleton .skeleton-line{background:rgba(255,255,255,0.1);height: 1em; border-radius:4px;margin-bottom:10px;animation:pulse-bg 1.5s infinite}
 
-/* --- Elemzés Specifikus Stílusok (Átemelve és finomítva) --- */
+/* --- Elemzés Specifikus Stílusok --- */
 
-/* Felső rács (1x2, xG, stb.) */
 .at-a-glance-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
 }
-/* 5 oszlopos elrendezés kényszerítése nagy képernyőn */
 @media (min-width: 1200px) {
     .at-a-glance-grid {
         grid-template-columns: repeat(5, 1fr);
@@ -178,28 +174,28 @@ details > summary::-webkit-details-marker { display: none; }
     text-align: center;
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Elosztja a helyet */
-    min-height: 200px; /* Konzisztens magasság */
+    justify-content: space-between; 
+    min-height: 200px; 
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.summary-card:hover { /* Kis lebegő effekt */
+.summary-card:hover { 
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .summary-card h5 { margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-.summary-card .value { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; line-height: 1.3; } /* Méret csökkentve kicsit */
+.summary-card .value { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; line-height: 1.3; } 
 .summary-card .details { font-size: 0.8rem; margin-top: auto; color:var(--text-secondary); }
 .summary-card .details strong { font-weight: 600; }
 
 .radial-chart-container { position: relative; width: 100%; max-width: 130px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; flex-grow: 1; }
 .radial-chart { width: 100%; height: 100%; transform: rotate(-90deg); }
-.radial-chart circle { fill: none; stroke-width: 10; /* Kicsit vastagabb */ stroke-linecap: round; transition: stroke-dashoffset 0.8s ease-out; } /* Lassabb animáció */
+.radial-chart circle { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease-out; } 
 .radial-chart .track { stroke: rgba(255,255,255,0.05); }
 .radial-chart .progress { 
     stroke-dasharray: var(--circumference); 
-    stroke-dashoffset: calc(var(--circumference) * (1 - var(--value, 0) / 100)); /* Hozzáadva a , 0 fallback */
-    filter: drop-shadow(0 0 3px currentColor); /* Finomabb fény */
+    stroke-dashoffset: calc(var(--circumference) * (1 - var(--value, 0) / 100)); 
+    filter: drop-shadow(0 0 3px currentColor); 
 }
 .radial-chart .home { stroke: var(--primary); }
 .radial-chart .draw { stroke: var(--text-secondary); }
@@ -213,15 +209,23 @@ details > summary::-webkit-details-marker { display: none; }
     margin-bottom: 1rem; 
     border: 1px solid var(--primary); 
     background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15)); 
-    min-height: auto; /* Felülírja a min-height-et */
+    min-height: auto; 
     padding: 1.5rem;
+    display: flex; /* === ÚJ: Flexbox az igazításhoz === */
+    flex-direction: column; /* === ÚJ: Oszlopos elrendezés === */
 }
-/* === MÓDOSÍTVA: Expert confidence value elrejtve, ha gauge van === */
-.expert-confidence-card .value { display: none; } /* Elrejtjük, mert a gauge mutatja */
-.expert-confidence-card .details { font-size: 0.9rem; max-width: 800px; margin: 0.5rem auto 0; }
+/* === MÓDOSÍTVA: Expert confidence value elrejtve === */
+.expert-confidence-card .value { display: none; } 
+.expert-confidence-card .details { 
+    font-size: 0.9rem; 
+    max-width: 800px; 
+    margin: 1rem auto 0; /* === MÓDOSÍTVA: Nagyobb felső margó === */
+    flex-grow: 1; /* === ÚJ: Kitölti a maradék helyet === */
+    text-align: center; /* === ÚJ: Középre igazítás === */
+}
 
-.xg-value-container { display: flex; align-items: center; justify-content: space-around; /* Jobb elosztás */ width: 100%; flex-grow: 1; gap: 1rem; padding: 1rem 0; }
-.xg-team { display: flex; flex-direction: column; align-items: center; /* Középre igazítás */ }
+.xg-value-container { display: flex; align-items: center; justify-content: space-around; width: 100%; flex-grow: 1; gap: 1rem; padding: 1rem 0; }
+.xg-team { display: flex; flex-direction: column; align-items: center; }
 .xg-separator { font-size: 1.5rem; color: var(--text-secondary); font-weight: 700; }
 
 .market-data-section { margin-bottom: 2rem; }
@@ -234,7 +238,7 @@ details > summary::-webkit-details-marker { display: none; }
 .micromodel-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
 .micromodel-card h5 { color: var(--primary); margin-bottom: 0.8rem; font-size: 1rem; }
 .micromodel-card p { margin: 0; color: var(--text-secondary); line-height: 1.6; }
-.micromodel-card strong { /* Mikromodell kiemelés */ color: var(--text-primary) !important; text-shadow: none !important; animation: none !important; font-weight: 600; } 
+.micromodel-card strong { color: var(--text-primary) !important; text-shadow: none !important; animation: none !important; font-weight: 600; } 
 
 
 .totals-breakdown { display: flex; flex-direction: column; justify-content: center; align-items: stretch; height: 100%; gap: 0.75rem; font-size: 1.2rem; flex-grow: 1; padding: 1rem 0; }
@@ -243,20 +247,20 @@ details > summary::-webkit-details-marker { display: none; }
 
 /* Harmonika (Accordion) */
 .analysis-accordion { margin-top: 2rem; }
-.analysis-accordion details { background: transparent; /* Háttér eltüntetve */ border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; margin-bottom: 0; overflow: visible; }
+.analysis-accordion details { background: transparent; border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; margin-bottom: 0; overflow: visible; }
 .analysis-accordion details:last-of-type { border-bottom: none; }
-.analysis-accordion summary { font-size: 1.2rem; font-weight: 600; padding: 1.5rem 0; /* Kevesebb padding */ cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; transition: color 0.2s ease; position: relative; color: var(--text-secondary); /* Alapból szürke */ }
-.analysis-accordion summary:hover, .analysis-accordion details[open] summary { color: var(--text-primary); /* Aktív / hover: fehér */ }
+.analysis-accordion summary { font-size: 1.2rem; font-weight: 600; padding: 1.5rem 0; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; transition: color 0.2s ease; position: relative; color: var(--text-secondary); }
+.analysis-accordion summary:hover, .analysis-accordion details[open] summary { color: var(--text-primary); }
 .analysis-accordion summary::-webkit-details-marker { display: none; }
 .analysis-accordion summary .section-title { display: flex; align-items: center; gap: 0.75rem; }
-.analysis-accordion summary .section-icon { stroke: currentColor; /* Szín öröklése */ flex-shrink: 0; }
+.analysis-accordion summary .section-icon { stroke: currentColor; flex-shrink: 0; }
 .analysis-accordion summary::after { content: '+'; font-size: 1.5rem; color: var(--text-secondary); transition: transform 0.3s ease, color 0.2s ease; position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
 .analysis-accordion details[open] summary::after { transform: translateY(-50%) rotate(45deg); color: var(--primary); }
-.analysis-accordion .accordion-content { padding: 0 0 1.5rem 0; /* Nincs oldalsó padding */ animation: fadeIn .5s; line-height: 1.7; }
+.analysis-accordion .accordion-content { padding: 0 0 1.5rem 0; animation: fadeIn .5s; line-height: 1.7; }
 .analysis-accordion .accordion-content p { color: var(--text-secondary); margin-bottom: 1rem; }
 .analysis-accordion .accordion-content p:last-child { margin-bottom: 0; }
 .analysis-accordion .accordion-content h4 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--secondary); font-size: 1rem; }
-.analysis-accordion .accordion-content strong { /* Harmonika kiemelés */ color: var(--primary) !important; text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; font-weight: 600; }
+.analysis-accordion .accordion-content strong { color: var(--primary) !important; text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; font-weight: 600; }
 
 .chat-container { border-radius: 12px; margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); }
 .chat-messages { max-height: 300px; overflow-y: auto; margin-bottom: 1rem; padding-right: 1rem; }
@@ -266,7 +270,7 @@ details > summary::-webkit-details-marker { display: none; }
 .chat-bubble.user { background-color: var(--primary); color: #000; margin-left: auto; border-bottom-right-radius: 3px; }
 .chat-bubble.ai { background-color: rgba(255,255,255,0.1); border: 1px solid var(--border-color); border-bottom-left-radius: 3px; }
 
-.portfolio-report { white-space: pre-wrap; line-height: 1.8; } /* Portfólió riport formázása */
+.portfolio-report { white-space: pre-wrap; line-height: 1.8; } 
 
 /* Toast értesítések */
 .toast-notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
@@ -285,13 +289,13 @@ details > summary::-webkit-details-marker { display: none; }
 }
 @keyframes pulse-glow-white { from { text-shadow: 0 0 6px var(--text-primary), 0 0 12px rgba(255, 255, 255, 0.3); } to { text-shadow: 0 0 10px var(--text-primary), 0 0 20px rgba(255, 255, 255, 0.6); } }
 
-.glowing-text strong { /* Öröklődés biztosítása */
+.glowing-text strong { 
   color: inherit !important;
   text-shadow: inherit !important;
   animation: inherit !important;
 }
 
-strong { /* Alapértelmezett strong kiemelés */
+strong { 
   color: var(--primary) !important;
   text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
   animation: pulse-glow-orange 3s infinite alternate;
@@ -339,9 +343,9 @@ strong { /* Alapértelmezett strong kiemelés */
     font-size: 1.8rem;
     font-weight: 700;
     margin-bottom: 0.75rem;
-    color: var(--primary); /* A tipp legyen arany */
-    text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); /* Arany fény */
-    animation: pulse-glow-orange 3s infinite alternate; /* Használja az arany animációt */
+    color: var(--primary); 
+    text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); 
+    animation: pulse-glow-orange 3s infinite alternate; 
 }
 
 .master-confidence {
@@ -350,7 +354,7 @@ strong { /* Alapértelmezett strong kiemelés */
     margin-bottom: 1.5rem;
 }
 
-.master-confidence strong.glowing-text { /* Bizalom pontszám */
+.master-confidence strong.glowing-text { 
    color: var(--text-primary) !important;
    text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5);
    animation: pulse-glow-white 3s infinite alternate;
@@ -365,12 +369,12 @@ strong { /* Alapértelmezett strong kiemelés */
     line-height: 1.6;
 }
 
-/* Elemzés Törzs Stílus (a modal-body-n belül) */
-.analysis-body { /* Ezt a class-t add hozzá a modal-body div-hez, vagy ahol az elemzés tartalma van */
+/* Elemzés Törzs Stílus */
+.analysis-body { 
     line-height: 1.7;
     color: var(--text-secondary);
 }
-.analysis-body h4 { /* Pl. Kulcskérdések, Piaci adatok alcímei */
+.analysis-body h4 { 
     margin-top: 1.5rem;
     margin-bottom: 0.75rem;
     color: var(--secondary);
@@ -378,55 +382,56 @@ strong { /* Alapértelmezett strong kiemelés */
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 0.5rem;
 }
-.analysis-body strong { /* Kiemelések az elemzés szövegében */
+.analysis-body strong { 
   color: var(--primary) !important;
   text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
   animation: pulse-glow-orange 3s infinite alternate;
-  font-weight: 600; /* Legyen vastagabb is */
+  font-weight: 600; 
 }
 
-.analysis-section { /* Pl. Kulcskérdések, Player Markets dobozai */
+.analysis-section { 
   margin-bottom: 1.5rem;
   padding: 1.5rem;
-  background: rgba(var(--card-bg-rgb), 0.5); /* Enyhén áttetsző háttér */
+  background: rgba(var(--card-bg-rgb), 0.5); 
   border: 1px solid var(--border-color);
   border-radius: 12px;
 }
-.analysis-section h4 { /* Dobozon belüli címek */
+.analysis-section h4 { 
   margin-top: 0;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 0.75rem;
   margin-bottom: 1rem;
-  color: var(--primary); /* Legyen arany a címe */
+  color: var(--primary); 
 }
 .analysis-section p {
-    margin-bottom: 0; /* Ne legyen extra hely a bekezdés alatt a dobozban */
+    margin-bottom: 0; 
 }
 
 
 /* Reszponzivitás finomítása */
 @media (max-width: 768px) {
-  body { overflow-y: auto; } /* Engedélyezzük a görgetést mobilon */
+  body { overflow-y: auto; } 
   .kanban-container { display: none !important; }
   .mobile-list-container { display: block !important; }
-  #placeholder { display: none !important; } /* Placeholder elrejtése mobilon */
-  .main-content { overflow-y: auto; } /* Tartalom görgethető legyen */
+  #placeholder { display: none !important; } 
+  .main-content { overflow-y: auto; } 
   .app-header { flex-direction: column; height: auto; gap: 1rem; padding-bottom: 1rem; }
-  .header-status { position: static; } /* Statusz ne legyen abszolút */
+  .header-status { position: static; } 
   .controls-bar { flex-direction: column; align-items: stretch; padding: 1rem; }
   .main-actions { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
   
-  /* Modális ablak mobilon */
   .modal-content { 
       width: 98vw; 
       max-height: 95vh; 
-      max-width: 98vw; /* Felülírja a .modal-lg max-width-ot */
+      max-width: 98vw; 
+      /* === MÓDOSÍTVA: Mobil méret felülírja az XL-t === */
+      &.modal-xl, &.modal-lg { max-width: 98vw; } 
   }
   .modal-body { padding: 1rem; }
-  .modal-header h3 { font-size: 1rem; } /* Kisebb cím */
+  .modal-header h3 { font-size: 1rem; } 
 
-  .at-a-glance-grid { grid-template-columns: 1fr 1fr; } /* 2 oszlop mobilon */
-  .expert-confidence-card { grid-column: span 2; } /* Teljes szélesség */
+  .at-a-glance-grid { grid-template-columns: 1fr 1fr; } 
+  .expert-confidence-card { grid-column: span 2; } 
   .market-card-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
   .summary-card { min-height: 180px; padding: 1rem; }
   .radial-chart-container { max-width: 110px; }
@@ -437,150 +442,147 @@ strong { /* Alapértelmezett strong kiemelés */
 }
 
 
-/* === ÚJ MÓDOSÍTÁSOK KEZDETE === */
+/* === ÚJ MÓDOSÍTÁSOK KEZDETE (Javítások) === */
 
-/* --- ÚJ: Kártya "beúszás" animáció --- */
+/* --- Kártya "beúszás" animáció --- */
 @keyframes cardFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .match-card {
-    /* ... meglévő stílusok ... */
-    opacity: 0; /* Kezdetben láthatatlan */
+    opacity: 0; 
     animation: cardFadeIn 0.4s ease-out forwards;
 }
 
-/* --- ÚJ: Magabiztossági Mérőműszer (Gauge) --- */
+/* --- Magabiztossági Mérőműszer (Gauge) JAVÍTÁSOK --- */
 .gauge-container {
     width: 100%;
-    /* === MÓDOSÍTVA: max-width növelve === */
-    max-width: 130px; 
+    max-width: 120px; /* === JAVÍTVA: Kisebb max szélesség === */
     margin: 0 auto;
     position: relative;
     flex-grow: 1;
     display: flex;
-    flex-direction: column; /* === MÓDOSÍTVA: Oszlopos elrendezés === */
+    flex-direction: column; 
     align-items: center;
-    justify-content: center; /* === MÓDOSÍTVA: Jobb vertikális középre igazítás === */
+    justify-content: center; 
 }
 .gauge-svg {
     width: 100%;
     height: auto;
-    transform: rotate(-90deg); /* 12 óránál kezdődik */
-    /* === MÓDOSÍTVA: max-height eltávolítva, hagyjuk, hogy a width határozza meg === */
-    /* max-height: 100px; */ 
-    overflow: visible; /* === ÚJ: Biztosítja, hogy az ív ne vágódjon le === */
+    transform: rotate(-90deg); 
+    overflow: visible; 
 }
 .gauge-track {
     fill: none;
     stroke: rgba(255, 255, 255, 0.05);
-    stroke-width: 12;
+    stroke-width: 12; /* === JAVÍTVA: Vékonyabb vonal === */
 }
 .gauge-value {
     fill: none;
     stroke: var(--primary);
-    stroke-width: 12;
+    stroke-width: 12; /* === JAVÍTVA: Vékonyabb vonal === */
     stroke-linecap: round;
-    stroke-dasharray: 235.6; /* (0.75 * 2 * PI * 50) - 75%-a a körnek */
-    stroke-dashoffset: 235.6; /* Alapból üres */
+    /* === JAVÍTVA: Pontosabb számítás (r=50 -> C=314.15, 75% = 235.6) === */
+    stroke-dasharray: 235.6; 
+    stroke-dashoffset: 235.6; 
     transition: stroke-dashoffset 1s ease-out;
     filter: drop-shadow(0 0 4px var(--primary));
 }
 .gauge-text {
     position: absolute;
-    /* === MÓDOSÍTVA: Kisebb betűméret, hogy biztosan kiférjen === */
     font-size: 1.6rem; 
     font-weight: 700;
     color: var(--text-primary);
     text-shadow: 0 0 8px var(--text-primary);
-    top: 55%; /* === MÓDOSÍTVA: Pozíció finomhangolva === */
+    /* === JAVÍTVA: Pontosabb középre igazítás (SVG közepéhez képest) === */
+    top: 50%; 
     left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1; /* === ÚJ: Szöveg az ív felett === */
+    transform: translate(-50%, -50%); 
+    z-index: 1; 
+    padding-bottom: 5px; /* === JAVÍTVA: Kis emelés a label miatt === */
 }
 .gauge-label {
     position: absolute;
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* === JAVÍTVA: Kisebb label === */
     color: var(--text-secondary);
-    /* === MÓDOSÍTVA: Pozíció feljebb hozva === */
-    bottom: 15%; 
+    /* === JAVÍTVA: Ív alá pozícionálás === */
+    bottom: 10px; 
     left: 50%;
     transform: translateX(-50%);
     z-index: 1;
 }
+/* === JAVÍTVA: Expert card specifikus igazítás === */
+.expert-confidence-card .gauge-container {
+    margin-bottom: 0.5rem; /* Kisebb margó a szöveg előtt */
+}
 
-/* --- ÚJ: Prófétai Idővonal Vizualizáció --- */
+
+/* --- Prófétai Idővonal Vizualizáció JAVÍTÁSOK --- */
 .prophetic-timeline-bar {
     width: 100%;
-    height: 12px;
+    height: 8px; /* === JAVÍTVA: Vékonyabb sáv === */
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
+    border-radius: 4px; /* === JAVÍTVA: Kisebb rádiusz === */
     position: relative;
-    margin-bottom: 1.5rem; /* === MÓDOSÍTVA: Kisebb margó === */
-    margin-top: 0.5rem; /* === ÚJ: Kis térköz felette === */
+    margin-bottom: 1.5rem; 
+    margin-top: 0.5rem; 
     border: 1px solid var(--border-color);
 }
 .timeline-event {
     position: absolute;
     top: 50%;
-    /* === MÓDOSÍTVA: translate(-50%, -50%) biztosítja a pontos középre igazítást === */
     transform: translate(-50%, -50%); 
-    width: 24px;
-    height: 24px;
+    /* === JAVÍTVA: Kisebb ikon méret === */
+    width: 20px; 
+    height: 20px; 
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px; /* === MÓDOSÍTVA: Emoji méret === */
-    line-height: 1; /* === ÚJ: Emoji vertikális igazítása === */
+    font-size: 12px; /* === JAVÍTVA: Kisebb emoji/szöveg méret === */
+    line-height: 1; 
     cursor: help;
     border: 2px solid var(--card-bg);
-    z-index: 2; /* === ÚJ: Esemény a sáv felett === */
-    transition: transform 0.2s ease; /* === ÚJ: Hover effekt === */
+    z-index: 2; 
+    transition: transform 0.2s ease; 
 }
 .timeline-event:hover {
-    transform: translate(-50%, -50%) scale(1.1); /* === ÚJ: Kis nagyítás hoverre === */
+    transform: translate(-50%, -50%) scale(1.15); /* === JAVÍTVA: Nagyobb hover scale === */
 }
 
 .timeline-event.home { background-color: var(--primary); color: #000; }
 .timeline-event.away { background-color: var(--accent); color: #000; }
 .timeline-event.event { background-color: var(--text-secondary); color: #fff; }
 
-/* Tooltip a részletekért */
+/* Tooltip */
 .timeline-event[data-tooltip] { position: relative; }
 .timeline-event[data-tooltip]::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: 140%; /* === MÓDOSÍTVA: Kicsit feljebb === */
+    bottom: 150%; /* === JAVÍTVA: Magasabban === */
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-dark); /* === MÓDOSÍTVA: Sötétebb háttér === */
+    background: var(--bg-dark); 
     color: var(--text-primary);
-    padding: 6px 12px; /* === MÓDOSÍTVA: Nagyobb padding === */
-    border-radius: 6px; /* === MÓDOSÍTVA: Kerekítés === */
-    font-size: 0.8rem;
+    padding: 6px 12px; 
+    border-radius: 6px; 
+    font-size: 0.75rem; /* === JAVÍTVA: Kisebb tooltip szöveg === */
     white-space: nowrap;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s, visibility 0.2s;
     z-index: 10;
-    pointer-events: none; /* === ÚJ: Ne zavarja az egeret === */
-    box-shadow: 0 2px 10px rgba(0,0,0,0.5); /* === ÚJ: Árnyék === */
+    pointer-events: none; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5); 
 }
-/* === ÚJ: Kis nyíl a tooltiphez === */
+/* Tooltip nyíl */
 .timeline-event[data-tooltip]::before {
     content: '';
     position: absolute;
-    bottom: calc(140% - 5px); /* Pozíció a tooltip aljához igazítva */
+    bottom: calc(150% - 5px); 
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) rotate(180deg); /* === JAVÍTVA: Felfelé mutató nyíl === */
     border-width: 5px;
     border-style: solid;
     border-color: var(--bg-dark) transparent transparent transparent;
