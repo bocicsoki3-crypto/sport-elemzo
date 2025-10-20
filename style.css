@@ -397,11 +397,15 @@ strong { /* Alapértelmezett strong kiemelés */
 }
 
 
-/* Reszponzivitás finomítása */
-@media (max-width: 768px) {
+/* === RESZPONZIVITÁS MÓDOSÍTÁSA (ID SZELEKTOROKKAL) === */
+@media (max-width: 768px) { 
   body { overflow-y: auto; } /* Engedélyezzük a görgetést mobilon */
-  .kanban-container { display: none !important; }
-  .mobile-list-container { display: block !important; }
+  
+  /* Kanban elrejtése CSAK mobilon - ID SZELEKTORRAL */
+  #kanban-container { display: none !important; } 
+  /* Mobil lista mutatása CSAK mobilon - ID SZELEKTORRAL */
+  #mobile-list-container { display: block !important; }
+  
   #placeholder { display: none !important; } /* Placeholder elrejtése mobilon */
   .main-content { overflow-y: auto; } /* Tartalom görgethető legyen */
   .app-header { flex-direction: column; height: auto; gap: 1rem; padding-bottom: 1rem; }
@@ -413,13 +417,14 @@ strong { /* Alapértelmezett strong kiemelés */
   .modal-content { 
       width: 98vw; 
       max-height: 95vh; 
-      max-width: 98vw; /* Felülírja a .modal-lg max-width-ot */
+      max-width: 98vw; 
   }
   .modal-body { padding: 1rem; }
-  .modal-header h3 { font-size: 1rem; } /* Kisebb cím */
+  .modal-header h3 { font-size: 1rem; } 
 
-  .at-a-glance-grid { grid-template-columns: 1fr 1fr; } /* 2 oszlop mobilon */
-  .expert-confidence-card { grid-column: span 2; } /* Teljes szélesség */
+  /* Egyéb mobil specifikus stílusok... */
+  .at-a-glance-grid { grid-template-columns: 1fr 1fr; } 
+  .expert-confidence-card { grid-column: span 2; } 
   .market-card-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
   .summary-card { min-height: 180px; padding: 1rem; }
   .radial-chart-container { max-width: 110px; }
@@ -428,3 +433,4 @@ strong { /* Alapértelmezett strong kiemelés */
   .analysis-accordion summary { font-size: 1.1rem; padding: 1.2rem 0; }
   .analysis-accordion .accordion-content { padding: 0 0 1.2rem 0; }
 }
+/* === RESZPONZIVITÁS MÓDOSÍTÁS VÉGE === */
