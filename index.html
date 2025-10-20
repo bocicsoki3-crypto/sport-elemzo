@@ -44,21 +44,39 @@
              <button id="loadFixturesBtn" class="btn btn-primary btn-lg" onclick="loadFixtures()">Meccsek Betöltése</button>
              <button id="historyBtn" class="btn btn-lg" onclick="openHistoryModal()">Előzmények</button>
              <button id="manualBtn" class="btn btn-lg" onclick="openManualAnalysisModal()">Kézi Megnyitás</button>
-             
+        </div>
+        
+        <div class="filter-actions">
+             <div class="control-group">
+                 <label for="leagueFilter">Liga Szűrő</label>
+                 <div class="select-wrapper">
+                     <select id="leagueFilter" onchange="applyFilters()" disabled>
+                         <option value="all">Összes Liga</option>
+                         </select>
+                 </div>
              </div>
-    </div>
+             <div class="control-group">
+                 <label for="dateFilter">Dátum Szűrő</label>
+                 <div class="select-wrapper">
+                     <select id="dateFilter" onchange="applyFilters()" disabled>
+                         <option value="all">Összes Nap</option>
+                         </select>
+                 </div>
+             </div>
+             <button class="btn" onclick="resetFilters()" id="resetFilterBtn" disabled>Szűrők Törlése</button>
+        </div>
+        </div>
 
     <main id="main-content" class="main-content">
         <div id="placeholder" class="placeholder">
              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20v-10M18 20V4"/></svg>
-            <h3>Válassz sportágat és töltsd be a meccseket.</h3>
+            <h3>Válassz sportágat és töltsd be a meccsek</h3>
             <p>A mérkőzések kategóriák szerint, oszlopokban fognak megjelenni.</p>
         </div>
-        
+
         <div id="kanban-container" class="kanban-container">
             <div id="kanban-board" class="kanban-board">
                 </div>
-            <div id="kanban-board" class="kanban-board"></div>
         </div>
 
         <div id="mobile-list-container" class="mobile-list-container">
