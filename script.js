@@ -6,8 +6,9 @@ const appState = {
     currentSport: 'soccer',
     sheetUrl: '',
     currentAnalysisContext: '',
-    chatHistory: [],
-    completedAnalyses: []
+    chatHistory: []
+    // === PORTFÓLIÓVAL KAPCSOLATOS ÁLLAPOT ELTÁVOLÍTVA ===
+    // completedAnalyses: [] 
 };
 
 // --- LIGA KATEGÓRIÁK ---
@@ -39,12 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
     toastContainer.className = 'toast-notification-container';
     document.body.appendChild(toastContainer);
 
-    // Portfólió adatainak betöltése a sessionStorage-ből
-    const savedAnalyses = sessionStorage.getItem('completedAnalyses');
-    if (savedAnalyses) {
-        appState.completedAnalyses = JSON.parse(savedAnalyses);
-        updatePortfolioButton();
-    }
+    // === PORTFÓLIÓ BETÖLTÉS ELTÁVOLÍTVA ===
+    // const savedAnalyses = sessionStorage.getItem('completedAnalyses');
+    // if (savedAnalyses) {
+    //     appState.completedAnalyses = JSON.parse(savedAnalyses);
+    //     updatePortfolioButton();
+    // }
 });
 
 // --- FŐ FUNKCIÓK ---
@@ -81,12 +82,10 @@ async function runAnalysis(home, away) {
     away = unescape(away);
 
     if (isMobile()) {
-        showToast("Elemzés folyamatban... A folyamat megszakadásának elkerülése érdekében ne váltson másik alkalmazásra.", 'info', 6000); // Hosszabb ideig látható
+        showToast("Elemzés folyamatban... A folyamat megszakadásának elkerülése érdekében ne váltson másik alkalmazásra.", 'info', 6000); 
     }
 
-    openModal(`${home} vs ${away}`, document.getElementById('common-elements').innerHTML, isMobile() ? 'modal-fullscreen' : 'modal-lg');
-    // === MÓDOSÍTVA: Nagyobb modális méret alapértelmezettként ===
-    openModal(`${home} vs ${away}`, document.getElementById('common-elements').innerHTML, 'modal-xl'); // 'modal-xl' vagy 'modal-fullscreen'
+    openModal(`${home} vs ${away}`, document.getElementById('common-elements').innerHTML, 'modal-xl'); 
 
     const modalSkeleton = document.querySelector('#modal-container #loading-skeleton');
     const modalResults = document.querySelector('#modal-container #analysis-results');
@@ -100,7 +99,8 @@ async function runAnalysis(home, away) {
     modalChat.querySelector('#chat-input').onkeyup = (e) => e.key === "Enter" && sendChatMessage();
 
     try {
-        let analysisUrl = `${appState.gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${appState.currentSport}&force=true&sheetUrl=${encodeURIComponent(appState.sheetUrl)}`;
+        // === MÓDOSÍTVA: force=false alapértelmezett, hogy mentsen ===
+        let analysisUrl = `${appState.gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${appState.currentSport}&force=false&sheetUrl=${encodeURIComponent(appState.sheetUrl)}`;
         const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
 
         const response = await fetch(analysisUrl, {
@@ -120,12 +120,13 @@ async function runAnalysis(home, away) {
         modalChat.style.display = 'block';
         modalChat.querySelector('#chat-messages').innerHTML = '';
 
-        const portfolioData = extractDataForPortfolio(data.html, home, away);
-        if (portfolioData && !appState.completedAnalyses.some(a => a.match === portfolioData.match)) {
-            appState.completedAnalyses.push(portfolioData);
-            sessionStorage.setItem('completedAnalyses', JSON.stringify(appState.completedAnalyses));
-            updatePortfolioButton();
-        }
+        // === PORTFÓLIÓ ADAT KINYERÉS ÉS MENTÉS ELTÁVOLÍTVA ===
+        // const portfolioData = extractDataForPortfolio(data.html, home, away);
+        // if (portfolioData && !appState.completedAnalyses.some(a => a.match === portfolioData.match)) {
+        //     appState.completedAnalyses.push(portfolioData);
+        //     sessionStorage.setItem('completedAnalyses', JSON.stringify(appState.completedAnalyses));
+        //     updatePortfolioButton();
+        // }
 
     } catch (e) {
         modalResults.innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba történt az elemzés során: ${e.message}</p>`;
@@ -145,7 +146,6 @@ async function openHistoryModal() {
         } else { return; }
     }
     const modalSize = isMobile() ? 'modal-fullscreen' : 'modal-lg';
-    const modalSize = isMobile() ? 'modal-fullscreen' : 'modal-lg'; // Előzmények maradhatnak kisebbek
     const loadingHTML = document.getElementById('loading-skeleton').outerHTML;
     openModal('Előzmények', loadingHTML, modalSize);
     document.querySelector('#modal-container #loading-skeleton').classList.add('active');
@@ -172,43 +172,22 @@ async function deleteHistoryItem(id) {
         if (data.error) throw new Error(data.error);
 
         showToast('Elem sikeresen törölve.', 'success');
-        openHistoryModal();
-        openHistoryModal(); // Frissíti a listát
+        openHistoryModal(); 
     } catch (e) {
         showToast(`Hiba a törlés során: ${e.message}`, 'error');
     }
 }
 
-async function buildPortfolio() {
-    openModal('Napi Portfólió Építése', document.getElementById('loading-skeleton').outerHTML, 'modal-lg');
-    openModal('Napi Portfólió Építése', document.getElementById('loading-skeleton').outerHTML, 'modal-lg'); // Ez maradhat közepes
-    document.querySelector('#modal-container #loading-skeleton').classList.add('active');
-
-    try {
-        const response = await fetch(appState.gasUrl, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'buildPortfolio', analyses: appState.completedAnalyses }),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-        });
-        if (!response.ok) throw new Error(`Szerver hiba: ${response.statusText}`);
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-
-        const formattedReport = data.report.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>').replace(/- /g, '&bull; ');
-        document.getElementById('modal-body').innerHTML = `<div class="portfolio-report" style="font-family: var(--font-family-body); line-height: 1.8;">${formattedReport}</div>`;
-
-    } catch (e) {
-        document.getElementById('modal-body').innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
-    }
-}
+// === PORTFÓLIÓ ÉPÍTŐ FUNKCIÓ ELTÁVOLÍTVA ===
+// async function buildPortfolio() { ... }
 
 async function runFinalCheck(home, away, sport) {
+    // Ez a funkció változatlan marad
     const btn = event.target;
     btn.disabled = true;
     btn.innerHTML = '...';
 
-    openModal('Végső Elme-Ellenőrzés', document.getElementById('loading-skeleton').outerHTML, 'modal-sm');
-    openModal('Végső Elme-Ellenőrzés', document.getElementById('loading-skeleton').outerHTML, 'modal-sm'); // Ez maradhat kicsi
+    openModal('Végső Elme-Ellenőrzés', document.getElementById('loading-skeleton').outerHTML, 'modal-sm'); 
     document.querySelector('#modal-container #loading-skeleton').classList.add('active');
 
     try {
@@ -241,9 +220,6 @@ async function runFinalCheck(home, away, sport) {
     } catch (e) {
         document.getElementById('modal-body').innerHTML = `<p style="color:var(--danger); text-align:center;">Hiba: ${e.message}</p>`;
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '✔️';
-        // Find the button again in case the DOM was rebuilt
         const currentBtn = document.querySelector(`button[onclick*="'${escape(home)}'"][onclick*="'${escape(away)}'"].btn-final-check`);
         if (currentBtn) {
             currentBtn.disabled = false;
@@ -254,21 +230,17 @@ async function runFinalCheck(home, away, sport) {
 
 function handleSportChange() {
     appState.currentSport = document.getElementById('sportSelector').value;
-    appState.completedAnalyses = [];
-    sessionStorage.removeItem('completedAnalyses');
-    updatePortfolioButton();
+    // === PORTFÓLIÓVAL KAPCSOLATOS RÉSZEK ELTÁVOLÍTVA ===
+    // appState.completedAnalyses = [];
+    // sessionStorage.removeItem('completedAnalyses');
+    // updatePortfolioButton();
     document.getElementById('kanban-board').innerHTML = '';
     document.getElementById('mobile-list-container').innerHTML = '';
     document.getElementById('placeholder').style.display = 'flex';
 }
 
-function updatePortfolioButton() {
-    const btn = document.getElementById('portfolioBtn');
-    if (!btn) return;
-    const count = appState.completedAnalyses.length;
-    btn.textContent = `Portfólió Építése (${count}/3)`;
-    btn.disabled = count < 3;
-}
+// === PORTFÓLIÓ GOMB FRISSÍTŐ FUNKCIÓ ELTÁVOLÍTVA ===
+// function updatePortfolioButton() { ... }
 
 function openManualAnalysisModal() {
     let content = `
@@ -293,7 +265,7 @@ function runManualAnalysis() {
 function isMobile() { return window.innerWidth <= 1024; }
 
 function getLeagueGroup(leagueName) {
-    if (!leagueName) return '🎲 Vad Kártyák'; // Hibakezelés
+    if (!leagueName) return '🎲 Vad Kártyák'; 
     const sportGroups = LEAGUE_CATEGORIES[appState.currentSport] || {};
     const lowerLeagueName = leagueName.toLowerCase();
     for (const groupName in sportGroups) {
@@ -302,7 +274,6 @@ function getLeagueGroup(leagueName) {
     return '🎲 Vad Kártyák';
 }
 
-// === MÓDOSÍTOTT FUNKCIÓ (renderFixturesForDesktop) ===
 function renderFixturesForDesktop(fixtures) {
     const board = document.getElementById('kanban-board');
     document.getElementById('placeholder').style.display = 'none';
@@ -313,8 +284,8 @@ function renderFixturesForDesktop(fixtures) {
 
     groupOrder.forEach(group => {
         let columnContent = '';
-        let cardIndex = 0; // Index a késleltetéshez
-
+        let cardIndex = 0; 
+        
         if (groupedByCategory[group]) {
             const groupedByDate = groupBy(groupedByCategory[group], fx => new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
 
@@ -322,8 +293,7 @@ function renderFixturesForDesktop(fixtures) {
                 columnContent += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
                 groupedByDate[dateKey].forEach(fx => {
                     const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
-
-                    // === SOR MÓDOSÍTVA: style="animation-delay:..." hozzáadva ===
+                    
                     columnContent += `
                         <div class="match-card" 
                              onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}')"
@@ -334,7 +304,7 @@ function renderFixturesForDesktop(fixtures) {
                                 <span>${time}</span>
                             </div>
                         </div>`;
-                    cardIndex++; // Növeld az indexet
+                    cardIndex++; 
                 });
                 columnContent += `</details>`;
             });
@@ -352,7 +322,6 @@ function renderFixturesForDesktop(fixtures) {
             </div>`;
     });
 }
-// === MÓDOSÍTÁS VÉGE ===
 
 function renderFixturesForMobileList(fixtures) {
     const container = document.getElementById('mobile-list-container');
@@ -375,7 +344,6 @@ function renderFixturesForMobileList(fixtures) {
                     <div class="list-item" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}')">
                         <div>
                             <div class="list-item-title">${fx.home} – ${fx.away}</div>
-                            <div class="list-item-meta">${fx.league} - ${time}</div>
                             <div class="list-item-meta">${fx.league || 'Ismeretlen Liga'} - ${time}</div>
                         </div>
                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -386,85 +354,47 @@ function renderFixturesForMobileList(fixtures) {
     container.innerHTML = html || '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek elérhető mérkőzések.</p>';
 }
 
-// --- JAVÍTOTT FUNKCIÓ ---
-function extractDataForPortfolio(html, home, away) {
-    try {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
+// === PORTFÓLIÓ ADATKINYERŐ FUNKCIÓ ELTÁVOLÍTVA ===
+// function extractDataForPortfolio(html, home, away) { ... }
 
-        // A keresési feltételek javítva, hogy megfeleljenek a HTML_Builder.gs-ben generált címkéknek
-        const bestBetCard = Array.from(doc.querySelectorAll('.summary-card h5')).find(h5 => 
-            h5.textContent.includes('Értéket Rejtő Tipp') || 
-            h5.textContent.includes('Legvalószínűbb kimenetel')
-        );
-
-        if (!bestBetCard) {
-            console.error("Nem található 'Best Bet' kártya a portfólióhoz.");
-            return null;
-        }
-
-        const bestBet = bestBetCard.nextElementSibling.textContent.trim();
-        const confidence = bestBetCard.nextElementSibling.nextElementSibling.querySelector('strong').textContent.trim();
-        const bestBetElement = bestBetCard.nextElementSibling;
-        const confidenceElement = bestBetElement?.nextElementSibling?.querySelector('strong');
-
-        const bestBet = bestBetElement ? bestBetElement.textContent.trim() : null;
-        const confidence = confidenceElement ? confidenceElement.textContent.trim() : null;
-
-        if (bestBet && confidence) {
-            return { match: `${home} vs ${away}`, bestBet: bestBet, confidence: confidence };
-        }
-        console.error("Nem sikerült kinyerni a 'Best Bet' vagy 'Confidence' adatot.");
-        return null;
-    } catch (e) {
-        console.error("Hiba az adatok kinyerésekor a portfólióhoz:", e);
-        return null;
-    }
-}
-
+// === MÓDOSÍTOTT FUNKCIÓ (renderHistory) ===
 function renderHistory(historyData) {
     if (!historyData || historyData.length === 0) {
         return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek mentett előzmények.</p>';
     }
-    const history = historyData.filter(item => item.home && item.away);
-    const history = historyData.filter(item => item && item.id && item.home && item.away && item.date); // Szigorúbb ellenőrzés
+    const history = historyData.filter(item => item && item.id && item.home && item.away && item.date); 
     const groupedByDate = groupBy(history, item => new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
 
     let html = '';
     Object.keys(groupedByDate).sort((a,b) => new Date(b.split('. ').join('.').split('.').reverse().join('-')) - new Date(a.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
-        html += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
+        // === MÓDOSÍTVA: 'open' attribútum eltávolítva ===
+        html += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`; 
         const sortedItems = groupedByDate[dateKey].sort((a,b) => new Date(b.date) - new Date(a.date));
 
         sortedItems.forEach(item => {
-            const matchTime = new Date(item.date);
-            const matchTime = new Date(item.date); // Ez az elemzés ideje, nem a meccsé! Jobb lenne a meccs idejét tárolni.
+            const analysisTime = new Date(item.date); // Elemzés ideje
             const now = new Date();
-            // Az elemzés idejéhez képest (nem a meccs idejéhez)
-            const timeDiffMinutes = (matchTime - now) / (1000 * 60); 
-            const timeDiffMinutes = (now - matchTime) / (1000 * 60); // Eltelt idő az elemzés óta
-
-            // Aktív: meccs előtt 1 órával, és utána 2 óráig
-            const isCheckable = timeDiffMinutes <= 60 && timeDiffMinutes > -120;
-            // Ideiglenes logika: Tegyük fel, hogy az elemzés kb. 2 órával a meccs előtt készült.
-            // Aktív: Elemzéstől számított 1 órán át. (Ez nem ideális, a meccs idejéből kellene kiindulni)
-            const isCheckable = timeDiffMinutes < 60; 
             
+            // Jobb logika a Final Check gombhoz: Tegyük fel a meccs az elemzés után ~2 órával kezdődik
+            // Aktív: Elemzés után 1 órával kezdődik az aktív időszak és 3 óráig tart (kb. meccs vége)
+            const startTimeDiffMinutes = (now - analysisTime) / (1000 * 60) - 60; // Elemzés után 1 órával indul
+            const endTimeDiffMinutes = (now - analysisTime) / (1000 * 60) - 180; // Elemzés után 3 óráig tart
+            const isCheckable = startTimeDiffMinutes > 0 && endTimeDiffMinutes < 0; // Aktív az intervallumban
+
             const finalCheckButton = `
                 <button class="btn btn-final-check" 
                         onclick="runFinalCheck('${escape(item.home)}', '${escape(item.away)}', '${item.sport}'); event.stopPropagation();" 
-                        title="Végső Ellenőrzés (meccs előtt 1 órával aktív)" 
                         title="Végső Ellenőrzés (kb. meccs előtt aktív)" 
                         ${!isCheckable ? 'disabled' : ''}>
                     ✔️
                 </button>`;
 
-            const time = matchTime.toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
+            const time = analysisTime.toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
             html += `
                 <div class="list-item">
                     <div style="flex-grow:1;" onclick="viewHistoryDetail('${item.id}')">
                         <div class="list-item-title">${item.home} – ${item.away}</div>
-                        <div class="list-item-meta">${item.sport.charAt(0).toUpperCase() + item.sport.slice(1)} - ${time}</div>
-                        <div class="list-item-meta">${item.sport ? item.sport.charAt(0).toUpperCase() + item.sport.slice(1) : ''} - ${time}</div>
+                        <div class="list-item-meta">${item.sport ? item.sport.charAt(0).toUpperCase() + item.sport.slice(1) : ''} - Elemzés ideje: ${time}</div>
                     </div>
                      ${finalCheckButton}
                      <button class="btn" onclick="deleteHistoryItem('${item.id}'); event.stopPropagation();" title="Törlés">
@@ -476,11 +406,10 @@ function renderHistory(historyData) {
     });
     return html;
 }
+// === MÓDOSÍTÁS VÉGE ===
 
 async function viewHistoryDetail(id) {
-    openModal('Elemzés Betöltése...', document.getElementById('loading-skeleton').outerHTML, isMobile() ? 'modal-fullscreen' : 'modal-lg');
-    // === MÓDOSÍTVA: Nagyobb modális méret alapértelmezettként ===
-    openModal('Elemzés Betöltése...', document.getElementById('loading-skeleton').outerHTML, 'modal-xl'); // 'modal-xl' vagy 'modal-fullscreen'
+    openModal('Elemzés Betöltése...', document.getElementById('loading-skeleton').outerHTML, 'modal-xl'); 
     document.querySelector('#modal-container #loading-skeleton').classList.add('active');
 
     try {
@@ -510,30 +439,20 @@ async function viewHistoryDetail(id) {
     }
 }
 
-function openModal(title, content = '', sizeClass = 'modal-sm') {
-// === MÓDOSÍTOTT FUNKCIÓ (openModal) ===
-// Hozzáadva 'modal-xl' és alapértelmezettként ez van beállítva
-function openModal(title, content = '', sizeClass = 'modal-xl') { // Alapértelmezett: modal-xl
+function openModal(title, content = '', sizeClass = 'modal-xl') { 
     const modalContainer = document.getElementById('modal-container');
     const modalContent = modalContainer.querySelector('.modal-content');
-    modalContent.className = 'modal-content';
-    modalContent.classList.add(sizeClass);
     
-    // Először eltávolítjuk a régi méretosztályokat, hogy ne halmozódjanak
     modalContent.classList.remove('modal-sm', 'modal-lg', 'modal-xl', 'modal-fullscreen'); 
-    
-    // Hozzáadjuk az újat
     modalContent.classList.add(sizeClass); 
     
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-body').innerHTML = content;
     modalContainer.classList.add('open');
 }
-// === MÓDOSÍTÁS VÉGE ===
 
 function closeModal() { document.getElementById('modal-container').classList.remove('open'); }
 
-function groupBy(arr, key) { return arr.reduce((acc, item) => ((acc[key(item)] = [...(acc[key(item)] || []), item]), acc), {}); }
 function groupBy(arr, keyFn) { 
     return arr.reduce((acc, item) => {
         const key = keyFn(item);
@@ -590,7 +509,6 @@ function addMessageToChat(text, role) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// --- JAVÍTOTT FUNKCIÓ (Duplikáció eltávolítva) ---
 function showToast(message, type = 'info', duration = 4000) {
     const container = document.getElementById('toast-notification-container');
     const toast = document.createElement('div');
