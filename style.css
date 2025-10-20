@@ -216,7 +216,8 @@ details > summary::-webkit-details-marker { display: none; }
     min-height: auto; /* Felülírja a min-height-et */
     padding: 1.5rem;
 }
-.expert-confidence-card .value { margin-bottom: 0.5rem; }
+/* === MÓDOSÍTVA: Expert confidence value elrejtve, ha gauge van === */
+.expert-confidence-card .value { display: none; } /* Elrejtjük, mert a gauge mutatja */
 .expert-confidence-card .details { font-size: 0.9rem; max-width: 800px; margin: 0.5rem auto 0; }
 
 .xg-value-container { display: flex; align-items: center; justify-content: space-around; /* Jobb elosztás */ width: 100%; flex-grow: 1; gap: 1rem; padding: 1rem 0; }
@@ -459,19 +460,23 @@ strong { /* Alapértelmezett strong kiemelés */
 /* --- ÚJ: Magabiztossági Mérőműszer (Gauge) --- */
 .gauge-container {
     width: 100%;
-    max-width: 150px;
+    /* === MÓDOSÍTVA: max-width növelve === */
+    max-width: 130px; 
     margin: 0 auto;
     position: relative;
     flex-grow: 1;
     display: flex;
+    flex-direction: column; /* === MÓDOSÍTVA: Oszlopos elrendezés === */
     align-items: center;
-    justify-content: center;
+    justify-content: center; /* === MÓDOSÍTVA: Jobb vertikális középre igazítás === */
 }
 .gauge-svg {
     width: 100%;
     height: auto;
     transform: rotate(-90deg); /* 12 óránál kezdődik */
-    max-height: 100px; /* Megakadályozza, hogy túl magas legyen */
+    /* === MÓDOSÍTVA: max-height eltávolítva, hagyjuk, hogy a width határozza meg === */
+    /* max-height: 100px; */ 
+    overflow: visible; /* === ÚJ: Biztosítja, hogy az ív ne vágódjon le === */
 }
 .gauge-track {
     fill: none;
@@ -490,21 +495,25 @@ strong { /* Alapértelmezett strong kiemelés */
 }
 .gauge-text {
     position: absolute;
-    font-size: 1.8rem; /* Nagyobb, mint az xG */
+    /* === MÓDOSÍTVA: Kisebb betűméret, hogy biztosan kiférjen === */
+    font-size: 1.6rem; 
     font-weight: 700;
     color: var(--text-primary);
     text-shadow: 0 0 8px var(--text-primary);
-    top: 60%; /* Finomhangolás */
+    top: 55%; /* === MÓDOSÍTVA: Pozíció finomhangolva === */
     left: 50%;
     transform: translate(-50%, -50%);
+    z-index: 1; /* === ÚJ: Szöveg az ív felett === */
 }
 .gauge-label {
     position: absolute;
     font-size: 0.8rem;
     color: var(--text-secondary);
-    bottom: 5px; /* Alulra pozícionálva */
+    /* === MÓDOSÍTVA: Pozíció feljebb hozva === */
+    bottom: 15%; 
     left: 50%;
     transform: translateX(-50%);
+    z-index: 1;
 }
 
 /* --- ÚJ: Prófétai Idővonal Vizualizáció --- */
@@ -514,23 +523,32 @@ strong { /* Alapértelmezett strong kiemelés */
     background: rgba(255, 255, 255, 0.1);
     border-radius: 6px;
     position: relative;
-    margin-bottom: 2rem; /* Térköz a szöveg előtt */
+    margin-bottom: 1.5rem; /* === MÓDOSÍTVA: Kisebb margó === */
+    margin-top: 0.5rem; /* === ÚJ: Kis térköz felette === */
     border: 1px solid var(--border-color);
 }
 .timeline-event {
     position: absolute;
     top: 50%;
-    transform: translate(-50%, -50%);
+    /* === MÓDOSÍTVA: translate(-50%, -50%) biztosítja a pontos középre igazítást === */
+    transform: translate(-50%, -50%); 
     width: 24px;
     height: 24px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 14px; /* === MÓDOSÍTVA: Emoji méret === */
+    line-height: 1; /* === ÚJ: Emoji vertikális igazítása === */
     cursor: help;
     border: 2px solid var(--card-bg);
+    z-index: 2; /* === ÚJ: Esemény a sáv felett === */
+    transition: transform 0.2s ease; /* === ÚJ: Hover effekt === */
 }
+.timeline-event:hover {
+    transform: translate(-50%, -50%) scale(1.1); /* === ÚJ: Kis nagyítás hoverre === */
+}
+
 .timeline-event.home { background-color: var(--primary); color: #000; }
 .timeline-event.away { background-color: var(--accent); color: #000; }
 .timeline-event.event { background-color: var(--text-secondary); color: #fff; }
@@ -540,21 +558,41 @@ strong { /* Alapértelmezett strong kiemelés */
 .timeline-event[data-tooltip]::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: 120%; /* Az ikon felett */
+    bottom: 140%; /* === MÓDOSÍTVA: Kicsit feljebb === */
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-dark);
+    background: var(--bg-dark); /* === MÓDOSÍTVA: Sötétebb háttér === */
     color: var(--text-primary);
-    padding: 5px 10px;
-    border-radius: 4px;
+    padding: 6px 12px; /* === MÓDOSÍTVA: Nagyobb padding === */
+    border-radius: 6px; /* === MÓDOSÍTVA: Kerekítés === */
     font-size: 0.8rem;
     white-space: nowrap;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s, visibility 0.2s;
     z-index: 10;
+    pointer-events: none; /* === ÚJ: Ne zavarja az egeret === */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5); /* === ÚJ: Árnyék === */
 }
-.timeline-event[data-tooltip]:hover::after {
+/* === ÚJ: Kis nyíl a tooltiphez === */
+.timeline-event[data-tooltip]::before {
+    content: '';
+    position: absolute;
+    bottom: calc(140% - 5px); /* Pozíció a tooltip aljához igazítva */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--bg-dark) transparent transparent transparent;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 9;
+    pointer-events: none;
+}
+
+.timeline-event[data-tooltip]:hover::after,
+.timeline-event[data-tooltip]:hover::before {
     opacity: 1;
     visibility: visible;
 }
