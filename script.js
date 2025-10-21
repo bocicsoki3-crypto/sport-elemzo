@@ -1,7 +1,7 @@
 // --- ALKALMAZÁS ÁLLAPOT ---
 const appState = {
     // !!! KRITIKUS: CSERÉLD KI A SAJÁT KÖZZÉTETT GOOGLE APPS SCRIPT URL-EDRE !!!
-    gasUrl: 'https://script.google.com/macros/s/AKfycbyN99ot1yzv4Na9nq0rTIsCSQ2DUlMMCzSKQmtM8fg7qDMAaFzHW8n_2Y8eNxnsFdabvg/exec',
+    gasUrl: 'https://script.google.com/macros/s/AKfycby0_R0SGvYG5C8AGsl2R8Yw5gOAIdVc7lIVeXiHuJkI-adGLgjKvN3-a-10FQdzobciJA/exec',
     fixtures: [],
     currentSport: 'soccer',
     sheetUrl: '',
