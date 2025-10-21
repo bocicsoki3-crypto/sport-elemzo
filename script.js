@@ -78,7 +78,8 @@ async function loadFixtures() {
     }
 }
 
-async function runAnalysis(home, away) {
+// === MÓDOSÍTVA: forceNew paraméter hozzáadva ===
+async function runAnalysis(home, away, forceNew = false) {
     home = unescape(home);
     away = unescape(away);
 
@@ -100,8 +101,8 @@ async function runAnalysis(home, away) {
     modalChat.querySelector('#chat-input').onkeyup = (e) => e.key === "Enter" && sendChatMessage();
 
     try {
-        // === MÓDOSÍTVA: force=false alapértelmezett, hogy mentsen ===
-        let analysisUrl = `${appState.gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${appState.currentSport}&force=false&sheetUrl=${encodeURIComponent(appState.sheetUrl)}`;
+        // === MÓDOSÍTVA: &force=${forceNew} használata ===
+        let analysisUrl = `${appState.gasUrl}?action=runAnalysis&home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&sport=${appState.currentSport}&force=${forceNew}&sheetUrl=${encodeURIComponent(appState.sheetUrl)}`;
         const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
 
         const response = await fetch(analysisUrl, {
@@ -260,7 +261,8 @@ function runManualAnalysis() {
         return;
     }
     closeModal();
-    runAnalysis(home, away);
+    // === MÓDOSÍTVA: forceNew=true átadása ===
+    runAnalysis(home, away, true);
 }
 
 function isMobile() { return window.innerWidth <= 1024; }
@@ -295,9 +297,10 @@ function renderFixturesForDesktop(fixtures) {
                 groupedByDate[dateKey].forEach(fx => {
                     const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
                     
+                    // === MÓDOSÍTVA: forceNew=true átadása (true) ===
                     columnContent += `
                         <div class="match-card" 
-                             onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}')"
+                             onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}', true)"
                              style="animation-delay: ${cardIndex * 0.05}s">
                             <div class="match-card-teams">${fx.home} – ${fx.away}</div>
                             <div class="match-card-meta">
@@ -341,8 +344,9 @@ function renderFixturesForMobileList(fixtures) {
 
             groupedByCategory[group].forEach(fx => {
                 const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
+                // === MÓDOSÍTVA: forceNew=true átadása (true) ===
                 html += `
-                    <div class="list-item" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}')">
+                    <div class="list-item" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}', true)">
                         <div>
                             <div class="list-item-title">${fx.home} – ${fx.away}</div>
                             <div class="list-item-meta">${fx.league || 'Ismeretlen Liga'} - ${time}</div>
@@ -414,7 +418,8 @@ async function viewHistoryDetail(id) {
     document.querySelector('#modal-container #loading-skeleton').classList.add('active');
 
     try {
-        const response = await fetch(`${appState.gasUrl}?action=getAnalysisDetail&sheetUrl=${encodeURIComponent(appState.sheetUrl)}&id=${id}`);
+        // === MÓDOSÍTVA: az id encodeURIComponent-be került a URL-biztonság miatt ===
+        const response = await fetch(`${appState.gasUrl}?action=getAnalysisDetail&sheetUrl=${encodeURIComponent(appState.sheetUrl)}&id=${encodeURIComponent(id)}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
