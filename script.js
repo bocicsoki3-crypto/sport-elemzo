@@ -11,22 +11,23 @@ const appState = {
     // completedAnalyses: [] 
 };
 
-// --- LIGA KATEGÓRIÁK ---
+// --- LIGA KATEGÓRIÁK (MÓDOSÍTVA) ---
 const LEAGUE_CATEGORIES = {
     soccer: {
-        '🎯 Prémium Elemzés': [ 'Champions League', 'Premier League', 'Bundesliga', 'LaLiga', 'Serie A' ],
-        '📈 Stabil Ligák': [ 'Europa League', 'Ligue 1', 'Eredivisie', 'Liga Portugal' ],
-        '❔ Változékony Mezőny': [ 'Championship', '2. Bundesliga', 'Serie B', 'LaLiga2', 'Super Lig', 'Premiership', 'MLS' ],
-        '🎲 Vad Kártyák': [ 'FIFA World Cup', 'UEFA European Championship', 'Conference League', 'Brazil Serie A', 'Argentinian Liga Profesional', 'Greek Super League', 'Nemzetek Ligája', 'Kupa', 'Copa', 'Cup' ]
+        'Top Ligák': [ 'Champions League', 'Premier League', 'Bundesliga', 'LaLiga', 'Serie A' ],
+        'Kiemelt Bajnokságok': [ 'Europa League', 'Ligue 1', 'Eredivisie', 'Liga Portugal' ],
+        'Figyelmet Érdemlő': [ 'Championship', '2. Bundesliga', 'Serie B', 'LaLiga2', 'Super Lig', 'Premiership', 'MLS' ],
+        'Egyéb Meccsek': [ 'FIFA World Cup', 'UEFA European Championship', 'Conference League', 'Brazil Serie A', 'Argentinian Liga Profesional', 'Greek Super League', 'Nemzetek Ligája', 'Kupa', 'Copa', 'Cup' ]
     },
-    hockey: { '🎯 Prémium Elemzés': [ 'NHL' ], '📈 Stabil Ligák': [ 'KHL', 'SHL', 'Liiga', 'DEL', 'AHL', 'ICEHL', 'Champions Hockey League' ], '🎲 Vad Kártyák': [ 'IIHF World Championship', 'Olimpiai Játékok', 'Spengler Cup', 'Extraliga' ] },
-    basketball: { '🎯 Prémium Elemzés': [ 'NBA', 'Euroleague' ], '📈 Stabil Ligák': [ 'Liga ACB', 'BSL', 'BBL', 'Lega A' ], '🎲 Vad Kártyák': [ 'FIBA World Cup', 'Olimpiai Játékok', 'EuroBasket', 'FIBA Champions League', 'EuroCup', 'LNB Pro A' ] }
+    hockey: { 'Top Ligák': [ 'NHL' ], 'Kiemelt Bajnokságok': [ 'KHL', 'SHL', 'Liiga', 'DEL', 'AHL', 'ICEHL', 'Champions Hockey League' ], 'Egyéb Meccsek': [ 'IIHF World Championship', 'Olimpiai Játékok', 'Spengler Cup', 'Extraliga' ] },
+    basketball: { 'Top Ligák': [ 'NBA', 'Euroleague' ], 'Kiemelt Bajnokságok': [ 'Liga ACB', 'BSL', 'BBL', 'Lega A' ], 'Egyéb Meccsek': [ 'FIBA World Cup', 'Olimpiai Játékok', 'EuroBasket', 'FIBA Champions League', 'EuroCup', 'LNB Pro A' ] }
 };
 
-// --- INICIALIZÁLÁS ---
+// --- INICIALIZÁLÁS (MÓDOSÍTVA) ---
 document.addEventListener('DOMContentLoaded', () => {
     setupThemeSwitcher();
     createGlowingOrbs(); // Fénygömbök hozzáadása
+    createHeaderOrbs(); // Narancssárga gömbök a fejlécbe
 
     if(!appState.gasUrl || !appState.gasUrl.startsWith('https://script.google.com')){
         document.getElementById('userInfo').textContent='HIBA: URL nincs beállítva!';
@@ -268,13 +269,13 @@ function runManualAnalysis() {
 function isMobile() { return window.innerWidth <= 1024; }
 
 function getLeagueGroup(leagueName) {
-    if (!leagueName) return '🎲 Vad Kártyák'; 
+    if (!leagueName) return 'Egyéb Meccsek'; 
     const sportGroups = LEAGUE_CATEGORIES[appState.currentSport] || {};
     const lowerLeagueName = leagueName.toLowerCase();
     for (const groupName in sportGroups) {
         if (sportGroups[groupName].some(l => lowerLeagueName.includes(l.toLowerCase()))) return groupName;
     }
-    return '🎲 Vad Kártyák';
+    return 'Egyéb Meccsek';
 }
 
 function renderFixturesForDesktop(fixtures) {
@@ -282,7 +283,8 @@ function renderFixturesForDesktop(fixtures) {
     document.getElementById('placeholder').style.display = 'none';
     board.innerHTML = '';
 
-    const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
+    // === MÓDOSÍTVA: groupOrder ===
+    const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
     const groupedByCategory = groupBy(fixtures, fx => getLeagueGroup(fx.league));
 
     groupOrder.forEach(group => {
@@ -314,12 +316,10 @@ function renderFixturesForDesktop(fixtures) {
             });
         }
 
-        const [icon, ...titleParts] = group.split(' ');
-        const title = titleParts.join(' ');
-
+        // === MÓDOSÍTVA: Cím renderelés (nincs ikon) ===
         board.innerHTML += `
             <div class="kanban-column">
-                <h4 class="kanban-column-header">${icon} ${title}</h4>
+                <h4 class="kanban-column-header">${group}</h4>
                 <div class="column-content">
                     ${columnContent || '<p class="muted" style="text-align: center; padding-top: 2rem;">Nincs meccs ebben a kategóriában.</p>'}
                 </div>
@@ -332,15 +332,15 @@ function renderFixturesForMobileList(fixtures) {
     document.getElementById('placeholder').style.display = 'none';
     container.innerHTML = '';
 
-    const groupOrder = ['🎯 Prémium Elemzés', '📈 Stabil Ligák', '❔ Változékony Mezőny', '🎲 Vad Kártyák'];
+    // === MÓDOSÍTVA: groupOrder ===
+    const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
     const groupedByCategory = groupBy(fixtures, fx => getLeagueGroup(fx.league));
 
     let html = '';
     groupOrder.forEach(group => {
         if (groupedByCategory[group]) {
-            const [icon, ...titleParts] = group.split(' ');
-            const title = titleParts.join(' ');
-            html += `<h4 class="league-header-mobile">${icon} ${title}</h4>`;
+            // === MÓDOSÍTVA: Cím renderelés (nincs ikon) ===
+            html += `<h4 class="league-header-mobile">${group}</h4>`;
 
             groupedByCategory[group].forEach(fx => {
                 const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', {timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit'});
@@ -594,6 +594,53 @@ function createGlowingOrbs() {
         }
     } catch (e) {
         console.error("Hiba a fénygömbök létrehozásakor:", e);
+    }
+}
+// === ÚJ FUNKCIÓ VÉGE ===
+
+// === ÚJ FUNKCIÓ: FEJLÉC FÉNYGÖMBÖK ===
+function createHeaderOrbs() {
+    try {
+        const orbContainer = document.createElement('div');
+        orbContainer.className = 'orb-container-header';
+        const appHeader = document.querySelector('.app-header');
+        if (!appHeader) return;
+        
+        appHeader.prepend(orbContainer); // Prepend to be behind other content
+        const orbCount = 5; // Fewer orbs for the header
+
+        for (let i = 0; i < orbCount; i++) {
+            const orb = document.createElement('div');
+            orb.className = 'glowing-orb-orange';
+            
+            const size = Math.random() * 15 + 5; // 5px - 20px (smaller)
+            const scale = Math.random() * 0.5 + 0.5; 
+            const opacity = Math.random() * 0.5 + 0.2; // 0.2 - 0.7
+            const duration = Math.random() * 10 + 8; // 8s - 18s (faster)
+            const delay = Math.random() * -duration; 
+
+            orb.style.width = `${size}px`;
+            orb.style.height = `${size}px`;
+            orb.style.setProperty('--scale', scale);
+            orb.style.setProperty('--opacity', opacity);
+            orb.style.animationDuration = `${duration}s`;
+            orb.style.animationDelay = `${delay}s`;
+
+            // Constrained to header (vw) and (px limited to header height)
+            const startX = Math.random() * 100; // 0% - 100% vw
+            const startY = Math.random() * 80; // 0px - 80px (header height)
+            const endX = Math.random() * 100;
+            const endY = Math.random() * 80;
+
+            orb.style.setProperty('--start-x', `${startX}vw`);
+            orb.style.setProperty('--start-y', `${startY}px`);
+            orb.style.setProperty('--end-x', `${endX}vw`);
+            orb.style.setProperty('--end-y', `${endY}px`);
+            
+            orbContainer.appendChild(orb);
+        }
+    } catch (e) {
+        console.error("Hiba a fejléc gömbök létrehozásakor:", e);
     }
 }
 // === ÚJ FUNKCIÓ VÉGE ===
