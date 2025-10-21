@@ -11,6 +11,13 @@
     <link rel="stylesheet" href="style.css">
 
 
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:_dlc_DocId msdt:dt="string">FZU25CTHTDUX-449951804-786</mso:_dlc_DocId>
+<mso:_dlc_DocIdItemGuid msdt:dt="string">216d91fb-95f1-4251-be1c-325068c8506e</mso:_dlc_DocIdItemGuid>
+<mso:_dlc_DocIdUrl msdt:dt="string">https://bbraun.sharepoint.com/sites/bbraun_eis_processdevhungary/_layouts/15/DocIdRedir.aspx?ID=FZU25CTHTDUX-449951804-786, FZU25CTHTDUX-449951804-786</mso:_dlc_DocIdUrl>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
 </head>
 <body>
 
@@ -45,16 +52,22 @@
              <button id="loadFixturesBtn" class="btn btn-primary btn-lg" onclick="loadFixtures()">Meccsek Betöltése</button>
              <button id="historyBtn" class="btn btn-lg" onclick="openHistoryModal()">Előzmények</button>
              <button id="manualBtn" class="btn btn-lg" onclick="openManualAnalysisModal()">Kézi Megnyitás</button>
+             
              </div>
     </div>
 
     <main id="main-content" class="main-content">
         <div id="placeholder" class="placeholder">
              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20v-10M18 20V4"/></svg>
-             </div>
-
+            <h3>Válassz sportágat és töltsd be a meccseket.</h3>
+            <p>A mérkőzések kategóriák szerint, oszlopokban fognak megjelenni.</p>
+        </div>
+        
         <div id="kanban-container" class="kanban-container">
-            </div>
+            <div id="kanban-board" class="kanban-board">
+                </div>
+            <div id="kanban-board" class="kanban-board"></div>
+        </div>
 
         <div id="mobile-list-container" class="mobile-list-container">
             </div>
@@ -95,3 +108,5 @@
 <script src="script.js"></script>
 </body>
 </html>
+
+
