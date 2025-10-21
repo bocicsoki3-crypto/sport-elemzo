@@ -9,9 +9,6 @@
     --card-bg-dark-rgb: 24, 24, 24;
     --card-bg-light-rgb: 255, 255, 255;
 
-    /* Stadion kép URL eltávolítva */
-    /* --stadium-bg-url: url(...); */
-
 }
 .dark-theme { --bg: var(--bg-dark); --card-bg: var(--card-bg-dark); --text-primary: var(--text-primary-dark); --text-secondary: var(--text-secondary-dark); --border-color: var(--border-color-dark); --card-bg-rgb: var(--card-bg-dark-rgb); }
 .light-theme { --bg: var(--bg-light); --card-bg: var(--card-bg-light); --text-primary: var(--text-primary-light); --text-secondary: var(--text-secondary-light); --border-color: var(--border-color-light); --card-bg-rgb: var(--card-bg-light-rgb); }
@@ -23,11 +20,10 @@
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
-/* === MÓDOSÍTVA: Eredeti háttér visszaállítva === */
 body{margin:0;font-family:var(--font-family-body);color:var(--text-primary);background-color:var(--bg); background-image:radial-gradient(circle at 1px 1px,rgba(212,175,55,0.05) 1px,transparent 0);background-size:25px 25px; min-height:100vh;overflow:hidden;transition: background-color 0.3s, color 0.3s;}
 h1,h2,h3,h4,h5,h6{font-family:var(--font-family-header);font-weight: 600; color:var(--text-primary);margin-top:0}
 p{line-height:1.7;color:var(--text-secondary)}
-.app-container { display: flex; flex-direction: column; height: 100vh; position: relative; /* Pozicionáláshoz */ }
+.app-container { display: flex; flex-direction: column; height: 100vh; position: relative; }
 
 .app-header{padding:0 2rem;border-bottom:1px solid var(--border-color);display:flex;justify-content:center;align-items:center;flex-shrink: 0; height: 80px; position: relative; overflow: hidden; }
 .header-title-container { position: relative; display: flex; align-items: center; justify-content: center; z-index: 3; }
@@ -62,28 +58,24 @@ input:focus, .select-wrapper select:focus {outline:none;border-color:var(--prima
 
 .muted{color:var(--text-secondary);font-size:.9rem}
 
-/* === MÓDOSÍTVA: Placeholder stílusok === */
+/* === MÓDOSÍTVA: Placeholder stílusok - szöveg vissza CSS-be === */
 .placeholder{
-    display:flex; /* Visszaállítva flex-re */
-    /* display: none; */ /* Alapból látható, ha nincs tartalom */
+    display:flex; /* Alapból látható, ha nincs tartalom */
     flex-direction:column;
     align-items:center;
     justify-content:center;
     height: 100%; /* Kitölti a rendelkezésre álló magasságot */
-    color: var(--text-secondary); /* Visszaállítva */
+    color: var(--text-secondary); /* Eredeti szín */
     padding: 2rem;
     text-align:center;
-    position: relative; /* Visszaállítva relatívra */
-    /* top: 50%; */
-    /* left: 50%; */
-    /* transform: translate(-50%, -50%); */
+    position: relative;
     z-index: 2;
-    background: none; /* Nincs saját háttér */
-    backdrop-filter: none; /* Nincs blur */
+    background: none;
+    backdrop-filter: none;
     width: 100%;
-    /* max-width: 600px; */ /* Nincs max szélesség */
     margin: auto;
 }
+.placeholder svg{width:64px;height:64px;margin-bottom:1rem;stroke-width:1.5;opacity:.3; filter: none;}
 /* Placeholder szöveg visszaállítása */
 .placeholder::after {
     content: "Válassz sportágat és töltsd be a meccseket.\A mérkőzések kategóriák szerint, oszlopokban fognak megjelenni."; /* Szöveg vissza */
@@ -91,8 +83,6 @@ input:focus, .select-wrapper select:focus {outline:none;border-color:var(--prima
     margin-top: 1rem;
     color: var(--text-secondary);
 }
-
-.placeholder svg{width:64px;height:64px;margin-bottom:1rem;stroke-width:1.5;opacity:.3; filter: none;}
 
 
 .controls-bar { display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-color); background: rgba(var(--card-bg-dark-rgb, 24, 24, 24), 0.5); backdrop-filter: blur(5px); flex-shrink: 0; position: relative; z-index: 3; /* Gömbök fölé */ }
@@ -104,22 +94,17 @@ input:focus, .select-wrapper select:focus {outline:none;border-color:var(--prima
     flex-grow: 1;
     overflow: hidden;
     position: relative;
-    /* background-image: var(--stadium-bg-url); */ /* Eltávolítva */
-    /* background-size: cover; */
-    /* background-position: center bottom; */
-    /* background-repeat: no-repeat; */
     display: flex; /* Flexbox */
     justify-content: center;
     align-items: center;
 }
 /* Sötétítő overlay eltávolítva */
-/* .main-content::before { ... } */
 
 
 /* === MÓDOSÍTVA: z-index === */
 .kanban-container {
     height: 100%;
-    width: 100%; /* Teljes szélesség */
+    width: 100%;
     overflow-x: auto;
     padding: 2rem;
     display: flex;
@@ -171,18 +156,15 @@ input:focus, .select-wrapper select:focus {outline:none;border-color:var(--prima
     text-align: center;
     text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
     animation: pulse-glow-orange 3s infinite alternate;
-     /* Háttér eltávolítva a headerből */
-    /* background: rgba(var(--bg-dark-rgb, 16, 16, 16), 0.6); */
-    /* backdrop-filter: blur(3px); */
-    border-radius: 0; /* Nincs lekerekítés */
-    margin-left: 0; /* Nincs igazítás */
+    border-radius: 0;
+    margin-left: 0;
     margin-right: 0;
     margin-top: 0;
     padding-top: 0;
 }
 .column-content { overflow-y: auto; max-height: calc(100vh - 200px); padding-right: 5px; }
 .match-card {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); /* Eredeti kártya háttér */
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
     border-radius: 12px;
     padding: 0;
     cursor: default;
@@ -235,16 +217,16 @@ details > summary::-webkit-details-marker { display: none; }
 .list-item .list-item-content { padding: 12px; flex-grow: 1; cursor: pointer; z-index: 2; }
 
 
-/* === Fénygömb Animáció === */
+/* === Fénygömb Animáció (Z-index módosítva) === */
 .orb-container {
-    position: absolute; /* Abszolút pozíció */
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
     overflow: hidden;
-    z-index: 1; /* A kanban alatt */
+    z-index: 1; /* Kanban alatt, de alap háttér fölött */
 }
 .glowing-orb {
     position: absolute;
