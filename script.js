@@ -26,6 +26,7 @@ const LEAGUE_CATEGORIES = {
 // --- INICIALIZÁLÁS ---
 document.addEventListener('DOMContentLoaded', () => {
     setupThemeSwitcher();
+    createGlowingOrbs(); // Fénygömbök hozzáadása
 
     if(!appState.gasUrl || !appState.gasUrl.startsWith('https://script.google.com')){
         document.getElementById('userInfo').textContent='HIBA: URL nincs beállítva!';
@@ -544,3 +545,50 @@ function setupThemeSwitcher() {
         setIcon(newTheme);
     });
 }
+
+// === ÚJ FUNKCIÓ: FÉNYGÖMBÖK LÉTREHOZÁSA ===
+function createGlowingOrbs() {
+    try {
+        const orbContainer = document.createElement('div');
+        orbContainer.className = 'orb-container';
+        const appContainer = document.querySelector('.app-container');
+        if (!appContainer) return; // Ne fusson hibára, ha nincs meg a konténer
+        
+        appContainer.appendChild(orbContainer);
+        const orbCount = 10; // Gömbök száma
+
+        for (let i = 0; i < orbCount; i++) {
+            const orb = document.createElement('div');
+            orb.className = 'glowing-orb';
+            
+            const size = Math.random() * 30 + 10; // 10px - 40px
+            const scale = Math.random() * 0.5 + 0.5; // 0.5 - 1.0
+            const opacity = Math.random() * 0.4 + 0.1; // 0.1 - 0.5
+            const duration = Math.random() * 20 + 15; // 15s - 35s
+            const delay = Math.random() * -duration; // Véletlenszerű indítási pont
+
+            orb.style.width = `${size}px`;
+            orb.style.height = `${size}px`;
+            orb.style.setProperty('--scale', scale);
+            orb.style.setProperty('--opacity', opacity);
+            orb.style.animationDuration = `${duration}s`;
+            orb.style.animationDelay = `${delay}s`;
+
+            // Véletlenszerű kezdő és végpontok
+            const startX = Math.random() * 120 - 10; // -10% - 110%
+            const startY = Math.random() * 120 - 10; // -10% - 110%
+            const endX = Math.random() * 120 - 10;
+            const endY = Math.random() * 120 - 10;
+
+            orb.style.setProperty('--start-x', `${startX}vw`);
+            orb.style.setProperty('--start-y', `${startY}vh`);
+            orb.style.setProperty('--end-x', `${endX}vw`);
+            orb.style.setProperty('--end-y', `${endY}vh`);
+            
+            orbContainer.appendChild(orb);
+        }
+    } catch (e) {
+        console.error("Hiba a fénygömbök létrehozásakor:", e);
+    }
+}
+// === ÚJ FUNKCIÓ VÉGE ===
