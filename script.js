@@ -146,7 +146,7 @@ async function openHistoryModal() {
     const modalSize = isMobile() ? 'modal-fullscreen' : 'modal-lg';
     const loadingHTML = document.getElementById('loading-skeleton').outerHTML;
     openModal('Előzmények', loadingHTML, modalSize);
-    document.querySelector('#modal-container #loading-skeleton').classList.add('active');
+    document.querySelector('#modal-container #loading-skeleton').classList.add('active'); // Activate skeleton
 
     try {
         const response = await fetch(`${appState.gasUrl}?action=getHistory&sheetUrl=${encodeURIComponent(appState.sheetUrl)}`);
@@ -408,7 +408,7 @@ async function viewHistoryDetail(id) {
     // === MÓDOSÍTVA: unescape az id-re ===
     const originalId = unescape(id);
     openModal('Elemzés Betöltése...', document.getElementById('loading-skeleton').outerHTML, 'modal-xl');
-    document.querySelector('#modal-container #loading-skeleton').classList.add('active');
+    document.querySelector('#modal-container #loading-skeleton').classList.add('active'); // Activate skeleton
 
     try {
         // === MÓDOSÍTVA: az originalId encodeURIComponent-be került ===
@@ -423,7 +423,7 @@ async function viewHistoryDetail(id) {
 
         const modalBody = document.getElementById('modal-body');
         modalBody.innerHTML = document.getElementById('common-elements').innerHTML;
-        modalBody.querySelector('#loading-skeleton').style.display = 'none';
+        modalBody.querySelector('#loading-skeleton').style.display = 'none'; // Skeleton eltüntetése
         modalBody.querySelector('#analysis-results').innerHTML = `<div class="analysis-body">${record.html}</div>`;
 
         const modalChat = modalBody.querySelector('#chat-container');
@@ -706,14 +706,14 @@ async function runMultiAnalysis() {
          return;
     }
 
-
     openModal(`Többes Elemzés (${matchesToAnalyze.length} meccs)`, '<div id="multi-analysis-results"></div><div id="multi-loading-skeleton"></div>', 'modal-xl');
     const resultsContainer = document.getElementById('multi-analysis-results');
     const loadingContainer = document.getElementById('multi-loading-skeleton');
 
-    // Mutassunk egy egyszerűbb töltőképernyőt
-    loadingContainer.innerHTML = '<p class="muted" style="text-align: center; padding: 3rem;">Elemzések futtatása... Ez eltarthat egy ideig.</p>';
-
+    // === MÓDOSÍTVA: Skeleton loader használata ===
+    loadingContainer.innerHTML = document.getElementById('loading-skeleton').outerHTML;
+    const modalSkeleton = loadingContainer.querySelector('.loading-skeleton');
+    if (modalSkeleton) modalSkeleton.classList.add('active'); // Aktívvá tesszük a skeletont
 
     const analysisPromises = matchesToAnalyze.map(match => {
         return fetch(`${appState.gasUrl}?action=runAnalysis&home=${encodeURIComponent(match.home)}&away=${encodeURIComponent(match.away)}&sport=${appState.currentSport}&force=true&sheetUrl=${encodeURIComponent(appState.sheetUrl)}`, {
