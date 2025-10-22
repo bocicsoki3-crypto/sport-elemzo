@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="hu" class="dark-theme" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<html lang="hu" class="dark-theme">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,106 +7,60 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-
-
-<!--[if gte mso 9]><xml>
-<mso:CustomDocumentProperties>
-<mso:_dlc_DocId msdt:dt="string">FZU25CTHTDUX-449951804-786</mso:_dlc_DocId>
-<mso:_dlc_DocIdItemGuid msdt:dt="string">216d91fb-95f1-4251-be1c-325068c8506e</mso:_dlc_DocIdItemGuid>
-<mso:_dlc_DocIdUrl msdt:dt="string">https://bbraun.sharepoint.com/sites/bbraun_eis_processdevhungary/_layouts/15/DocIdRedir.aspx?ID=FZU25CTHTDUX-449951804-786, FZU25CTHTDUX-449951804-786</mso:_dlc_DocIdUrl>
-</mso:CustomDocumentProperties>
-</xml><![endif]-->
 </head>
 <body>
+    <div class="background-bubbles-top"></div>
+    <div class="background-bubbles-bottom"></div>
 
-<div class="app-container">
-    <header class="app-header">
-        <div class="header-title-container">
-            <div class="spotlight left"></div>
-            <h1 class="main-title">The King AI</h1>
-            <div class="spotlight right"></div>
-        </div>
-        <div class="header-status">
-            <svg id="theme-switcher" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-            <div id="userInfo" class="user-info"></div>
-        </div>
-    </header>
-
-    <div class="controls-bar">
-        <div class="main-actions">
-            <div class="control-group">
-                 <label for="sportSelector">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"></path><path d="M3.34 19a10 10 0 1 1 17.32 0"></path></svg>
-                    Sportág
-                </label>
-                <div class="select-wrapper">
-                    <select id="sportSelector" onchange="handleSportChange()">
-                        <option value="soccer" selected>Labdarúgás</option>
-                        <option value="hockey">Jégkorong</option>
-                        <option value="basketball">Kosárlabda</option>
-                    </select>
-                </div>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <h1>The King AI</h1>
             </div>
-             <button id="loadFixturesBtn" class="btn btn-primary btn-lg" onclick="loadFixtures()">Meccsek Betöltése</button>
-             <button id="historyBtn" class="btn btn-lg" onclick="openHistoryModal()">Előzmények</button>
-             <button id="manualBtn" class="btn btn-lg" onclick="openManualAnalysisModal()">Kézi Megnyitás</button>
-             
-             </div>
-    </div>
-
-    <main id="main-content" class="main-content">
-        <div id="placeholder" class="placeholder">
-             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20v-10M18 20V4"/></svg>
-            <h3>Válassz sportágat és töltsd be a meccseket.</h3>
-            <p>A mérkőzések kategóriák szerint, oszlopokban fognak megjelenni.</p>
-        </div>
-        
-        <div id="kanban-container" class="kanban-container">
-            <div id="kanban-board" class="kanban-board">
-                </div>
-            <div id="kanban-board" class="kanban-board"></div>
-        </div>
-
-        <div id="mobile-list-container" class="mobile-list-container">
+            <div class="header-actions">
+                <div id="userInfo"></div>
             </div>
-    </main>
-</div>
+        </header>
 
-<div id="modal-container" class="modal-container">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="modal-title"></h3>
-            <button class="modal-close-btn" onclick="closeModal()">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
+        <div class="controls-bar">
+            <div class="main-actions">
+                <label for="sportSelect" class="glow-text">Sportág</label>
+                <select id="sportSelect">
+                    <option value="soccer">Labdarúgás</option>
+                    <option value="basketball">Kosárlabda</option>
+                    <option value="hockey">Jégkorong</option>
+                </select>
+                <button id="loadFixturesBtn" class="btn btn-primary" onclick="loadFixtures()">Meccsek Betöltése</button>
+            </div>
+            <div class="filter-actions">
+                <span id="selected-count" class="glow-text">0</span> meccs kiválasztva
+                <button id="openAnalysisBtn" class="btn" onclick="openAnalysisForSelected()" disabled>Elemzés Megnyitása</button>
+            </div>
         </div>
-        <div id="modal-body" class="modal-body">
-             </div>
-    </div>
-</div>
 
-<div id="common-elements" style="display: none;">
-    <div id="loading-skeleton" class="loading-skeleton">
-        <div class="skeleton-card"><div class="skeleton-line" style="height: 2rem; width: 60%;"></div><div class="skeleton-line"></div><div class="skeleton-line" style="width: 80%;"></div></div>
-        <div class="skeleton-card"><div class="skeleton-line" style="height: 1.5rem; width: 40%;"></div><div class="skeleton-line" style="width: 90%;"></div><div class="skeleton-line" style="width: 95%;"></div><div class="skeleton-line" style="width: 85%;"></div></div>
-        <div class="skeleton-card"><div class="skeleton-line" style="height: 1.5rem; width: 50%;"></div><div class="skeleton-line" style="width: 90%;"></div><div class="skeleton-line" style="width: 80%;"></div></div>
+        <main id="kanban-board" class="kanban-board-container"></main>
+
+        <div class="initial-prompt" id="initialPrompt">
+            <span class="initial-prompt-icon">📊</span>
+            <p class="glow-text">Válassz sportágat és töltsd be a meccseket.</p>
+            <p class="glow-text-secondary">A mérkőzések kategóriák szerint, oszlopokban fognak megjelenni.</p>
+        </div>
+
     </div>
-    <div id="analysis-results"></div>
-    <div id="chat-container" class="chat-container">
-        <h4>Beszélgetés az AI Elemzővel</h4>
-        <div id="chat-messages" class="chat-messages"></div>
-        <div id="chat-thinking-indicator" style="display: none;"><p class="muted"><i>Az elemző gondolkodik...</i></p></div>
-        <div class="chat-input-container">
-            <input id="chat-input" type="text" placeholder="Kérdezz az elemzéstől...">
-            <button id="chat-send-btn" class="btn btn-primary">Küldés</button>
+
+    <div id="modal-container" class="modal-container">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title"></h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div id="modal-body" class="modal-body">
+                </div>
         </div>
     </div>
-</div>
 
 <script src="script.js"></script>
 </body>
 </html>
-
-
