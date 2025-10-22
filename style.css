@@ -1,20 +1,15 @@
 /* --- ALAP BEÁLLÍTÁSOK --- */
 :root {
-    --primary: #d4af37; /* Arany/Sárga */
-    --secondary: #00bfff; /* Élénk kék */
-    --background: #0a0a0a; /* Sötét háttér */
-    --card-bg: #121212; /* Kártya háttér */
+    --primary: #d4af37;
+    --secondary: #00bfff;
+    --background: #0a0a0a;
+    --card-bg: #121212;
     --card-bg-rgb: 18, 18, 18;
     --border-color: rgba(255, 255, 255, 0.1);
-    --text-primary: #f0f0f0; /* Elsődleges szöveg */
-    --text-secondary: #a0a0a0; /* Másodlagos szöveg */
-    --glow-primary: rgba(212, 175, 55, 0.8); /* Arany ragyogás */
-    --glow-secondary: rgba(0, 191, 255, 0.7); /* Kék ragyogás */
-    --glow-orange: rgba(255, 140, 0, 0.7); /* Narancs ragyogás */
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    --text-primary: #f0f0f0;
+    --text-secondary: #a0a0a0;
+    --glow-primary: rgba(212, 175, 55, 0.8);
+    --glow-orange: rgba(255, 140, 0, 0.7);
 }
 
 * {
@@ -24,8 +19,8 @@
 }
 
 html, body {
-    height: 100%;
-    overflow-x: hidden; /* Megakadályozza a vízszintes scrollbart */
+    width: 100%;
+    overflow-x: hidden;
 }
 
 body {
@@ -33,201 +28,186 @@ body {
     background-color: var(--background);
     color: var(--text-primary);
     line-height: 1.6;
-    position: relative; /* Fontos a háttér effektek miatt */
-    overflow-y: auto; /* Engedélyezi a függőleges görgetést */
+    position: relative;
 }
 
-.app-container {
-    width: 100%; /* Teljes szélesség */
-    padding: 1.5rem;
-    position: relative; /* Ahhoz, hogy a tartalom a buborékok felett legyen */
-    z-index: 10;
-    max-width: 1400px; /* Max szélesség megtartása a tartalomnak */
-    margin: 0 auto; /* Középre igazítás */
-}
-
-/* --- HÁTTÉR BUBORÉKOK ÉS ANIMÁCIÓK --- */
-.background-bubbles-top,
-.background-bubbles-bottom {
+/* --- HÁTTÉR ANIMÁCIÓ --- */
+.background-bubbles-top, .background-bubbles-bottom {
     position: fixed;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Nem zavarja az egér eseményeket */
-    z-index: 0;
-    overflow: hidden; /* A buborékok ne lógjanak ki */
-}
-
-.background-bubbles-top {
     top: 0;
     left: 0;
-    /* A buborékok itt keletkeznek és lefelé mozognak */
-    background: radial-gradient(circle at top, rgba(255, 165, 0, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
 }
 
-.background-bubbles-bottom {
-    bottom: 0;
-    left: 0;
-    /* A buborékok itt keletkeznek és felfelé mozognak */
-    background: radial-gradient(circle at bottom, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+@keyframes bubble-float {
+    0% { transform: translateY(0) scale(1); opacity: 0.5; }
+    100% { transform: translateY(-100vh) scale(1.2); opacity: 0; }
 }
 
-/* Buborék animáció (sima, nem sok) */
-@keyframes bubble-flow-top {
-    0% { transform: translateY(-100%); opacity: 0; }
-    50% { opacity: 0.5; }
-    100% { transform: translateY(100%); opacity: 0; }
+@keyframes bubble-sink {
+    0% { transform: translateY(0) scale(1); opacity: 0.5; }
+    100% { transform: translateY(100vh) scale(1.2); opacity: 0; }
 }
 
-@keyframes bubble-flow-bottom {
-    0% { transform: translateY(100%); opacity: 0; }
-    50% { opacity: 0.5; }
-    100% { transform: translateY(-100%); opacity: 0; }
-}
-
-/* Dinamikus buborékok generálása JS-ből, de ha CSS-ben kellene, akkor így: */
-.background-bubbles-top::before,
-.background-bubbles-top::after,
-.background-bubbles-bottom::before,
-.background-bubbles-bottom::after {
+.background-bubbles-bottom::before, .background-bubbles-bottom::after {
     content: '';
     position: absolute;
+    bottom: -150px; /* Alulról indulnak, a képernyőn kívülről */
     border-radius: 50%;
-    background-color: transparent;
-    border: 2px solid;
-    animation-iteration-count: infinite;
+    animation-name: bubble-float;
     animation-timing-function: linear;
-    opacity: 0;
-}
-
-.background-bubbles-top::before {
-    top: 10%; left: 20%; width: 50px; height: 50px;
-    border-color: rgba(255, 140, 0, 0.4);
-    animation: bubble-flow-bottom 15s -2s infinite; /* Narancs fentről le */
-}
-.background-bubbles-top::after {
-    top: 30%; left: 70%; width: 80px; height: 80px;
-    border-color: rgba(255, 165, 0, 0.3);
-    animation: bubble-flow-bottom 20s -5s infinite;
+    animation-iteration-count: infinite;
 }
 
 .background-bubbles-bottom::before {
-    bottom: 10%; left: 80%; width: 60px; height: 60px;
-    border-color: rgba(255, 255, 255, 0.3);
-    animation: bubble-flow-top 18s -3s infinite; /* Fehér lentről fel */
+    width: 80px;
+    height: 80px;
+    left: 15%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation-duration: 25s;
+    animation-delay: 0s;
 }
+
 .background-bubbles-bottom::after {
-    bottom: 20%; left: 30%; width: 90px; height: 90px;
-    border-color: rgba(255, 255, 255, 0.2);
-    animation: bubble-flow-top 22s -6s infinite;
+    width: 120px;
+    height: 120px;
+    left: 75%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+    animation-duration: 35s;
+    animation-delay: 5s;
 }
 
-/* Kiemelések és Ragyogás */
-strong, .highlight, .glow-text {
-    color: var(--primary);
-    font-weight: 700;
-    text-shadow: 0 0 8px var(--glow-primary), 0 0 15px rgba(212, 175, 55, 0.4);
-}
-.glow-text-secondary {
-    color: var(--text-secondary);
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+.background-bubbles-top::before, .background-bubbles-top::after {
+    content: '';
+    position: absolute;
+    top: -150px; /* Felülről indulnak, a képernyőn kívülről */
+    border-radius: 50%;
+    animation-name: bubble-sink;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
 }
 
+.background-bubbles-top::before {
+    width: 60px;
+    height: 60px;
+    left: 25%;
+    background: radial-gradient(circle, var(--glow-orange) 0%, transparent 70%);
+    animation-duration: 20s;
+    animation-delay: 2s;
+}
+
+.background-bubbles-top::after {
+    width: 90px;
+    height: 90px;
+    left: 65%;
+    background: radial-gradient(circle, var(--glow-orange) 0%, transparent 70%);
+    animation-duration: 30s;
+    animation-delay: 8s;
+}
+
+
+.app-container {
+    width: 100%;
+    max-width: 1600px; /* A tartalom ne legyen végtelen széles nagy monitorokon */
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+    position: relative;
+    z-index: 1;
+}
 
 /* --- FEJLÉC --- */
 .app-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1.5rem;
     margin-bottom: 2rem;
-    position: relative;
-    z-index: 10; /* A tartalom felett legyen */
+    border-bottom: 1px solid var(--border-color);
 }
 
-.logo h1 {
-    font-size: 3.5rem; /* Nagyobb cím */
-    font-weight: 900;
+.title-container {
+    flex-grow: 1;
+    text-align: center;
+}
+
+.title-container h1 {
+    font-size: 3rem; /* Nagyobb cím */
+    font-weight: 800;
     color: var(--primary);
-    text-shadow: 
-        0 0 10px var(--glow-primary), 
-        0 0 20px var(--glow-primary), 
-        0 0 30px var(--glow-orange); /* Kiterjesztett ragyogás */
+    text-shadow: 0 0 10px var(--glow-primary), 0 0 25px var(--glow-orange); /* Erősebb ragyogás */
+    display: inline-block;
+}
+
+.header-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
 /* --- VEZÉRLŐ SÁV --- */
 .controls-bar {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1.5rem;
+    justify-content: center; /* Gombok középre igazítása */
     margin-bottom: 2rem;
     padding: 1rem;
     background: rgba(var(--card-bg-rgb), 0.7);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     backdrop-filter: blur(5px);
-    position: relative;
-    z-index: 10;
 }
 
-.main-actions, .filter-actions {
+.main-actions {
     display: flex;
     gap: 1rem;
     align-items: center;
 }
-
-/* Label a select boxhoz */
-.controls-bar label {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
 
 /* --- GOMBOK ÉS INPUTOK --- */
 .btn, select {
     padding: 0.6rem 1.2rem;
     border-radius: 8px;
     border: 1px solid var(--border-color);
-    background-color: transparent;
+    background-color: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s ease;
     font-size: 0.9rem;
-    will-change: background-color, border-color, box-shadow;
 }
 
 .btn:hover:not(:disabled), select:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.1);
     border-color: var(--primary);
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
 }
 
 .btn-primary {
     background-color: var(--primary);
     color: #000;
     font-weight: 600;
-    text-shadow: none; /* A gomb belsejében ne ragyogjon a szöveg */
 }
+
 .btn-primary:hover:not(:disabled) {
     background-color: #e4c55a;
     border-color: #e4c55a;
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+    box-shadow: 0 0 15px var(--glow-primary);
 }
 .btn:disabled {
     cursor: not-allowed;
-    opacity: 0.5;
-    box-shadow: none;
+    opacity: 0.6;
+}
+.btn-lg {
+    font-size: 1rem;
+    padding: 0.8rem 1.5rem;
 }
 
-/* --- KANBAN TÁBLA --- */
-.kanban-board-container {
+/* --- KANBAN TÁBLA ÉS EGYÉB TARTALOM --- */
+.kanban-board {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 1.5rem;
-    position: relative;
-    z-index: 10;
 }
 
 .kanban-column {
@@ -236,17 +216,12 @@ strong, .highlight, .glow-text {
     border-radius: 12px;
     padding: 1rem;
 }
-
 .kanban-column-header {
     font-size: 1.2rem;
-    font-weight: 700;
     padding-bottom: 0.75rem;
     margin-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
-    color: var(--secondary);
-    text-shadow: 0 0 8px var(--glow-secondary);
 }
-
 .match-card {
     background: var(--card-bg);
     padding: 1rem;
@@ -254,35 +229,35 @@ strong, .highlight, .glow-text {
     margin-bottom: 0.75rem;
     cursor: pointer;
     border: 1px solid var(--border-color);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    will-change: transform, box-shadow;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
 .match-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     border-color: var(--primary);
 }
+.match-card-teams { font-weight: 600; }
+.match-card-meta { font-size: 0.8rem; color: var(--text-secondary); display: flex; justify-content: space-between; margin-top: 0.5rem; }
 
-.match-card.selected {
-    border-color: var(--primary);
-    box-shadow: 0 0 15px var(--glow-primary);
-}
-
-.match-card-teams {
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
-}
-
-.match-card-meta {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+/* Placeholder */
+.placeholder {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem;
+    text-align: center;
+    background: rgba(var(--card-bg-rgb), 0.5);
+    border: 1px dashed var(--border-color);
+    border-radius: 12px;
+    margin: 2rem auto;
+    max-width: 800px;
 }
+.placeholder h3 { font-size: 1.5rem; margin-top: 1rem; }
+.placeholder p { color: var(--text-secondary); }
 
-/* --- MODÁLIS ABLAK (ELEMZÉS) --- */
+
+/* --- MODÁLIS ABLAK --- */
 .modal-container {
     position: fixed;
     top: 0;
@@ -299,210 +274,22 @@ strong, .highlight, .glow-text {
     transition: opacity 0.3s, visibility 0.3s;
     z-index: 1000;
 }
-
-.modal-container.open {
-    opacity: 1;
-    visibility: visible;
-}
-
+.modal-container.open { opacity: 1; visibility: visible; }
 .modal-content {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 16px;
     width: 90%;
-    max-width: 1000px;
+    max-width: 1200px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     transform: scale(0.95);
     transition: transform 0.3s;
-    will-change: transform;
 }
-
-.modal-container.open .modal-content {
-    transform: scale(1);
-}
-
-.modal-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-#modal-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 2rem;
-    line-height: 1;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-.modal-close:hover {
-    color: var(--text-primary);
-}
-
-.modal-body {
-    padding: 1.5rem;
-    overflow-y: auto;
-}
-
-/* --- ÚJ ELEMZÉS NÉZET STÍLUSOK --- */
-.analysis-section-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--secondary);
-    text-shadow: 0 0 8px var(--glow-secondary);
-}
-
-.at-a-glance-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
-}
-
-.summary-card {
-    background: rgba(var(--card-bg-rgb), 0.7);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.5rem;
-    text-align: center;
-}
-
-.summary-card h5 {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.summary-card .value, .summary-card .details {
-    color: var(--text-primary);
-    font-weight: 700;
-    font-size: 2rem;
-    text-shadow: 0 0 8px var(--glow-primary);
-}
-.summary-card .details {
-    font-size: 1rem;
-    line-height: 1.4;
-}
-
-.market-card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2.5rem;
-}
-
-.market-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem;
-    text-align: center;
-}
-
-.market-card-title {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
-
-.market-card-value {
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    text-shadow: 0 0 6px var(--glow-primary);
-}
-
-.analysis-text-content p {
-    margin-bottom: 1rem;
-    line-height: 1.7;
-    color: var(--text-secondary);
-}
-
-.analysis-text-content p strong {
-    color: var(--primary);
-    font-weight: 700;
-}
-
-.loading-spinner {
-    border: 4px solid var(--border-color);
-    border-top: 4px solid var(--primary);
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-    margin: 4rem auto;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Kezdeti üzenet, ha még nincs betöltve semmi */
-.initial-prompt {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: rgba(var(--card-bg-rgb), 0.5);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    margin-top: 4rem;
-    position: relative;
-    z-index: 10;
-}
-.initial-prompt-icon {
-    font-size: 4rem;
-    display: block;
-    margin-bottom: 1rem;
-}
-.initial-prompt p {
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
-}
-.initial-prompt .glow-text {
-    text-shadow: 0 0 10px var(--glow-primary);
-}
-.initial-prompt .glow-text-secondary {
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
-}
-
-/* Reszponzivitás */
-@media (max-width: 768px) {
-    .app-header {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    .controls-bar {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .logo h1 {
-        font-size: 2.5rem;
-    }
-    .main-actions, .filter-actions {
-        flex-direction: column;
-        width: 100%;
-        gap: 0.8rem;
-    }
-    .btn, select {
-        width: 100%;
-    }
-    .at-a-glance-grid, .market-card-grid {
-        grid-template-columns: 1fr;
-    }
-}
+.modal-container.open .modal-content { transform: scale(1); }
+.modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+.modal-body { padding: 1.5rem; overflow-y: auto; }
+.modal-close-btn { background: none; border: none; cursor: pointer; color: var(--text-secondary); transition: color 0.2s; }
+.modal-close-btn:hover { color: var(--text-primary); }
