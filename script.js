@@ -8,7 +8,17 @@
  */
 
 // --- ALKALMAZÁS ÁLLAPOT ---
+// --- ALKALMAZÁS ÁLLAPOT ---
 const appState = {
+    // A VÉGLEGES RENDER.COM SZERVER CÍME!
+    gasUrl: 'https://king-ai-backend.onrender.com',
+    fixtures: [],
+    currentSport: 'soccer',
+    sheetUrl: '',
+    currentAnalysisContext: '',
+    chatHistory: [],
+    selectedMatches: new Set()
+};
     // A VÉGLEGES RENDER.COM SZERVER CÍME!
     [cite_start]gasUrl: 'https://king-ai-backend.onrender.com', [cite: 3]
     fixtures: [],
