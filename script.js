@@ -17,7 +17,6 @@ const appState = {
     currentAnalysisContext: '',
     chatHistory: [],
     selectedMatches: new Set() // ÚJ: Kiválasztott meccsek tárolása (ID alapján)
-    selectedMatches: new Set()
 };
 
 // --- LIGA KATEGÓRIÁK (MÓDOSÍTVA) ---
