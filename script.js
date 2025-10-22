@@ -57,7 +57,18 @@ async function loadFixtures() {
     try {
         // A hívás most már a Node.js szerver /getFixtures végpontjára mutat
         const response = await fetch(`${appState.gasUrl}/getFixtures?sport=${appState.currentSport}&days=2`);
-        if (!response.ok) throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
+        
+        // Hibakezelés
+        if (!response.ok) {
+            // Próbáljuk meg kiolvasni a szerver JSON hibaüzenetét
+            try {
+                const errorData = await response.json();
+                throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
+            } catch (jsonError) {
+                // Ha a válasz nem JSON, akkor általános hiba
+                throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
+            }
+        }
         
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -68,6 +79,7 @@ async function loadFixtures() {
             uniqueId: `${appState.currentSport}_${fx.home.toLowerCase().replace(/\s+/g, '')}_${fx.away.toLowerCase().replace(/\s+/g, '')}`
         }));
         
+        // A nyitó oddsokat a sessionStorage-be mentjük, ahogy a régi kód tette
         sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
 
         if (isMobile()) {
@@ -92,7 +104,7 @@ async function runAnalysis(home, away, forceNew = false) {
     home = unescape(home);
     away = unescape(away);
 
-    if (isMobile() && forceNew) {
+    if (isMobile() && forceNew) { // Csak akkor jelezzen mobilon, ha új elemzés indul
         showToast("Elemzés folyamatban... Ez hosszabb időt vehet igénybe.", 'info', 6000);
     }
 
@@ -124,7 +136,14 @@ async function runAnalysis(home, away, forceNew = false) {
             body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) })
         });
         
-        if (!response.ok) throw new Error(`Szerver válasz hiba: ${response.status} ${response.statusText}`);
+        if (!response.ok) {
+            try {
+                const errorData = await response.json();
+                throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
+            } catch (jsonError) {
+                throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
+            }
+        }
         
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -147,26 +166,34 @@ async function runAnalysis(home, away, forceNew = false) {
 // === MÓDOSÍTVA: Hívás az új '/getHistory' végpontra ===
 async function openHistoryModal() {
     if (!appState.sheetUrl) {
-        const url = prompt("Kérlek, add meg a Google Táblázat URL-jét (bár a szerver már tudhatja):", "");
+        // Még mindig bekérhetjük, bár a szerver már a .env-ből is tudhatja
+        const url = prompt("Kérlek, add meg a Google Táblázat URL-jét (opcionális, a szerver is tárolhatja):", "");
         if (url && url.startsWith('https://docs.google.com/spreadsheets/d/')) {
             appState.sheetUrl = url;
             localStorage.setItem('sheetUrl', url);
         } else if(url) {
             showToast('Érvénytelen URL.', 'error');
-            return;
+            // Nem állunk meg, hátha a szerver tudja a címet
         }
     }
     
     const modalSize = isMobile() ? 'modal-fullscreen' : 'modal-lg';
     const loadingHTML = document.getElementById('loading-skeleton').outerHTML;
     openModal('Előzmények', loadingHTML, modalSize);
-    document.querySelector('#modal-container #loading-skeleton').classList.add('active');
+    document.querySelector('#modal-container #loading-skeleton').classList.add('active'); // Activate skeleton
 
     try {
         // A hívás most már a Node.js szerver /getHistory végpontjára mutat
         const response = await fetch(`${appState.gasUrl}/getHistory`);
         
-        if (!response.ok) throw new Error(`Szerver válasz hiba: ${response.status} ${response.statusText}`);
+        if (!response.ok) {
+            try {
+                const errorData = await response.json();
+                throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
+            } catch (jsonError) {
+                throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
+            }
+        }
         
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -192,7 +219,14 @@ async function deleteHistoryItem(id) {
             body: JSON.stringify({ id: id })
         });
 
-        if (!response.ok) throw new Error(`Szerver válasz hiba: ${response.status} ${response.statusText}`);
+        if (!response.ok) {
+             try {
+                const errorData = await response.json();
+                throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
+            } catch (jsonError) {
+                throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
+            }
+        }
         
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -204,6 +238,7 @@ async function deleteHistoryItem(id) {
         console.error(e);
     }
 }
+
 
 // === MÓDOSÍTVA: Hívás az új '/runFinalCheck' végpontra (POST, application/json) ===
 async function runFinalCheck(home, away, sport) {
@@ -231,7 +266,14 @@ async function runFinalCheck(home, away, sport) {
             })
         });
 
-        if (!response.ok) throw new Error(`Szerver hiba: ${response.statusText}`);
+        if (!response.ok) {
+             try {
+                const errorData = await response.json();
+                throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
+            } catch (jsonError) {
+                throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
+            }
+        }
         
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -267,12 +309,13 @@ async function runFinalCheck(home, away, sport) {
 
 function handleSportChange() {
     appState.currentSport = document.getElementById('sportSelector').value;
-    appState.selectedMatches.clear();
+    appState.selectedMatches.clear(); // Töröljük a kiválasztást sportváltáskor
     document.getElementById('kanban-board').innerHTML = '';
     document.getElementById('mobile-list-container').innerHTML = '';
     document.getElementById('placeholder').style.display = 'flex';
-    updateMultiSelectButton();
+    updateMultiSelectButton(); // Frissítjük a gombot
 }
+
 
 function openManualAnalysisModal() {
     let content = `
@@ -425,8 +468,18 @@ async function viewHistoryDetail(id) {
     document.querySelector('#modal-container #loading-skeleton').classList.add('active');
 
     try {
+        // A hívás most már a Node.js szerver /getAnalysisDetail végpontjára mutat
         const response = await fetch(`${appState.gasUrl}/getAnalysisDetail?id=${encodeURIComponent(originalId)}`);
-        if (!response.ok) throw new Error(`Szerver válasz hiba: ${response.status} ${response.statusText}`);
+        
+        if (!response.ok) {
+             try {
+                const errorData = await response.json();
+                throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
+            } catch (jsonError) {
+                throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
+            }
+        }
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
@@ -494,6 +547,7 @@ async function sendChatMessage() {
     thinkingIndicator.style.display = 'block';
 
     try {
+        // A hívás most már a Node.js szerver /askChat végpontjára mutat
         const response = await fetch(`${appState.gasUrl}/askChat`, {
             method: 'POST',
             headers: {
@@ -506,7 +560,15 @@ async function sendChatMessage() {
             })
         });
 
-        if (!response.ok) throw new Error(`Szerver hiba: ${response.statusText}`);
+        if (!response.ok) {
+             try {
+                const errorData = await response.json();
+                throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
+            } catch (jsonError) {
+                throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
+            }
+        }
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         
@@ -636,7 +698,7 @@ function createHeaderOrbs() {
     }
 }
 
-// --- TÖBBES KIJELÖLÉS FUNKCIÓK (VÁLTOZATLAN) ---
+// --- TÖBBES KIJELÖLÉS FUNKCIÓK ---
 function initMultiSelect() {
     const controlsBar = document.querySelector('.controls-bar .main-actions');
     if (controlsBar) {
@@ -662,6 +724,7 @@ function handleCheckboxChange(event) {
     const checkbox = event.target;
     const matchId = checkbox.dataset.matchId;
     const cardOrItem = checkbox.closest('.selectable-card, .selectable-item');
+
     if (checkbox.checked) {
         if (appState.selectedMatches.size < 3) {
             appState.selectedMatches.add(matchId);
@@ -685,7 +748,6 @@ function updateMultiSelectButton() {
     btn.disabled = count === 0 || count > 3;
 }
 
-// === MÓDOSÍTVA: Hívás az új '/runAnalysis' végpontra (POST, application/json) ===
 async function runMultiAnalysis() {
     const selectedIds = Array.from(appState.selectedMatches);
     if (selectedIds.length === 0 || selectedIds.length > 3) {
@@ -694,30 +756,28 @@ async function runMultiAnalysis() {
     }
     const matchesToAnalyze = appState.fixtures.filter(fx => selectedIds.includes(fx.uniqueId));
     if (matchesToAnalyze.length !== selectedIds.length) {
-        showToast('Hiba: Nem található minden kiválasztott meccs. Próbáld újra betölteni a meccseket.', 'error');
-        return;
+         showToast('Hiba: Nem található minden kiválasztott meccs. Próbáld újra betölteni a meccseket.', 'error');
+         return;
     }
 
     openModal(`Többes Elemzés (${matchesToAnalyze.length} meccs)`, '<div id="multi-analysis-results"></div><div id="multi-loading-skeleton"></div>', 'modal-xl');
     const resultsContainer = document.getElementById('multi-analysis-results');
     const loadingContainer = document.getElementById('multi-loading-skeleton');
     
+    // MÓDOSÍTVA: Skeleton loader használata
     loadingContainer.innerHTML = document.getElementById('loading-skeleton').outerHTML;
     const modalSkeleton = loadingContainer.querySelector('.loading-skeleton');
     if (modalSkeleton) modalSkeleton.classList.add('active');
 
     const analysisPromises = matchesToAnalyze.map(match => {
-        let analysisUrl = `${appState.gasUrl}/runAnalysis?home=${encodeURIComponent(match.home)}&away=${encodeURIComponent(match.away)}&sport=${appState.currentSport}&force=true&sheetUrl=${encodeURIComponent(appState.sheetUrl)}`;
-        
-        return fetch(analysisUrl, {
+        // Ugyanazt a runAnalysis hívást használjuk, force=true-val
+        return fetch(`${appState.gasUrl}?action=runAnalysis&home=${encodeURIComponent(match.home)}&away=${encodeURIComponent(match.away)}&sport=${appState.currentSport}&force=true&sheetUrl=${encodeURIComponent(appState.sheetUrl)}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ openingOdds: JSON.parse(sessionStorage.getItem('openingOdds') || '{}') })
+            body: JSON.stringify({ openingOdds: JSON.parse(sessionStorage.getItem('openingOdds') || '{}') }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         })
         .then(response => {
-            if (!response.ok) throw new Error(`Szerver hiba (${match.home} vs ${match.away}): ${response.statusText}`);
+            if (!response.ok) throw new Error(`Szerver hiba (${match.home} vs ${match.away}): ${response.status}`);
             return response.json();
         })
         .then(data => {
@@ -738,6 +798,7 @@ async function runMultiAnalysis() {
         results.forEach(result => {
              const matchHeader = `<h4>${result.match}</h4>`;
              let recommendationHtml = '<p style="color:var(--danger);">Hiba történt az elemzés során ennél a meccsnél.</p>';
+
             if (!result.error && result.html) {
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = result.html;
@@ -750,6 +811,7 @@ async function runMultiAnalysis() {
             } else if (result.error) {
                  recommendationHtml = `<p style="color:var(--danger);">Hiba: ${result.error}</p>`;
             }
+
             resultsContainer.innerHTML += `
                 <div class="multi-analysis-item">
                     ${matchHeader}
@@ -758,13 +820,89 @@ async function runMultiAnalysis() {
             `;
         });
 
+         // Töröljük a kijelölést az elemzés után
          appState.selectedMatches.clear();
          document.querySelectorAll('.selectable-card.selected, .selectable-item.selected').forEach(el => el.classList.remove('selected'));
          document.querySelectorAll('.match-checkbox:checked').forEach(cb => cb.checked = false);
          updateMultiSelectButton();
+
     } catch (e) {
          console.error("Váratlan hiba a többes elemzés során:", e);
          loadingContainer.innerHTML = '';
          resultsContainer.innerHTML = `<p style="color:var(--danger); text-align:center;">Váratlan hiba történt az elemzések összesítésekor: ${e.message}</p>`;
     }
 }
+Kész, itt vagyunk
+
+Rendben, köszönöm a türelmet! Látom a `Gemini.txt` tartalmát, ami az egész eddigi beszélgetésünket tartalmazza a Google Apps Script fejlesztéséről és hibakereséséről.
+
+**Megerősítem a helyzetet:**
+
+1.  **A Cél:** Át akarjuk költöztetni a teljes backend logikádat (az összes `.gs` fájlt) Google Apps Scriptről egy Node.js alapú rendszerre.
+2.  [cite_start]**Az Ok:** Meg akarunk szabadulni a Google 6 perces futási időkorlátjától [cite: 3348, 3349, 3379-3382][cite_start], ami a `net::ERR_FAILED` hibákat okozza [cite: 3379-3382, 3125, 3127, 3153, 3156][cite_start], mert az elemzéseid már túl bonyolultak és hosszúak lettek [cite: 3348-3349, 3386-3387, 3224].
+3.  **Hol tartottunk:** Elkezdtük a laptopodon a környezet beállítását a Visual Studio Code (VS Code) segítségével. [cite_start]Létrehoztad a `king-ai-backend` mappát [cite: 3355][cite_start], és megpróbáltad létrehozni a `package.json` fájlt [cite: 3353-3354, 3359-3360, 3362][cite_start], de elakadtunk az `npm install` parancsnál [cite: 3365, 3368, 3369-3371][cite_start], mert a Node.js nem volt telepítve a gépedre[cite: 3365].
+4.  [cite_start]**A Terv:** Megbeszéltük, hogy otthon, a saját gépeden telepíted a Node.js-t [cite: 3365, 3372, 3373, 3390, 3398] [cite_start]és a VS Code-ot[cite: 3359, 3373, 3398], majd folytatjuk.
+
+**Szuper, hogy itt vagy! Kezdjük.**
+
+Most, hogy feltöltötted a teljes beszélgetést, én is felkészültem. Kezdjük azzal, ahol abbahagytuk:
+
+### 1. Lépés: Node.js Telepítése (Ha még nem tetted meg)
+
+Mielőtt bármit csinálnánk a VS Code-ban, a gépedre telepítened kell a **Node.js**-t.
+
+1.  Menj a hivatalos weboldalra: [https://nodejs.org/](https://nodejs.org/)
+2.  Kattints a **bal oldali, "LTS" feliratú** gombra. [cite_start]Ez a stabil, ajánlott verzió[cite: 3366, 3373, 3398].
+3.  Futtasd a letöltött telepítőt. [cite_start]Menj végig a telepítési lépéseken, **hagyd az alapértelmezett beállításokat** (a "Add to PATH" opció maradjon bepipálva) [cite: 3365-3366].
+4.  Miután a telepítés befejeződött, **indítsd újra a Visual Studio Code-ot** (ha nyitva volt).
+
+### 2. Lépés: Projekt Beállítása és Csomagok Telepítése (VS Code-ban)
+
+Most, hogy a Node.js (és vele az `npm` parancs) telepítve van, befejezhetjük a projekt alapozását.
+
+1.  **Mappa Megnyitása:** Nyisd meg a VS Code-ot. [cite_start]A felső menüben válaszd: **File -> Open Folder...** (Fájl -> Mappa megnyitása...) és nyisd meg a `king-ai-backend` mappádat [cite: 3355-3356, 3359, 3398].
+2.  **`package.json` Fájl Létrehozása:**
+    * [cite_start]A bal oldali Fájlkezelőben (ahol a `KING-AI-BACKEND` mappa neve van) kattints a mappa neve melletti kis **"Új fájl" ikonra** 📄 [cite: 3360, 3362-3363].
+    * Nevezd el a fájlt pontosan így: `package.json`
+    * Nyomj Enter-t.
+3.  [cite_start]**Tartalom Bemásolása:** Másold be az alábbi teljes tartalmat ebbe az új, üres `package.json` fájlba[cite: 3360, 3362]:
+
+    ```json
+    {
+      "name": "king-ai-backend",
+      "version": "1.0.0",
+      "description": "A sportelemző backend Node.js-re átírva.",
+      "main": "index.js",
+      "type": "module",
+      "scripts": {
+        "start": "node index.js"
+      },
+      "keywords": [
+        "ai",
+        "sports",
+        "analysis"
+      ],
+      "author": "The King AI",
+      "license": "ISC",
+      "dependencies": {
+        "axios": "^1.7.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.19.2",
+        "node-cache": "^5.1.2"
+      }
+    }
+    ```
+4.  **Mentés:** Nyomj egy **Ctrl+S** billentyűt (vagy File -> Save), hogy elmented a fájlt. [cite_start](Ez volt a hiba, amit korábban a fehér pötty jelzett [cite: 3367-3369, 3382-3383, 3394, 3399]).
+
+5.  [cite_start]**Terminál Megnyitása:** Nyiss egy új terminált a VS Code-on belül (felső menü: **Terminal -> New Terminal**)[cite: 3356, 3361, 3364, 3373, 3385, 3399].
+
+6.  [cite_start]**Telepítés:** Gépeld be az alul megjelenő terminál ablakba a következő parancsot, majd nyomj Enter-t [cite: 3357, 3361, 3364-3365, 3370-3371, 3383, 3385, 3394, 3399]:
+
+    ```bash
+    npm install
+    ```
+
+Ha mindent jól csináltunk, ennek a parancsnak most már hiba nélkül le kell futnia. Látni fogod, ahogy letölti a csomagokat, és megjelenik a `node_modules` mappa és a `package-lock.json` fájl.
+
+Szólj, ha idáig eljutottál!
