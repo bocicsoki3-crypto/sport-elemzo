@@ -1,15 +1,16 @@
 /* --- ALAP BEÁLLÍTÁSOK --- */
 :root {
-    --primary: #d4af37;
-    --secondary: #00bfff;
-    --background: #0a0a0a;
-    --card-bg: #121212;
+    --primary: #d4af37; /* Arany/Sárga */
+    --secondary: #00bfff; /* Élénk kék */
+    --background: #0a0a0a; /* Sötét háttér */
+    --card-bg: #121212; /* Kártya háttér */
     --card-bg-rgb: 18, 18, 18;
     --border-color: rgba(255, 255, 255, 0.1);
-    --text-primary: #f0f0f0;
-    --text-secondary: #a0a0a0;
-    --glow-primary: rgba(212, 175, 55, 0.7);
-    --glow-secondary: rgba(0, 191, 255, 0.6);
+    --text-primary: #f0f0f0; /* Elsődleges szöveg */
+    --text-secondary: #a0a0a0; /* Másodlagos szöveg */
+    --glow-primary: rgba(212, 175, 55, 0.8); /* Arany ragyogás */
+    --glow-secondary: rgba(0, 191, 255, 0.7); /* Kék ragyogás */
+    --glow-orange: rgba(255, 140, 0, 0.7); /* Narancs ragyogás */
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -22,30 +23,115 @@
     padding: 0;
 }
 
+html, body {
+    height: 100%;
+    overflow-x: hidden; /* Megakadályozza a vízszintes scrollbart */
+}
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--background);
     color: var(--text-primary);
     line-height: 1.6;
-    overflow-x: hidden;
+    position: relative; /* Fontos a háttér effektek miatt */
+    overflow-y: auto; /* Engedélyezi a függőleges görgetést */
 }
 
 .app-container {
-    max-width: 1400px;
-    margin: 0 auto;
+    width: 100%; /* Teljes szélesség */
     padding: 1.5rem;
+    position: relative; /* Ahhoz, hogy a tartalom a buborékok felett legyen */
+    z-index: 10;
+    max-width: 1400px; /* Max szélesség megtartása a tartalomnak */
+    margin: 0 auto; /* Középre igazítás */
 }
 
-/* --- KIEMELÉSEK ÉS RAGYOGÁS --- */
-strong, .highlight {
+/* --- HÁTTÉR BUBORÉKOK ÉS ANIMÁCIÓK --- */
+.background-bubbles-top,
+.background-bubbles-bottom {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Nem zavarja az egér eseményeket */
+    z-index: 0;
+    overflow: hidden; /* A buborékok ne lógjanak ki */
+}
+
+.background-bubbles-top {
+    top: 0;
+    left: 0;
+    /* A buborékok itt keletkeznek és lefelé mozognak */
+    background: radial-gradient(circle at top, rgba(255, 165, 0, 0.1) 0%, transparent 70%);
+}
+
+.background-bubbles-bottom {
+    bottom: 0;
+    left: 0;
+    /* A buborékok itt keletkeznek és felfelé mozognak */
+    background: radial-gradient(circle at bottom, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+}
+
+/* Buborék animáció (sima, nem sok) */
+@keyframes bubble-flow-top {
+    0% { transform: translateY(-100%); opacity: 0; }
+    50% { opacity: 0.5; }
+    100% { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes bubble-flow-bottom {
+    0% { transform: translateY(100%); opacity: 0; }
+    50% { opacity: 0.5; }
+    100% { transform: translateY(-100%); opacity: 0; }
+}
+
+/* Dinamikus buborékok generálása JS-ből, de ha CSS-ben kellene, akkor így: */
+.background-bubbles-top::before,
+.background-bubbles-top::after,
+.background-bubbles-bottom::before,
+.background-bubbles-bottom::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background-color: transparent;
+    border: 2px solid;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    opacity: 0;
+}
+
+.background-bubbles-top::before {
+    top: 10%; left: 20%; width: 50px; height: 50px;
+    border-color: rgba(255, 140, 0, 0.4);
+    animation: bubble-flow-bottom 15s -2s infinite; /* Narancs fentről le */
+}
+.background-bubbles-top::after {
+    top: 30%; left: 70%; width: 80px; height: 80px;
+    border-color: rgba(255, 165, 0, 0.3);
+    animation: bubble-flow-bottom 20s -5s infinite;
+}
+
+.background-bubbles-bottom::before {
+    bottom: 10%; left: 80%; width: 60px; height: 60px;
+    border-color: rgba(255, 255, 255, 0.3);
+    animation: bubble-flow-top 18s -3s infinite; /* Fehér lentről fel */
+}
+.background-bubbles-bottom::after {
+    bottom: 20%; left: 30%; width: 90px; height: 90px;
+    border-color: rgba(255, 255, 255, 0.2);
+    animation: bubble-flow-top 22s -6s infinite;
+}
+
+/* Kiemelések és Ragyogás */
+strong, .highlight, .glow-text {
     color: var(--primary);
     font-weight: 700;
-    text-shadow: 0 0 8px var(--glow-primary);
+    text-shadow: 0 0 8px var(--glow-primary), 0 0 15px rgba(212, 175, 55, 0.4);
+}
+.glow-text-secondary {
+    color: var(--text-secondary);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
 }
 
-.glow-text {
-    text-shadow: 0 0 8px var(--glow-primary);
-}
 
 /* --- FEJLÉC --- */
 .app-header {
@@ -55,13 +141,18 @@ strong, .highlight {
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 2rem;
+    position: relative;
+    z-index: 10; /* A tartalom felett legyen */
 }
 
 .logo h1 {
-    font-size: 2rem;
-    font-weight: 800;
+    font-size: 3.5rem; /* Nagyobb cím */
+    font-weight: 900;
     color: var(--primary);
-    text-shadow: 0 0 5px var(--glow-primary), 0 0 15px var(--glow-primary);
+    text-shadow: 
+        0 0 10px var(--glow-primary), 
+        0 0 20px var(--glow-primary), 
+        0 0 30px var(--glow-orange); /* Kiterjesztett ragyogás */
 }
 
 /* --- VEZÉRLŐ SÁV --- */
@@ -77,6 +168,8 @@ strong, .highlight {
     border: 1px solid var(--border-color);
     border-radius: 12px;
     backdrop-filter: blur(5px);
+    position: relative;
+    z-index: 10;
 }
 
 .main-actions, .filter-actions {
@@ -84,6 +177,13 @@ strong, .highlight {
     gap: 1rem;
     align-items: center;
 }
+
+/* Label a select boxhoz */
+.controls-bar label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
 
 /* --- GOMBOK ÉS INPUTOK --- */
 .btn, select {
@@ -93,27 +193,32 @@ strong, .highlight {
     background-color: transparent;
     color: var(--text-primary);
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
     font-size: 0.9rem;
+    will-change: background-color, border-color, box-shadow;
 }
 
 .btn:hover:not(:disabled), select:hover {
     background-color: rgba(255, 255, 255, 0.05);
     border-color: var(--primary);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
 }
 
 .btn-primary {
     background-color: var(--primary);
     color: #000;
     font-weight: 600;
+    text-shadow: none; /* A gomb belsejében ne ragyogjon a szöveg */
 }
 .btn-primary:hover:not(:disabled) {
     background-color: #e4c55a;
     border-color: #e4c55a;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
 }
 .btn:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+    box-shadow: none;
 }
 
 /* --- KANBAN TÁBLA --- */
@@ -121,6 +226,8 @@ strong, .highlight {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
+    position: relative;
+    z-index: 10;
 }
 
 .kanban-column {
@@ -136,6 +243,8 @@ strong, .highlight {
     padding-bottom: 0.75rem;
     margin-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
+    color: var(--secondary);
+    text-shadow: 0 0 8px var(--glow-secondary);
 }
 
 .match-card {
@@ -146,7 +255,7 @@ strong, .highlight {
     cursor: pointer;
     border: 1px solid var(--border-color);
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    will-change: transform, box-shadow; /* Teljesítményoptimalizálás */
+    will-change: transform, box-shadow;
 }
 
 .match-card:hover {
@@ -201,14 +310,14 @@ strong, .highlight {
     border: 1px solid var(--border-color);
     border-radius: 16px;
     width: 90%;
-    max-width: 1000px; /* Alapértelmezett méret */
+    max-width: 1000px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     transform: scale(0.95);
     transition: transform 0.3s;
-    will-change: transform; /* Teljesítményoptimalizálás */
+    will-change: transform;
 }
 
 .modal-container.open .modal-content {
@@ -326,7 +435,7 @@ strong, .highlight {
 }
 
 .analysis-text-content p strong {
-    color: var(--primary); /* A strong már alapból ragyog */
+    color: var(--primary);
     font-weight: 700;
 }
 
@@ -343,4 +452,57 @@ strong, .highlight {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Kezdeti üzenet, ha még nincs betöltve semmi */
+.initial-prompt {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: rgba(var(--card-bg-rgb), 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-top: 4rem;
+    position: relative;
+    z-index: 10;
+}
+.initial-prompt-icon {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+.initial-prompt p {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+.initial-prompt .glow-text {
+    text-shadow: 0 0 10px var(--glow-primary);
+}
+.initial-prompt .glow-text-secondary {
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+/* Reszponzivitás */
+@media (max-width: 768px) {
+    .app-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .controls-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .logo h1 {
+        font-size: 2.5rem;
+    }
+    .main-actions, .filter-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.8rem;
+    }
+    .btn, select {
+        width: 100%;
+    }
+    .at-a-glance-grid, .market-card-grid {
+        grid-template-columns: 1fr;
+    }
 }
