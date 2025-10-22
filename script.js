@@ -777,3 +777,33 @@ function updateMultiSelectButton() {
     btn.textContent = `Kiválasztottak Elemzése (${count})`;
     btn.disabled = count === 0 || count > 3;
 }
+// === JELSZAVAS VÉDELEM KEZDETE ===
+(function() {
+    // !!! --- VÁLTOZTASD MEG EZT A JELSZÓT --- !!!
+    const correctPassword = "Realmadrid3"; 
+    // !!! ------------------------------------ !!!
+
+    const storedPassword = sessionStorage.getItem('sitePassword');
+
+    if (storedPassword === correctPassword) {
+        // A jelszó már helyes volt, a szkript mehet tovább.
+        return;
+    }
+
+    const password = prompt("Kérem a belépési jelszót:", "");
+
+    if (password === correctPassword) {
+        // Helyes jelszó, elmentjük a munkamenethez.
+        sessionStorage.setItem('sitePassword', password);
+    } else {
+        // Rossz jelszó esetén elrejtjük a tartalmat és leállítjuk a szkript futását.
+        document.body.innerHTML = '<h1 style="font-family: sans-serif; text-align:center; margin-top: 50px; color: white;">Hibás jelszó. A hozzáférés megtagadva.</h1>';
+        throw new Error("Authentication failed. Stopping script execution.");
+    }
+})();
+// === JELSZAVAS VÉDELEM VÉGE ===
+
+
+// A te meglévő kódod innen folytatódik...
+const API_URL = 'https://king-ai-backend.onrender.com';
+// ...stb.
