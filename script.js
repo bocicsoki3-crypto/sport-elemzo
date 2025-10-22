@@ -64,7 +64,7 @@ async function loadFixtures() {
         // GET hívás az új /getFixtures végpontra
         const response = await fetch(`${appState.gasUrl}/getFixtures?sport=${appState.currentSport}&days=2`);
         if (!response.ok) await handleFetchError(response);
-
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
@@ -72,7 +72,7 @@ async function loadFixtures() {
             ...fx,
             uniqueId: `${appState.currentSport}_${fx.home.toLowerCase().replace(/\s+/g, '')}_${fx.away.toLowerCase().replace(/\s+/g, '')}`
         }));
-
+        
         sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
 
         if (isMobile()) {
@@ -124,9 +124,9 @@ async function runAnalysis(home, away, forceNew = false) {
             },
             body: JSON.stringify({ openingOdds: JSON.parse(openingOdds) }) // JSON-ként küldjük
         });
-
+        
         if (!response.ok) await handleFetchError(response);
-
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
@@ -155,7 +155,7 @@ async function openHistoryModal() {
             showToast('Érvénytelen URL.', 'error');
         }
     }
-
+    
     const modalSize = isMobile() ? 'modal-fullscreen' : 'modal-lg';
     const loadingHTML = document.getElementById('loading-skeleton').outerHTML;
     openModal('Előzmények', loadingHTML, modalSize);
@@ -165,10 +165,10 @@ async function openHistoryModal() {
         // GET hívás az új /getHistory végpontra
         const response = await fetch(`${appState.gasUrl}/getHistory`);
         if (!response.ok) await handleFetchError(response);
-
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-
+        
         document.getElementById('modal-body').innerHTML = renderHistory(data.history);
     } catch (e) {
         document.getElementById('modal-body').innerHTML = `<p class="muted" style="color:var(--danger); text-align:center; padding: 2rem;">Hiba: ${e.message}</p>`;
@@ -189,7 +189,7 @@ async function deleteHistoryItem(id) {
         });
 
         if (!response.ok) await handleFetchError(response);
-
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
@@ -211,7 +211,7 @@ async function runFinalCheck(home, away, sport) {
 
     try {
         const openingOdds = JSON.parse(sessionStorage.getItem('openingOdds') || '{}');
-
+        
         // POST hívás az új /runFinalCheck végpontra, JSON body-val
         const response = await fetch(`${appState.gasUrl}/runFinalCheck`, {
             method: 'POST',
@@ -227,7 +227,7 @@ async function runFinalCheck(home, away, sport) {
         });
 
         if (!response.ok) await handleFetchError(response);
-
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
@@ -268,7 +268,7 @@ async function viewHistoryDetail(id) {
         // GET hívás az új /getAnalysisDetail végpontra
         const response = await fetch(`${appState.gasUrl}/getAnalysisDetail?id=${encodeURIComponent(originalId)}`);
         if (!response.ok) await handleFetchError(response);
-
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
@@ -320,10 +320,10 @@ async function sendChatMessage() {
         });
 
         if (!response.ok) await handleFetchError(response);
-
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-
+        
         addMessageToChat(data.answer, 'ai');
         appState.chatHistory.push({ role: 'user', parts: [{ text: message }] });
         appState.chatHistory.push({ role: 'model', parts: [{ text: data.answer }] });
@@ -350,7 +350,7 @@ async function runMultiAnalysis() {
     openModal(`Többes Elemzés (${matchesToAnalyze.length} meccs)`, '<div id="multi-analysis-results"></div><div id="multi-loading-skeleton"></div>', 'modal-xl');
     const resultsContainer = document.getElementById('multi-analysis-results');
     const loadingContainer = document.getElementById('multi-loading-skeleton');
-
+    
     loadingContainer.innerHTML = document.getElementById('loading-skeleton').outerHTML;
     const modalSkeleton = loadingContainer.querySelector('.loading-skeleton');
     if (modalSkeleton) modalSkeleton.classList.add('active');
@@ -358,7 +358,7 @@ async function runMultiAnalysis() {
     const analysisPromises = matchesToAnalyze.map(match => {
         // Ugyanazt a runAnalysis hívást használjuk, force=true-val
         let analysisUrl = `${appState.gasUrl}/runAnalysis?home=${encodeURIComponent(match.home)}&away=${encodeURIComponent(match.away)}&sport=${appState.currentSport}&force=true&sheetUrl=${encodeURIComponent(appState.sheetUrl)}`;
-
+        
         return fetch(analysisUrl, {
             method: 'POST',
             headers: {
@@ -777,33 +777,3 @@ function updateMultiSelectButton() {
     btn.textContent = `Kiválasztottak Elemzése (${count})`;
     btn.disabled = count === 0 || count > 3;
 }
-// === JELSZAVAS VÉDELEM KEZDETE ===
-(function() {
-    // !!! --- VÁLTOZTASD MEG EZT A JELSZÓT --- !!!
-    const correctPassword = "Realmadrid3"; 
-    // !!! ------------------------------------ !!!
-
-    const storedPassword = sessionStorage.getItem('sitePassword');
-
-    if (storedPassword === correctPassword) {
-        // A jelszó már helyes volt, a szkript mehet tovább.
-        return;
-    }
-
-    const password = prompt("Kérem a belépési jelszót:", "");
-
-    if (password === correctPassword) {
-        // Helyes jelszó, elmentjük a munkamenethez.
-        sessionStorage.setItem('sitePassword', password);
-    } else {
-        // Rossz jelszó esetén elrejtjük a tartalmat és leállítjuk a szkript futását.
-        document.body.innerHTML = '<h1 style="font-family: sans-serif; text-align:center; margin-top: 50px; color: white;">Hibás jelszó. A hozzáférés megtagadva.</h1>';
-        throw new Error("Authentication failed. Stopping script execution.");
-    }
-})();
-// === JELSZAVAS VÉDELEM VÉGE ===
-
-
-// A te meglévő kódod innen folytatódik...
-const API_URL = 'https://king-ai-backend.onrender.com';
-// ...stb.
