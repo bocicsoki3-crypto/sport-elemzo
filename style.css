@@ -805,13 +805,11 @@ border-left: 3px solid var(--primary);
 
 /* === JAVÍTÁS (2025.10.23.): Vizuális finomítások az elemzési panelen === */
 
-/* 1. Várható eredmény (xG) számainak fehérré tétele */
 .xg-value-container .value {
     color: var(--text-primary);
     animation: pulse-glow-white 3s infinite alternate;
 }
 
-/* 2. Fő összesített vonal szövegeinek vastagítása és a százalékok fehérré tétele */
 .total-label {
     font-weight: 600;
 }
@@ -821,19 +819,16 @@ border-left: 3px solid var(--primary);
     text-shadow: 0 0 8px var(--text-primary), 0 0 16px rgba(255, 255, 255, 0.3);
 }
 
-/* 3. Statisztikai és Szakértői mérők ívének fehérré tétele */
 .gauge-value {
     stroke: var(--text-primary);
     filter: drop-shadow(0 0 4px var(--text-primary));
 }
 
-/* 4. Statisztikai és Szakértői mérők számainak lejjebb tolása */
+/* JAVÍTÁS: A számok lejjebb tolása, hogy ne lógjanak a csíkba */
 .gauge-text {
-    margin-top: 25px;
+    margin-top: 30px;
 }
 
-/* 5. A "Szakértői Bizalom" felirat eltávolítása a mérő belsejéből */
-/* Az .at-a-glance-grid 5. elemére céloz, ami a Szakértői Bizalom kártya */
 .at-a-glance-grid .summary-card:nth-of-type(5) .gauge-label {
     display: none;
 }
