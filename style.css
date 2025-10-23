@@ -29,8 +29,7 @@ p{line-height:1.7;color:var(--text-secondary)}
 .app-container { display: flex; flex-direction: column; height: 100vh; }
 
 .app-header{padding:0 2rem;border-bottom:1px solid var(--border-color);display:flex;justify-content:center;align-items:center;flex-shrink: 0; height: 80px; position: relative; overflow: hidden;
-/* Added overflow hidden */}
-/* === MÓDOSÍTVA: z-index === */
+}
 .header-title-container { position: relative; display: flex; align-items: center; justify-content: center;
 z-index: 3; }
 .main-title { font-weight: 700; margin:0; font-size: 2.5rem; color: var(--primary);
@@ -44,13 +43,10 @@ background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 5
 }
 .spotlight.left { left: -100px; }
 .spotlight.right { right: -100px; transform: translateY(-50%) rotate(30deg); }
-/* === MÓDOSÍTVA: z-index === */
 .header-status{font-size:.9rem;opacity:.8;display:flex;align-items:center;gap:1.5rem; position: absolute;
 right: 2rem; z-index: 3;}
 #theme-switcher { cursor: pointer; }
-#userInfo { /* Opcionális */ }
 
-.control-group { /* Vezérlőelem */ }
 .control-group label{display:flex; align-items:center;
 gap: 0.5rem; font-weight:500;margin-bottom:.5rem;font-size:.9rem;color:var(--text-secondary); text-shadow: 0 0 8px rgba(212, 175, 55, 0.4); }
 .control-group label svg { width: 16px; height: 16px;
@@ -89,23 +85,21 @@ flex-shrink: 0; }
 .main-actions { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: center; }
 .main-content { padding: 0; flex-grow: 1;
 overflow: hidden; position: relative; }
-/* === MÓDOSÍTVA: justify-content: center === */
 .kanban-container { height: 100%; overflow-x: auto; padding: 2rem; display: flex;
 justify-content: center; align-items: flex-start; }
 .kanban-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(320px, 360px); gap: 1.5rem; min-height: calc(100% - 4rem);
 padding-bottom: 2rem; }
 .mobile-list-container { display: none; height: 100%; overflow-y: auto; padding: 1rem;
 }
-/* === MÓDOSÍTVA: Cím stílus === */
 .league-header-mobile {
     font-size: 1.4rem;
     font-family: var(--font-family-header);
     padding: 1rem;
-border-bottom: 2px solid var(--primary);
+    border-bottom: 2px solid var(--primary);
     margin-top: 1.5rem;
     margin-bottom: 1rem;
     color: var(--primary);
-text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
+    text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
     animation: pulse-glow-orange 3s infinite alternate;
 }
 .league-header-mobile:first-child { margin-top: 0; }
@@ -113,21 +107,19 @@ text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
 .kanban-column { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column;
 gap: 1rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 30px var(--shadow-color); backdrop-filter: blur(5px); height: max-content;
 }
-/* === MÓDOSÍTVA: Cím stílus === */
 .kanban-column-header {
     font-family: var(--font-family-header);
     font-size: 1.5rem;
-/* Megnövelve */
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-gap: 0; /* Ikon eltávolítva */
-    color: var(--primary); /* Szín megváltoztatva */
+    gap: 0;
+    color: var(--primary);
     text-align: center;
-text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
+    text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
     animation: pulse-glow-orange 3s infinite alternate;
 }
 .column-content { overflow-y: auto; max-height: calc(100vh - 200px); padding-right: 5px;
@@ -136,35 +128,31 @@ text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
     border-radius: 12px;
     padding: 0;
-/* Checkbox miatt a belső padding a contentre megy */
     cursor: default;
-/* Alap cursor, a belső div lesz kattintható */
     transition: all .2s ease;
     border: 1px solid var(--border-color);
-position: relative;
+    position: relative;
     overflow: hidden;
     text-align: center;
-    display: flex; /* Flexbox a checkboxhoz */
+    display: flex;
     align-items: stretch;
-/* Checkbox nyúljon végig */
 }
 .match-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
 background: linear-gradient(90deg, transparent, rgba(212,175,55,0.1), transparent); transition: left 0.4s ease; z-index: 1; pointer-events: none;}
 .match-card:hover {
     transform: translateY(-6px);
-border-color: var(--primary);
+    border-color: var(--primary);
     box-shadow: 0 12px 30px rgba(212, 175, 55, 0.25);
     background: linear-gradient(145deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
 }
 .match-card:hover::before { left: 100%; }
-/* === MÓDOSÍTVA: Világító fehér szöveg === */
 .match-card-teams {
     font-weight: 600;
     font-size: 1.15rem;
-margin-bottom: 0.75rem;
-    color: #FFFFFF !important; /* Világító fehér */
+    margin-bottom: 0.75rem;
+    color: #FFFFFF !important;
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.7), 0 0 16px rgba(255, 255, 255, 0.5);
-animation: pulse-glow-white 3s infinite alternate;
+    animation: pulse-glow-white 3s infinite alternate;
 }
 .match-card-meta {
     font-size: 0.8rem;
@@ -172,7 +160,7 @@ animation: pulse-glow-white 3s infinite alternate;
     display: flex;
     justify-content: center;
     align-items: center;
-gap: 0.75rem;
+    gap: 0.75rem;
     flex-wrap: wrap;
 }
 .date-section { border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
@@ -188,10 +176,9 @@ font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; lett
 }
 .date-section .match-card { margin-top: 1rem; }
 
-/* --- MODÁLIS ABLAK JAVÍTÁSA --- */
 .modal-container {
     display: none; position: fixed;
-inset: 0; background: rgba(0,0,0,0.7);
+    inset: 0; background: rgba(0,0,0,0.7);
     backdrop-filter: blur(10px); z-index: 2000; justify-content: center;
     align-items: center; animation: fadeIn .3s; padding: 1rem;
 }
@@ -202,7 +189,7 @@ inset: 0; background: rgba(0,0,0,0.7);
 .modal-content {
     background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color);
     display: flex; flex-direction: column;
-box-shadow: 0 10px 50px var(--shadow-color);
+    box-shadow: 0 10px 50px var(--shadow-color);
     overflow: hidden; width: 100%; height: 100%;
     max-width: 1600px; max-height: 95vh; animation: slideUp 0.4s ease-out;
 }
@@ -221,7 +208,6 @@ background: rgba(var(--card-bg-rgb), 0.7); }
 .modal-body { padding: 1.5rem; overflow-y: auto; flex-grow: 1;
 }
 
-/* Méretosztályok */
 .modal-content.modal-sm { max-width: 500px; max-height: 90vh; width: 95%; }
 .modal-content.modal-lg { max-width: 1100px; max-height: 95vh; width: 95%;
 }
@@ -229,19 +215,14 @@ background: rgba(var(--card-bg-rgb), 0.7); }
 .modal-content.modal-fullscreen { width: 100%; height: 100%; max-height: 100vh; max-width: 100vw; border-radius: 0;
 }
 
-/* --- MODÁLIS ABLAK JAVÍTÁS VÉGE --- */
-
 .list-item{
     display:flex;
     justify-content:space-between;
     align-items:stretch;
-/* Nyúljon a checkbox */
     border-bottom:1px solid var(--border-color);
     cursor:default;
-/* Alap cursor */
     transition: background-color 0.2s ease;
     padding: 0;
-/* Padding a belső elemekre */
 }
 .list-item:hover { background-color: rgba(212, 175, 55, 0.05); }
 .list-item-title{font-weight:600}.list-item-meta{font-size:.8rem;color:var(--text-secondary)}
@@ -254,11 +235,9 @@ background: rgba(var(--card-bg-rgb), 0.7); }
 } }
 .loading-skeleton .skeleton-line{background:rgba(255,255,255,0.1);height: 1em; border-radius:4px;margin-bottom:10px;animation:pulse-bg 1.5s infinite}
 
-/* --- Elemzés Specifikus Stílusok --- */
-
 .at-a-glance-grid {
     display: grid;
-grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem; margin-bottom: 2rem;
 }
 @media (min-width: 1200px) { .at-a-glance-grid { grid-template-columns: repeat(5, 1fr);
@@ -267,7 +246,7 @@ grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 .summary-card {
     background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;
     padding: 1.5rem; text-align: center; display: flex;
-flex-direction: column;
+    flex-direction: column;
     justify-content: space-between; min-height: 200px; transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .summary-card:hover { transform: translateY(-3px);
@@ -284,7 +263,7 @@ font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
 max-width: 130px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; flex-grow: 1; }
 .radial-chart { width: 100%; height: 100%;
 transform: rotate(-90deg); }
-.radial-chart circle { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease-out; }
+.radial-chart circle { fill: none; stroke-width: 10; stroke-linecap: round; transition: all 0.8s ease-out; }
 .radial-chart .track { stroke: rgba(255,255,255,0.05);
 }
 .radial-chart .progress { filter: drop-shadow(0 0 3px currentColor);
@@ -301,7 +280,7 @@ gap: 0.5rem; }
 
 .expert-confidence-card {
     grid-column: 1 / -1; margin-bottom: 1rem; border: 1px solid var(--primary);
-background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15));
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15));
     min-height: auto; padding: 1.5rem; display: flex; flex-direction: column;
 }
 .expert-confidence-card .value { display: none; }
@@ -324,17 +303,21 @@ text-align: center; }
 }
 .market-card-value { font-size: 1.2rem; }
 
-.micromodel-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;
+/* === JAVÍTÁS (3. KÉP): Új stílusok a mikromodell kártyákhoz === */
+.micromodel-section { margin-top: 2rem; }
+.micromodel-section h4 { font-size: 1.1rem; color: var(--secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+.micromodel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+.micromodel-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;
 }
 .micromodel-card h5 { color: var(--primary); margin-bottom: 0.8rem; font-size: 1rem; }
 .micromodel-card p { margin: 0; color: var(--text-secondary); line-height: 1.6;
 }
-.micromodel-card p strong {
-    color: var(--primary) !important;
-text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
-    animation: pulse-glow-orange 3s infinite alternate;
-    font-weight: 600;
-}
+.micromodel-card p.confidence { margin-top: 0.75rem; font-size: 0.9rem; opacity: 0.8; font-style: italic;}
+/* ============================================================= */
 
 .totals-breakdown { display: flex; flex-direction: column; justify-content: center; align-items: stretch; height: 100%; gap: 0.75rem; font-size: 1.2rem; flex-grow: 1;
 padding: 1rem 0; }
@@ -342,7 +325,6 @@ padding: 1rem 0; }
 }
 .total-label { color: var(--text-secondary); margin-right: 10px; }
 
-/* Harmonika (Accordion) */
 .analysis-accordion { margin-top: 2rem; }
 .analysis-accordion details { background: transparent; border: none;
 border-bottom: 1px solid var(--border-color); border-radius: 0; margin-bottom: 0; overflow: visible; }
@@ -362,15 +344,12 @@ top: 50%; transform: translateY(-50%); }
 }
 .analysis-accordion .accordion-content { padding: 0 0 1.5rem 0; animation: fadeIn .5s; line-height: 1.7;
 }
-/* === MÓDOSÍTVA: Nagyobb felső margó a szövegnek az idővonal miatt === */
 .analysis-accordion .accordion-content p { color: var(--text-secondary); margin-bottom: 1rem;
-margin-top: 1.5rem; }
-.analysis-accordion .accordion-content p:first-child { margin-top: 0; } /* Az első bekezdésnek ne legyen felső margója */
+margin-top: 0; }
 .analysis-accordion .accordion-content p:last-child { margin-bottom: 0;
 }
 .analysis-accordion .accordion-content h4 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--secondary); font-size: 1rem; }
-/* === JAVÍTÁS (2. KÉP): Biztosítjuk, hogy az elemzésen belüli strong tag is megkapja a narancs ragyogást === */
-.analysis-accordion .accordion-content strong { color: var(--primary) !important;
+.analysis-body strong, .analysis-accordion .accordion-content strong { color: var(--primary) !important;
 text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; font-weight: 600;
 }
 
@@ -385,10 +364,6 @@ margin-bottom: 10px; max-width: 80%; line-height: 1.5; word-wrap: break-word; }
 }
 .chat-bubble.ai { background-color: rgba(255,255,255,0.1); border: 1px solid var(--border-color); border-bottom-left-radius: 3px; }
 
-.portfolio-report { white-space: pre-wrap; line-height: 1.8;
-}
-
-/* Toast értesítések */
 .toast-notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;
 }
 .toast-notification { padding: 15px 20px; border-radius: 10px; color: #fff; font-weight: 500; font-size: 0.9rem; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
@@ -402,13 +377,6 @@ opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes fadeOut { to { opacity: 0; transform: translateX(100%);
 } }
 
-/* === JAVÍTÁS (1. KÉP): .glowing-text átnevezve .glowing-text-orange-re a félreértések elkerülése érdekében === */
-.glowing-text-orange {
-  color: var(--primary) !important;
-  text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
-  animation: pulse-glow-orange 3s infinite alternate;
-}
-/* === ÚJ (1. KÉP): Fehér ragyogás osztály === */
 .glowing-text-white {
     color: var(--text-primary) !important;
     text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5);
@@ -418,7 +386,6 @@ opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes pulse-glow-white { from { text-shadow: 0 0 6px var(--text-primary), 0 0 12px rgba(255, 255, 255, 0.3);
 } to { text-shadow: 0 0 10px var(--text-primary), 0 0 20px rgba(255, 255, 255, 0.6);
 } }
-.glowing-text-white strong { color: inherit !important; text-shadow: inherit !important; animation: inherit !important; }
 
 strong { color: var(--primary) !important;
 text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; font-weight: 600;
@@ -427,7 +394,6 @@ text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6); animation
 } to { text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6);
 } }
 
-/* Mester Ajánlás Kártya Stílus */
 .master-recommendation-card { margin-top: 2rem; padding: 2rem; border-radius: 16px; text-align: center;
 background: linear-gradient(145deg, rgba(30, 30, 30, 0.8), rgba(10, 10, 10, 0.9)), radial-gradient(circle at top left, rgba(212, 175, 55, 0.15), transparent 50%), radial-gradient(circle at bottom right, rgba(0, 191, 255, 0.1), transparent 50%);
 background-blend-mode: normal; border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
@@ -442,7 +408,6 @@ box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255
 text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate;
 }
 .master-confidence { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
-/* === JAVÍTÁS (1. KÉP): Az új fehér ragyogás osztály használata === */
 .master-confidence strong.glowing-text-white {
     color: var(--text-primary) !important;
     text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5);
@@ -451,20 +416,15 @@ text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); animatio
 .master-reasoning { font-size: 0.95rem; color: var(--text-secondary); font-style: italic; max-width: 600px; margin: 0 auto; line-height: 1.6;
 }
 
-/* Elemzés Törzs Stílus */
 .analysis-body { line-height: 1.7; color: var(--text-secondary); }
 .analysis-body h4 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--secondary);
 font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
-.analysis-body strong { color: var(--primary) !important;
-text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; font-weight: 600;
-}
 .analysis-section { margin-bottom: 1.5rem; padding: 1.5rem; background: rgba(var(--card-bg-rgb), 0.5); border: 1px solid var(--border-color); border-radius: 12px; }
 .analysis-section h4 { margin-top: 0;
 border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem; color: var(--primary); }
 .analysis-section p { margin-bottom: 0;
 }
 
-/* Reszponzivitás finomítása */
 @media (max-width: 768px) {
   body { overflow-y: auto; } .kanban-container { display: none !important;
 } .mobile-list-container { display: block !important; }
@@ -479,15 +439,13 @@ border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bo
   .modal-body { padding: 1rem; } .modal-header h3 { font-size: 1rem; }
   .at-a-glance-grid { grid-template-columns: 1fr 1fr;
 } .expert-confidence-card { grid-column: span 2; }
-  .market-card-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); } .summary-card { min-height: 180px;
+  .market-card-grid, .micromodel-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); } .summary-card { min-height: 180px;
 padding: 1rem; }
   .radial-chart-container { max-width: 110px; } .master-recommendation-card { padding: 1.5rem; } .master-bet { font-size: 1.6rem;
 }
   .analysis-accordion summary { font-size: 1.1rem; padding: 1.2rem 0; } .analysis-accordion .accordion-content { padding: 0 0 1.2rem 0;
 }
 }
-
-/* === ÚJ MÓDOSÍTÁSOK KEZDETE (Javítások + Bizalmi Szint Értelmező + Idővonal Konténer) === */
 
 @keyframes cardFadeIn { from { opacity: 0;
 transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -501,7 +459,6 @@ justify-content: center; }
 .gauge-track { fill: none; stroke: rgba(255, 255, 255, 0.05); stroke-width: 12; }
 .gauge-value { fill: none; stroke: var(--primary); stroke-width: 12;
 stroke-linecap: round; stroke-dasharray: 235.6; stroke-dashoffset: 235.6; transition: stroke-dashoffset 1s ease-out; filter: drop-shadow(0 0 4px var(--primary)); }
-/* === JAVÍTÁS (1. KÉP): A mérőműszer szövegeinek fehér ragyogást adunk === */
 .gauge-text {
     position: relative;
     font-size: 1.6rem;
@@ -523,39 +480,29 @@ stroke-linecap: round; stroke-dasharray: 235.6; stroke-dashoffset: 235.6; transi
 .expert-confidence-card .gauge-container { margin-bottom: 0.5rem; height: 120px;
 }
 
-/* ÚJ SZABÁLY: Modell Magabiztosság /10 kijelzéséhez */
 .gauge-text .gauge-label-inline {
     font-size: 0.6em;
     font-weight: 700;
     color: inherit;
-text-shadow: inherit;
+    text-shadow: inherit;
     margin-left: 1px;
     opacity: 0.9;
     vertical-align: middle;
 }
 
-
-/* === ÚJ: Idővonal Konténer Stílusa === */
 .timeline-visualization-container {
     padding: 1rem 0;
-/* Térköz a konténeren belül */
     margin-bottom: 1rem;
-/* Térköz a szöveg előtt */
-    /* Opcionális: háttér vagy keret a jobb elkülönítéshez */
-    /* background: rgba(var(--card-bg-rgb), 0.5);
-*/
-    /* border-radius: 8px; */
-    /* border: 1px solid var(--border-color); */
 }
 
 .prophetic-timeline-bar { width: 100%;
 height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; position: relative; border: 1px solid var(--border-color); margin: 0;
-/* Margót a konténer kezeli */ }
+}
 .timeline-event { position: absolute; top: 50%; transform: translateX(-50%) translateY(-50%); width: 20px; height: 20px;
 border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1; cursor: help; border: 2px solid var(--card-bg); z-index: 2;
 transition: transform 0.2s ease; }
 .timeline-event:hover { transform: translateX(-50%) translateY(-50%) scale(1.15); z-index: 3;
-/* Hoverelt elem legyen legfelül */ }
+}
 .timeline-event.home { background-color: var(--primary); color: #000; }
 .timeline-event.away { background-color: var(--accent); color: #000;
 }
@@ -585,12 +532,9 @@ text-shadow: 0 0 8px var(--primary); animation: none; }
 .confidence-interpretation strong { font-weight: 700;
 }
 
-/* === ÚJ MÓDOSÍTÁSOK VÉGE === */
-
-/* === Fénygömb Animáció Kezdete === */
 .orb-container {
     position: fixed;
-top: 0;
+    top: 0;
     left: 0;
     width: 100%;
     height: 100%;
@@ -603,84 +547,70 @@ top: 0;
     position: absolute;
     border-radius: 50%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 70%);
-box-shadow: 0 0 15px rgba(255, 255, 255, 0.3), 0 0 30px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3), 0 0 30px rgba(255, 255, 255, 0.2);
     animation: moveOrb 20s infinite linear;
-opacity: 0;
+    opacity: 0;
 }
 
 @keyframes moveOrb {
     0% {
         transform: translate(var(--start-x), var(--start-y)) scale(var(--scale));
-opacity: 0;
+        opacity: 0;
     }
-    25% {
-        opacity: var(--opacity);
-}
-    75% {
-        opacity: var(--opacity);
-}
+    25% { opacity: var(--opacity); }
+    75% { opacity: var(--opacity); }
     100% {
         transform: translate(var(--end-x), var(--end-y)) scale(var(--scale));
         opacity: 0;
+    }
 }
-}
-/* === Fénygömb Animáció Vége === */
-
-/* === Fénygömb Animáció (Fejléc) === */
 .orb-container-header {
     position: absolute;
-top: 0;
+    top: 0;
     left: 0;
     width: 100%;
-    height: 100%; /* Only 80px height of header */
+    height: 100%;
     pointer-events: none;
-overflow: hidden;
-    z-index: 1; /* Behind the title */
+    overflow: hidden;
+    z-index: 1;
 }
 
 .glowing-orb-orange {
     position: absolute;
     border-radius: 50%;
-background: radial-gradient(circle, rgba(212, 175, 55, 0.6) 0%, rgba(212, 175, 55, 0) 70%);
-box-shadow: 0 0 15px rgba(212, 175, 55, 0.3), 0 0 30px rgba(212, 175, 55, 0.2);
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.6) 0%, rgba(212, 175, 55, 0) 70%);
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.3), 0 0 30px rgba(212, 175, 55, 0.2);
     animation: moveOrbHeader 10s infinite linear;
-opacity: 0;
+    opacity: 0;
 }
 
 @keyframes moveOrbHeader {
     0% {
         transform: translate(var(--start-x), var(--start-y)) scale(var(--scale));
-opacity: 0;
+        opacity: 0;
     }
-    25% {
-        opacity: var(--opacity);
-}
-    75% {
-        opacity: var(--opacity);
-}
+    25% { opacity: var(--opacity); }
+    75% { opacity: var(--opacity); }
     100% {
         transform: translate(var(--end-x), var(--end-y)) scale(var(--scale));
         opacity: 0;
+    }
 }
-}
-/* === Fénygömb Animáció (Fejléc) Vége === */
 
-/* === ÚJ: Többes kijelölés stílusok === */
 .match-checkbox {
     appearance: none;
--webkit-appearance: none;
+    -webkit-appearance: none;
     background-color: rgba(255,255,255,0.1);
     margin: 0;
     font: inherit;
     color: currentColor;
     width: 30px;
-/* Fix szélesség */
-    height: 100%; /* Teljes magasság */
+    height: 100%;
     border-right: 1px solid var(--border-color);
-display: grid;
+    display: grid;
     place-content: center;
     cursor: pointer;
-    flex-shrink: 0; /* Ne zsugorodjon */
+    flex-shrink: 0;
     transition: background-color 0.2s ease;
 }
 .match-checkbox::before {
@@ -689,10 +619,9 @@ display: grid;
     height: 0.8em;
     transform: scale(0);
     transition: 120ms transform ease-in-out;
-box-shadow: inset 1em 1em var(--primary);
+    box-shadow: inset 1em 1em var(--primary);
     transform-origin: center center;
     clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-/* pipa forma */
 }
 .match-checkbox:checked::before {
     transform: scale(1);
@@ -705,13 +634,9 @@ box-shadow: inset 1em 1em var(--primary);
 }
 .match-card .match-card-content {
     padding: 1.25rem;
-/* Eredeti padding ide került */
     flex-grow: 1;
-/* Töltse ki a maradék helyet */
     cursor: pointer;
-/* Ez legyen kattintható */
     z-index: 2;
-/* Checkbox fölött */
 }
 .list-item .list-item-content {
      padding: 12px;
@@ -726,29 +651,25 @@ box-shadow: inset 1em 1em var(--primary);
      color: var(--text-secondary);
 }
 .list-item .match-checkbox {
-    width: 40px; /* Mobil listánál kicsit szélesebb */
+    width: 40px;
     height: auto;
-/* Magasság automatikus */
 }
 
-/* Kiemelés kiválasztáskor */
 .selectable-card.selected, .selectable-item.selected {
     border-color: var(--accent) !important;
-background: linear-gradient(145deg, rgba(0, 191, 255, 0.1), rgba(0, 191, 255, 0.05)) !important;
+    background: linear-gradient(145deg, rgba(0, 191, 255, 0.1), rgba(0, 191, 255, 0.05)) !important;
     box-shadow: 0 8px 25px rgba(0, 191, 255, 0.3) !important;
 }
 
-/* Többes elemzés eredmény elrendezése */
 #multi-analysis-results {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-/* Reszponzív rács */
     gap: 1.5rem;
 }
 .multi-analysis-item {
     border: 1px solid var(--border-color);
     border-radius: 12px;
-padding: 1rem;
+    padding: 1rem;
     background: rgba(var(--card-bg-rgb), 0.5);
 }
 .multi-analysis-item h4 {
@@ -756,19 +677,16 @@ padding: 1rem;
     color: var(--secondary);
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
-border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 .multi-analysis-item .master-recommendation-card {
     margin-top: 0;
-/* Ne legyen extra margó a kártyán belül */
     padding: 1rem;
     border: none;
     box-shadow: none;
     animation: none;
-background: transparent;
+    background: transparent;
 }
-/* === Többes kijelölés stílusok vége === */
-/* === JAVÍTÁS (5. KÉP): Stratégiai kulcskérdések szebb elrendezése === */
 .analysis-body ul.key-questions {
     list-style-type: none;
     padding-left: 0;
