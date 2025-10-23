@@ -98,7 +98,7 @@ padding-bottom: 2rem;
 }
 .mobile-list-container { display: none; height: 100%; overflow-y: auto; padding: 1rem;
 }
-.league-header-mobile {
+.league-header-mobile, .date-header-mobile {
     font-size: 1.4rem;
     font-family: var(--font-family-header);
 padding: 1rem;
@@ -108,6 +108,15 @@ padding: 1rem;
     color: var(--primary);
 text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6);
     animation: pulse-glow-orange 3s infinite alternate;
+}
+.date-header-mobile {
+    font-size: 0.9rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    margin-top: 1rem;
+    padding-bottom: 0.5rem;
+    animation: none;
+    text-shadow: none;
 }
 .league-header-mobile:first-child { margin-top: 0; }
 
@@ -158,9 +167,9 @@ box-shadow: 0 12px 30px rgba(212, 175, 55, 0.25);
     font-weight: 600;
     font-size: 1.15rem;
     margin-bottom: 0.75rem;
-    color: #FFFFFF !important;
-text-shadow: 0 0 8px rgba(255, 255, 255, 0.7), 0 0 16px rgba(255, 255, 255, 0.5);
-    animation: pulse-glow-white 3s infinite alternate;
+    color: var(--text-primary);
+text-shadow: none;
+    animation: none;
 }
 .match-card-meta {
     font-size: 0.8rem;
@@ -792,4 +801,39 @@ border-left: 3px solid var(--primary);
 
 #login-button {
     width: 100%;
+}
+
+/* === JAVÍTÁS (2025.10.23.): Vizuális finomítások az elemzési panelen === */
+
+/* 1. Várható eredmény (xG) számainak fehérré tétele */
+.xg-value-container .value {
+    color: var(--text-primary);
+    animation: pulse-glow-white 3s infinite alternate;
+}
+
+/* 2. Fő összesített vonal szövegeinek vastagítása és a százalékok fehérré tétele */
+.total-label {
+    font-weight: 600;
+}
+.totals-breakdown strong {
+    color: var(--text-primary) !important;
+    animation: pulse-glow-white 3s infinite alternate;
+    text-shadow: 0 0 8px var(--text-primary), 0 0 16px rgba(255, 255, 255, 0.3);
+}
+
+/* 3. Statisztikai és Szakértői mérők ívének fehérré tétele */
+.gauge-value {
+    stroke: var(--text-primary);
+    filter: drop-shadow(0 0 4px var(--text-primary));
+}
+
+/* 4. Statisztikai és Szakértői mérők számainak lejjebb tolása */
+.gauge-text {
+    margin-top: 25px;
+}
+
+/* 5. A "Szakértői Bizalom" felirat eltávolítása a mérő belsejéből */
+/* Az .at-a-glance-grid 5. elemére céloz, ami a Szakértői Bizalom kártya */
+.at-a-glance-grid .summary-card:nth-of-type(5) .gauge-label {
+    display: none;
 }
