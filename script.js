@@ -27,7 +27,7 @@ const LEAGUE_CATEGORIES = {
 
 // --- INICIALIZÁLÁS (JELSZÓVÉDELEMMEL KIEGÉSZÍTVE) ---
 document.addEventListener('DOMContentLoaded', () => {
-    setupLoginProtection(); // <<< --- ÚJ FUNKCIÓ HÍVÁSA
+    setupLoginProtection();
     
     setupThemeSwitcher();
     document.getElementById('loadFixturesBtn').addEventListener('click', loadFixtures);
@@ -44,12 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(toastContainer);
 });
 
-// === ÚJ FUNKCIÓ: JELSZÓVÉDELEM LOGIKÁJA ===
+// === JELSZÓVÉDELEM LOGIKÁJA ===
 function setupLoginProtection() {
     const loginOverlay = document.getElementById('login-overlay');
     const appContainer = document.querySelector('.app-container');
     
-    // Ellenőrizzük, hogy a felhasználó be van-e már jelentkezve ebben a munkamenetben
     if (sessionStorage.getItem('isLoggedIn') === 'true') {
         loginOverlay.style.display = 'none';
         appContainer.style.display = 'flex';
@@ -88,7 +87,7 @@ async function handleFetchError(response) {
     }
 }
 
-// --- FŐ FUNKCIÓK (NODE.JS SZERVERHEZ IGAZÍTVA) ---
+// --- FŐ FUNKCIÓK ---
 
 async function loadFixtures() {
     const loadBtn = document.getElementById('loadFixturesBtn');
@@ -508,13 +507,25 @@ function renderFixturesForDesktop(fixtures) {
     board.innerHTML = '';
     const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
     const groupedByCategory = groupBy(fixtures, fx => getLeagueGroup(fx.league));
+
+    // JAVÍTÁS: A csoportosítás kulcsa egyértelmű YYYY-MM-DD formátumú string lesz.
+    const getUTCDateKey = (dateStr) => {
+        const d = new Date(dateStr);
+        return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()).toISOString().split('T')[0];
+    };
+    
     groupOrder.forEach(group => {
         let columnContent = '';
         let cardIndex = 0;
         if (groupedByCategory[group]) {
-            const groupedByDate = groupBy(groupedByCategory[group], fx => new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
-            Object.keys(groupedByDate).sort((a, b) => new Date(a.split('. ').join('.').split('.').reverse().join('-')) - new Date(b.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
-                columnContent += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
+            const groupedByDate = groupBy(groupedByCategory[group], fx => getUTCDateKey(fx.utcKickoff));
+            
+            // JAVÍTÁS: A kulcsok (YYYY-MM-DD) most már helyesen rendezhetők stringként.
+            Object.keys(groupedByDate).sort((a, b) => a.localeCompare(b)).forEach(dateKey => {
+                // JAVÍTÁS: A megjelenítéshez visszaalakítjuk a dátumot a helyi formátumra.
+                const displayDate = new Date(dateKey).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
+                columnContent += `<details class="date-section" open><summary>${formatDateLabel(displayDate)}</summary>`;
+                
                 groupedByDate[dateKey].forEach(fx => {
                     const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                     columnContent += `
@@ -551,20 +562,34 @@ function renderFixturesForMobileList(fixtures) {
     const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
     const groupedByCategory = groupBy(fixtures, fx => getLeagueGroup(fx.league));
     let html = '';
+
+    // JAVÍTÁS: Itt is ugyanazt a rendezési logikát használjuk, mint a desktop verzióban.
+    const getUTCDateKey = (dateStr) => {
+        const d = new Date(dateStr);
+        return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()).toISOString().split('T')[0];
+    };
+
     groupOrder.forEach(group => {
         if (groupedByCategory[group]) {
             html += `<h4 class="league-header-mobile">${group}</h4>`;
-            groupedByCategory[group].forEach(fx => {
-                const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
-                html += `
-                    <div class="list-item selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
-                        <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
-                        <div class="list-item-content" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}', true)">
-                            <div class="list-item-title">${fx.home} – ${fx.away}</div>
-                            <div class="list-item-meta">${fx.league || 'Ismeretlen Liga'} - ${time}</div>
-                        </div>
-                         <svg class="list-item-arrow" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </div>`;
+            const groupedByDate = groupBy(groupedByCategory[group], fx => getUTCDateKey(fx.utcKickoff));
+            
+            Object.keys(groupedByDate).sort((a, b) => a.localeCompare(b)).forEach(dateKey => {
+                const displayDate = new Date(dateKey).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
+                html += `<div class="date-header-mobile">${formatDateLabel(displayDate)}</div>`;
+
+                groupedByDate[dateKey].forEach(fx => {
+                    const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
+                    html += `
+                        <div class="list-item selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
+                            <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
+                            <div class="list-item-content" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}', true)">
+                                <div class="list-item-title">${fx.home} – ${fx.away}</div>
+                                <div class="list-item-meta">${fx.league || 'Ismeretlen Liga'} - ${time}</div>
+                            </div>
+                             <svg class="list-item-arrow" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>`;
+                });
             });
         }
     });
@@ -576,10 +601,26 @@ function renderHistory(historyData) {
         return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek mentett előzmények.</p>';
     }
     const history = historyData.filter(item => item && item.id && item.home && item.away && item.date);
-    const groupedByDate = groupBy(history, item => new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }));
+    
+    // JAVÍTÁS: Itt is YYYY-MM-DD alapú csoportosítást használunk a megbízható rendezéshez.
+    const getLocalDateKey = (dateStr) => {
+        const d = new Date(dateStr);
+        // Itt a helyi dátum számít, nem az UTC
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    
+    const groupedByDate = groupBy(history, item => getLocalDateKey(item.date));
     let html = '';
-    Object.keys(groupedByDate).sort((a, b) => new Date(b.split('. ').join('.').split('.').reverse().join('-')) - new Date(a.split('. ').join('.').split('.').reverse().join('-'))).forEach(dateKey => {
-        html += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
+
+    // JAVÍTÁS: A kulcsokat (YYYY-MM-DD) most már helyesen rendezzük csökkenő sorrendbe.
+    Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a)).forEach(dateKey => {
+        // JAVÍTÁS: A megjelenítéshez visszaalakítjuk a dátumot a helyi formátumra.
+        const displayDate = new Date(dateKey).toLocaleDateString('hu-HU', { timeZone: 'UTC' }); // UTC, mert a dateKey már helyi idő szerint van
+        html += `<details class="date-section" open><summary>${formatDateLabel(displayDate)}</summary>`;
+        
         const sortedItems = groupedByDate[dateKey].sort((a, b) => new Date(b.date) - new Date(a.date));
         sortedItems.forEach(item => {
             const analysisTime = new Date(item.date);
