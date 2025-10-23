@@ -11,7 +11,7 @@ const appState = {
 };
 
 // === JELSZÓVÉDELEM: Itt add meg a saját jelszavad! ===
-const CORRECT_PASSWORD = 'TheKingAI-2025'; // <<< --- CSERÉLD LE EGY SAJÁT, BIZTONSÁGOS JELSZÓRA!
+const CORRECT_PASSWORD = 'Rmadrid1987!'; // <<< --- CSERÉLD LE EGY SAJÁT, BIZTONSÁGOS JELSZÓRA!
 
 // --- LIGA KATEGÓRIÁK (VÁLTOZATLAN) ---
 const LEAGUE_CATEGORIES = {
