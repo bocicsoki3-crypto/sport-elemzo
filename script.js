@@ -578,8 +578,7 @@ if (!isNaN(date.getTime())) {
     // Ha nem sikerült, próbáljuk a pontokkal tagolt formátumot
     const parts = huDate.split('.').map(p => p.trim()).filter(p => p);
 if (parts.length >= 3) {
-        // Formátum feltételezése: YYYY. MM. DD.
-(vagy YYYY. M. D.)
+        // Formátum feltételezése: YYYY. MM. DD. (vagy YYYY. M. D.)
         const year = parseInt(parts[0]);
 const month = parseInt(parts[1]) - 1; // Hónap 0-indexelt
         const day = parseInt(parts[2]);
