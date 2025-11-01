@@ -664,7 +664,7 @@ return;
 
     try {
         // A 'datetime-local' input a böngésző helyi idejét adja.
-Ezt kell UTC ISO stringgé alakítani.
+// Ezt kell UTC ISO stringgé alakítani.
         const kickoffDate = new Date(kickoffLocal);
 if (isNaN(kickoffDate.getTime())) {
              throw new Error('Érvénytelen dátum formátum.');
