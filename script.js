@@ -13,20 +13,20 @@ fixtures: [],
 const CORRECT_PASSWORD = 'Rmadrid1987!';
 // <<< --- CSERÉLD LE EGY SAJÁT, BIZTONSÁGOS JELSZÓRA!
 
-// --- LIGA KATEGÓRIÁK (VÁLTOZATLAN) ---
+// --- LIGA KATEGÓRIÁK (JAVÍTVA) ---
 const LEAGUE_CATEGORIES = {
     soccer: {
         'Top Ligák': [ 'Champions League', 'Premier League', 'Bundesliga', 'LaLiga', 'Serie A' ],
         'Kiemelt Bajnokságok': [ 'Europa League', 'Ligue 1', 'Eredivisie', 'Liga Portugal' ],
-        'Figyelmet Érdemlő': [ 'Championship', '2.
-Bundesliga', 'Serie B', 'LaLiga2', 'Super Lig', 'Premiership', 'MLS' ],
+        // JAVÍTÁS: A '2.Bundesliga' string egybeírva, a sortörés megszüntetve.
+        'Figyelmet Érdemlő': [ 'Championship', '2.Bundesliga', 'Serie B', 'LaLiga2', 'Super Lig', 'Premiership', 'MLS' ],
         'Egyéb Meccsek': [ 'FIFA World Cup', 'UEFA European Championship', 'Conference League', 'Brazil Serie A', 'Argentinian Liga Profesional', 'Greek Super League', 'Nemzetek Ligája', 'Kupa', 'Copa', 'Cup' ] // Hozzáadva általánosabb kupamegnevezések
     },
     hockey: {
         'Top Ligák': [ 'NHL' ],
         'Kiemelt Bajnokságok': [ 'KHL', 'SHL', 'Liiga', 'DEL', 'AHL', 'ICEHL', 'Champions Hockey League' ],
-        'Egyéb Meccsek': [ 'IIHF World Championship', 
-'Olimpiai Játékok', 'Spengler Cup', 'Extraliga' ]
+        // JAVÍTÁS: A sortörés megszüntetve az array-en belül.
+        'Egyéb Meccsek': [ 'IIHF World Championship', 'Olimpiai Játékok', 'Spengler Cup', 'Extraliga' ]
     },
     basketball: {
         'Top Ligák': [ 'NBA', 'Euroleague' ],
