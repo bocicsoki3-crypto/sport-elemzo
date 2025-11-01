@@ -715,80 +715,57 @@ function getLeagueGroup(leagueName) {
 function renderFixturesForDesktop(fixtures) {
     const board = document.getElementById('kanban-board');
     if (!board) return;
-// Ha nincs meg a tábla elem, kilépünk
     document.getElementById('placeholder').style.display = 'none';
-// Placeholder elrejtése
-    board.innerHTML = ''; // Korábbi tartalom törlése
+    board.innerHTML = '';
     const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
-// Oszlopok sorrendje
     const groupedByCategory = groupBy(fixtures, fx => getLeagueGroup(fx.league));
-// Csoportosítás kategória szerint
 
-    groupOrder.forEach(group => { // Végigmegyünk a kategóriákon a kívánt sorrendben
-        let columnContent = ''; // Az oszlop HTML tartalma
-        let cardIndex = 0; // Animációhoz index
+    groupOrder.forEach(group => {
+        let columnContent = '';
+        let cardIndex = 0;
 
-        if (groupedByCategory[group]) { // Ha van meccs ebben a kategóriában
-            // Dátum szerint csoportosítjuk az adott kategória meccseit
+        if (groupedByCategory[group]) {
             const groupedByDate = groupBy(groupedByCategory[group], fx => 
-{
+            {
                 try {
-                    // Megbízható dátum formázás, időzónával
                     return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
-                } catch (e) { return 'Ismeretlen dátum'; } // Hibakezelés
-        
-    });
+                } catch (e) { return 'Ismeretlen dátum'; }
+            });
 
-            // Dátumok szerinti rendezés (legkorábbi elöl)
             Object.keys(groupedByDate)
-                .sort((a, b) => parseHungarianDate(a) - parseHungarianDate(b)) // Megbízható dátum összehasonlítás
+                .sort((a, b) => parseHungarianDate(a) - parseHungarianDate(b))
                 .forEach(dateKey => {
-                    // Dátum szekció hozzáadása 
-(összecsukható)
+                    // JAVÍTÁS: A '(összecsukható)' szöveg a komment végére került, egy sorba.
                     columnContent += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
-// Az adott dátum meccseinek rendezése kezdési idő szerint
                     groupedByDate[dateKey]
                         .sort((a, b) => new Date(a.utcKickoff) - new Date(b.utcKickoff))
-                        .forEach(fx => { // Végigmegyünk a meccseken
-           
-                 const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
-                            // Meccs kártya HTML összeállítása
-                            // --- MÓDOSÍTÁS KEZDETE: utcKickoff átadása az onclick-nek ---
-   
-                         columnContent += `
+                        .forEach(fx => {
+                            const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
+                            columnContent += `
                                 <div class="match-card selectable-card ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}" style="animation-delay: ${cardIndex * 0.05}s">
-                             
-        <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ?
-'checked' : ''}>
+                                    <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
                                      <div class="match-card-content" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', true)">
                                          <div class="match-card-teams">${fx.home} – ${fx.away}</div>
-            
-                             <div class="match-card-meta">
-                                             <span>${fx.league ||
-'Ismeretlen Liga'}</span>
+                                         <div class="match-card-meta">
+                                             <span>${fx.league || 'Ismeretlen Liga'}</span>
                                              <span>${time}</span>
                                          </div>
-             
-                        </div>
+                                     </div>
                                 </div>`;
-// --- MÓDOSÍTÁS VÉGE ---
                             cardIndex++;
-// Animáció index növelése
                         });
-columnContent += `</details>`; // Dátum szekció lezárása
+                    columnContent += `</details>`;
                 });
-}
+        }
 
-        // Teljes oszlop HTML hozzáadása a táblához
         board.innerHTML += `
             <div class="kanban-column">
                 <h4 class="kanban-column-header">${group}</h4>
                 <div class="column-content">
-                    ${columnContent ||
-'<p class="muted" style="text-align: center; padding-top: 2rem;">Nincs meccs ebben a kategóriában.</p>'}
+                    ${columnContent || '<p class="muted" style="text-align: center; padding-top: 2rem;">Nincs meccs ebben a kategóriában.</p>'}
                 </div>
             </div>`;
-});
+    });
 }
 
 function renderFixturesForMobileList(fixtures) {
