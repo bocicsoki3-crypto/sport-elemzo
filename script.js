@@ -904,8 +904,7 @@ function renderHistory(historyData) {
             sortedItems.forEach(item => {
                 const analysisTime = new Date(item.date); // Elemzés ideje
                 // Ellenőrzés, hogy a "Végső Ellenőrzés" gomb aktív legyen-e
-                // (Ez a logika feltételezi, hogy a backend implementálja 
-a /runFinalCheck végpontot)
+                // (Ez a logika feltételezi, hogy a backend implementálja a /runFinalCheck végpontot)
                 // const now = new Date();
                 // const startTimeDiffMinutes = (now - analysisTime) / (1000 * 60) - 60; // kb. 1 órával a meccs előtt
                 // const endTimeDiffMinutes = (now - analysisTime) / (1000 * 60) - 180;
