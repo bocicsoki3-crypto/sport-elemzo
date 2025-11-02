@@ -61,7 +61,7 @@ p{line-height:1.7;color:var(--text-secondary)}
 .header-status{font-size:.9rem;opacity:.8;display:flex;align-items:center;gap:1.5rem; position: absolute; right: 2rem; z-index: 3;}
 #theme-switcher { cursor: pointer; }
 
-.control-group label{display:flex; align-items:center; gap: 0.5rem; font-weight:500;margin-bottom:.5rem;font-size:.9rem;color:var(--text-secondary); /* text-shadow: 0 0 8px rgba(212, 175, 55, 0.4); */ /* Eltávolítva a narancs árnyék */}
+.control-group label{display:flex; align-items:center; gap: 0.5rem; font-weight:500;margin-bottom:.5rem;font-size:.9rem;color:var(--text-secondary); /* text-shadow: 0 0 8px rgba(212, 175, 55, 0.4); */}
 .control-group label svg { width: 16px; height: 16px; stroke: var(--primary); opacity: 0.7; }
 input, .select-wrapper select {width:100%;padding:10px 14px;border:1px solid var(--border-color);border-radius:10px;background:var(--card-bg);color:var(--text-primary);font-size:.9rem;font-family:inherit;transition:all .2s ease}
 input:focus, .select-wrapper select:focus {outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(212,175,55,.3)}
@@ -155,13 +155,13 @@ details > summary::-webkit-details-marker { display: none; }
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 1rem; /* Kisebb padding */
+    padding: 1rem;
     text-align: center;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Vertikális középre igazítás */
+    justify-content: center; 
     align-items: center; /* Horizontális középre igazítás */
-    min-height: 190px; /* Kicsit csökkentett magasság */
+    min-height: 190px; 
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .summary-card:hover {
@@ -172,11 +172,11 @@ details > summary::-webkit-details-marker { display: none; }
 .summary-card h5 {
     margin: 0 0 1rem 0;
     color: var(--text-secondary);
-    font-size: 0.8rem; /* Kisebb cím */
+    font-size: 0.8rem; 
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    width: 100%; /* Teljes szélesség */
+    width: 100%; 
 }
 .summary-card .value {
     font-size: 1.5rem; /* Kisebb érték */
@@ -185,55 +185,66 @@ details > summary::-webkit-details-marker { display: none; }
     line-height: 1.2; /* Szorosabb sor */
 }
 .summary-card .details {
-    font-size: 0.75rem; /* Kisebb részletek */
+    font-size: 0.75rem; 
     margin-top: 0.5rem; /* Kisebb térköz */
     color: var(--text-secondary);
 }
 .summary-card .details strong { font-weight: 600; }
 
-/* Radiális diagram specifikus */
+/* === JAVÍTÁS: Radiális diagram specifikus === */
 .radial-chart-container {
     position: relative;
     width: 100%;
     max-width: 100px; /* Kisebb diagram */
-    margin: 0 auto 0.5rem; /* Kevesebb alsó margó */
+    margin: 0 auto 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-grow: 0; /* Ne nyúljon */
+    flex-grow: 0;
     min-height: 100px; /* Fix magasság a körnek */
 }
 .radial-chart { width: 100%; height: 100%; transform: rotate(-90deg); }
 .radial-chart circle { fill: none; stroke-width: 8; /* Vékonyabb vonal */ stroke-linecap: round; transition: all 0.8s ease-out; }
 .radial-chart .track { stroke: rgba(255,255,255,0.05); }
-.radial-chart .progress { filter: none; /* Nincs árnyék */ } /* Eltávolítjuk a színeket, minden fehér lesz */
-.radial-chart .home,
-.radial-chart .draw,
-.radial-chart .away { stroke: var(--white-glow-color); /* Fehér fénylés */ }
+.radial-chart .progress { filter: none; } 
+/* === JAVÍTÁS: Színek visszaállítása === */
+.radial-chart .home { stroke: var(--success); filter: drop-shadow(0 0 3px var(--success)); }
+.radial-chart .draw { stroke: var(--text-secondary); }
+.radial-chart .away { stroke: var(--danger); filter: drop-shadow(0 0 3px var(--danger)); }
 
 .diagram-legend {
     display: flex;
     flex-direction: column;
-    align-items: center; /* Középre igazítás */
-    margin: 0.5rem auto 0; /* Kisebb margó */
-    font-size: 0.75rem; /* Kisebb betűméret */
-    gap: 0.3rem; /* Kisebb térköz */
-    padding-left: 0; /* Nincs bal padding */
+    align-items: center;
+    margin: 0.5rem auto 0; 
+    font-size: 0.75rem; 
+    gap: 0.3rem; 
+    padding-left: 0;
     width: 100%;
 }
 .legend-item { display: flex; align-items: center; gap: 0.4rem; }
-.legend-color-box { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; background-color: var(--white-glow-color) !important; /* Minden box fehér */ }
+.legend-color-box { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+/* === JAVÍTÁS: Színek hozzárendelése a jelmagyarázathoz === */
+.legend-color-box.home { background-color: var(--success); }
+.legend-color-box.draw { background-color: var(--text-secondary); }
+.legend-color-box.away { background-color: var(--danger); }
+
 .legend-item span { color: var(--text-secondary); }
-.legend-item span strong { color: var(--text-primary) !important; /* A százalék legyen sima fehér */ animation: none !important; text-shadow: none !important; }
+.legend-item span strong { 
+    color: var(--text-primary) !important; 
+    /* A százalék legyen sima fehér */
+    animation: none !important; 
+    text-shadow: none !important;
+}
 
 /* xG értékek specifikus */
 .xg-value-container {
     display: flex;
     align-items: center;
-    justify-content: center; /* Középre igazítás */
+    justify-content: center; 
     width: 100%;
     flex-grow: 1;
-    gap: 0.5rem; /* Kisebb rés */
+    gap: 0.5rem; 
     padding: 0.5rem 0; /* Kevesebb padding */
 }
 .xg-team { display: flex; flex-direction: column; align-items: center; }
@@ -245,10 +256,10 @@ details > summary::-webkit-details-marker { display: none; }
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center; /* Középre igazítás */
+    align-items: center; 
     height: 100%;
     gap: 0.5rem; /* Kisebb térköz */
-    font-size: 1rem; /* Kisebb betű */
+    font-size: 1rem; 
     flex-grow: 1;
     padding: 0.5rem 0;
     width: 100%;
@@ -257,44 +268,63 @@ details > summary::-webkit-details-marker { display: none; }
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 85%; /* Kicsit szűkebb */
+    width: 85%; 
     font-size: 1rem; /* Összhangban a containerrel */
 }
 .total-label { color: var(--text-secondary); margin-right: 8px; }
 .totals-breakdown strong { color: var(--text-primary) !important; animation: none !important; text-shadow: none !important; } /* Sima fehér */
 
-/* Gauge specifikus */
+/* === JAVÍTÁS: Gauge specifikus (Átfedés javítása) === */
 .gauge-container {
     width: 100%;
-    max-width: 100px; /* Kisebb gauge */
+    max-width: 110px; /* Kicsit nagyobb konténer */
     margin: 0 auto;
     position: relative;
-    height: 90px; /* Kisebb magasság */
+    height: 100px; /* Megnövelt magasság */
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end; /* Alulra igazítjuk a szöveget */
+    padding-bottom: 5px; /* Kis padding alul */
 }
-.gauge-svg { width: 100%; height: auto; transform: rotate(-90deg); overflow: visible; position: absolute; top: 0; left: 0; }
+.gauge-svg { 
+    width: 100%;
+    height: auto; 
+    transform: rotate(-90deg); 
+    overflow: visible; 
+    position: absolute; 
+    top: -15px; /* Feljebb toljuk az SVG-t, hogy a szöveg elférjen */
+    left: 0; 
+}
 .gauge-track { fill: none; stroke: rgba(255, 255, 255, 0.05); stroke-width: 8; /* Vékonyabb vonal */ }
-.gauge-value { fill: none; stroke: var(--white-glow-color); /* Fehér fénylés */ stroke-width: 8; /* Vékonyabb vonal */ stroke-linecap: round; stroke-dasharray: 235.6; stroke-dashoffset: 235.6; transition: stroke-dashoffset 1s ease-out; filter: drop-shadow(0 0 3px var(--white-glow-color)); }
+.gauge-value { 
+    fill: none; 
+    stroke: var(--white-glow-color); 
+    stroke-width: 8; 
+    stroke-linecap: round; 
+    stroke-dasharray: 235.6; 
+    stroke-dashoffset: 235.6; 
+    transition: stroke-dashoffset 1s ease-out;
+    filter: drop-shadow(0 0 3px var(--white-glow-color)); 
+}
 .gauge-text {
-    position: relative;
-    font-size: 1.5rem; /* Kisebb szám */
+    position: relative; /* Pozíció relatív marad */
+    font-size: 1.5rem; 
     font-weight: 700;
     z-index: 1;
-    margin-top: 0; /* Nincs extra margó, középen legyen */
     line-height: 1;
     color: var(--text-primary) !important;
     text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5);
     animation: pulse-glow-white 3s infinite alternate;
+    margin-top: auto; /* Automatikus margó felül (lejjebb tolja) */
+    padding-top: 25px; /* Helyet hagyunk a felül lévő SVG-nek */
 }
 .gauge-label {
     position: relative;
-    font-size: 0.7rem; /* Kisebb label */
+    font-size: 0.7rem; 
     color: var(--text-secondary);
     z-index: 1;
-    margin-top: 2px; /* Közelebb a számhoz */
+    margin-top: 2px; 
     width: 100%;
     text-align: center;
 }
@@ -302,59 +332,88 @@ details > summary::-webkit-details-marker { display: none; }
 /* === FEJLÉC BOXOK VÁLTOZTATÁSOK VÉGE === */
 
 .expert-confidence-card {
-    grid-column: 1 / -1; margin-bottom: 1rem; border: 1px solid var(--primary); background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15)); min-height: auto; padding: 1.5rem; display: flex; flex-direction: column;
+    grid-column: 1 / -1; margin-bottom: 1rem;
+    border: 1px solid var(--primary); background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15)); min-height: auto; padding: 1.5rem; display: flex;
+    flex-direction: column;
 }
 .expert-confidence-card .value { display: none; }
-.expert-confidence-card .details { font-size: 0.9rem; max-width: 800px; margin: 1rem auto 0; flex-grow: 1; text-align: center; }
+.expert-confidence-card .details { font-size: 0.9rem; max-width: 800px; margin: 1rem auto 0; flex-grow: 1;
+    text-align: center; }
 
 
 .market-data-section { margin-bottom: 2rem; }
-.market-data-section h4 { font-size: 1.1rem; color: var(--secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+.market-data-section h4 { font-size: 1.1rem; color: var(--secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;
+    margin-bottom: 1rem; }
 .market-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; }
-.market-card { background: rgba(var(--card-bg-rgb), 0.7); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 0.5rem; text-align: center; }
-.market-card-title { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem; min-height: 30px; display: flex; align-items: center; justify-content: center; }
+.market-card { background: rgba(var(--card-bg-rgb), 0.7);
+    border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 0.5rem; text-align: center; }
+.market-card-title { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;
+    margin-bottom: 0.5rem; min-height: 30px; display: flex; align-items: center; justify-content: center; }
 .market-card-value { font-size: 1.2rem; }
 
-.micromodel-section { margin-top: 2rem; }
+.micromodel-section { margin-top: 2rem;
+}
 .micromodel-section h4 { font-size: 1.1rem; color: var(--secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
-.micromodel-grid { display: flex; flex-direction: column; gap: 1rem; }
-.micromodel-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; }
+.micromodel-grid { display: flex;
+    flex-direction: column; gap: 1rem; }
+.micromodel-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;
+}
 .micromodel-card h5 { color: var(--primary); margin-bottom: 0.8rem; font-size: 1rem; }
-.micromodel-card p { margin: 0; color: var(--text-secondary); line-height: 1.6; }
+.micromodel-card p { margin: 0; color: var(--text-secondary); line-height: 1.6;
+}
 .micromodel-card p.confidence { margin-top: 0.75rem; font-size: 0.9rem; opacity: 0.8; font-style: italic;}
 
 
 .analysis-accordion { margin-top: 2rem; }
-.analysis-accordion details { background: transparent; border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; margin-bottom: 0; overflow: visible; }
-.analysis-accordion details:last-of-type { border-bottom: none; }
-.analysis-accordion summary { font-size: 1.2rem; font-weight: 600; padding: 1.5rem 0; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; transition: color 0.2s ease; position: relative; color: var(--text-secondary); }
-.analysis-accordion summary:hover, .analysis-accordion details[open] summary { color: var(--text-primary); }
+.analysis-accordion details { background: transparent;
+    border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; margin-bottom: 0; overflow: visible; }
+.analysis-accordion details:last-of-type { border-bottom: none;
+}
+.analysis-accordion summary { font-size: 1.2rem; font-weight: 600; padding: 1.5rem 0; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between;
+    transition: color 0.2s ease; position: relative; color: var(--text-secondary); }
+.analysis-accordion summary:hover, .analysis-accordion details[open] summary { color: var(--text-primary);
+}
 .analysis-accordion summary::-webkit-details-marker { display: none; }
-.analysis-accordion summary .section-title { display: flex; align-items: center; gap: 0.75rem; }
+.analysis-accordion summary .section-title { display: flex; align-items: center; gap: 0.75rem;
+}
 .analysis-accordion summary .section-icon { stroke: currentColor; flex-shrink: 0; }
-.analysis-accordion summary::after { content: '+'; font-size: 1.5rem; color: var(--text-secondary); transition: transform 0.3s ease, color 0.2s ease; position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+.analysis-accordion summary::after { content: '+'; font-size: 1.5rem; color: var(--text-secondary);
+    transition: transform 0.3s ease, color 0.2s ease; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+}
 .analysis-accordion details[open] summary::after { transform: translateY(-50%) rotate(45deg); color: var(--primary); }
-.analysis-accordion .accordion-content { padding: 0 0 1.5rem 0; animation: fadeIn .5s; line-height: 1.7; }
+.analysis-accordion .accordion-content { padding: 0 0 1.5rem 0; animation: fadeIn .5s;
+    line-height: 1.7; }
 .analysis-accordion .accordion-content p { color: var(--text-secondary); margin-bottom: 1rem; margin-top: 0; }
-.analysis-accordion .accordion-content p:last-child { margin-bottom: 0; }
-.analysis-accordion .accordion-content h4 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--secondary); font-size: 1rem; }
+.analysis-accordion .accordion-content p:last-child { margin-bottom: 0;
+}
+.analysis-accordion .accordion-content h4 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--secondary); font-size: 1rem;
+}
 /* Az analysis-body strong már kezeli a narancs kiemelést */
 
-.chat-container { border-radius: 12px; margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); }
+.chat-container { border-radius: 12px; margin-top: 2rem; padding: 1.5rem; background: var(--card-bg);
+}
 .chat-messages { max-height: 300px; overflow-y: auto; margin-bottom: 1rem; padding-right: 1rem; }
-.chat-input-container { display: flex; gap: 1rem; }
+.chat-input-container { display: flex; gap: 1rem;
+}
 .chat-input-container input { flex-grow: 1; margin-top: 0; }
-.chat-bubble { padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; max-width: 80%; line-height: 1.5; word-wrap: break-word; }
+.chat-bubble { padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; max-width: 80%; line-height: 1.5;
+    word-wrap: break-word; }
 .chat-bubble.user { background-color: var(--primary); color: #000; margin-left: auto; border-bottom-right-radius: 3px; }
-.chat-bubble.ai { background-color: rgba(255,255,255,0.1); border: 1px solid var(--border-color); border-bottom-left-radius: 3px; }
+.chat-bubble.ai { background-color: rgba(255,255,255,0.1); border: 1px solid var(--border-color);
+    border-bottom-left-radius: 3px; }
 
-.toast-notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-.toast-notification { padding: 15px 20px; border-radius: 10px; color: #fff; font-weight: 500; font-size: 0.9rem; box-shadow: 0 5px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); animation: slideIn 0.3s ease forwards; }
-.toast-notification.info { background: linear-gradient(135deg, #00BFFF, #0077B6); }
+.toast-notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;
+}
+.toast-notification { padding: 15px 20px; border-radius: 10px; color: #fff; font-weight: 500; font-size: 0.9rem; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.2); animation: slideIn 0.3s ease forwards; }
+.toast-notification.info { background: linear-gradient(135deg, #00BFFF, #0077B6);
+}
 .toast-notification.success { background: linear-gradient(135deg, #39FF14, #28a745); }
 .toast-notification.error { background: linear-gradient(135deg, #FF4747, #dc3545); }
-@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-@keyframes fadeOut { to { opacity: 0; transform: translateX(100%); } }
+@keyframes slideIn { from { transform: translateX(100%);
+    opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { to { opacity: 0; transform: translateX(100%);
+} }
 
 /* Fénylő fehér szöveg */
 .glowing-text-white {
@@ -362,26 +421,47 @@ details > summary::-webkit-details-marker { display: none; }
     text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5);
     animation: pulse-glow-white 3s infinite alternate;
 }
-@keyframes pulse-glow-white { from { text-shadow: 0 0 6px var(--text-primary), 0 0 12px rgba(255, 255, 255, 0.3); } to { text-shadow: 0 0 10px var(--text-primary), 0 0 20px rgba(255, 255, 255, 0.6); } }
+@keyframes pulse-glow-white { from { text-shadow: 0 0 6px var(--text-primary), 0 0 12px rgba(255, 255, 255, 0.3);
+} to { text-shadow: 0 0 10px var(--text-primary), 0 0 20px rgba(255, 255, 255, 0.6);
+} }
 
 /* Fénylő narancs szöveg (strong tag) */
-strong { color: var(--primary) !important; text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; font-weight: 600; }
-@keyframes pulse-glow-orange { from { text-shadow: 0 0 6px var(--primary), 0 0 12px rgba(212, 175, 55, 0.3); } to { text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); } }
+strong { color: var(--primary) !important;
+    text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; font-weight: 600;
+}
+@keyframes pulse-glow-orange { from { text-shadow: 0 0 6px var(--primary), 0 0 12px rgba(212, 175, 55, 0.3);
+} to { text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6);
+} }
 
 /* Master Recommendation Card */
-.master-recommendation-card { margin-top: 2rem; padding: 2rem; border-radius: 16px; text-align: center; background: linear-gradient(145deg, rgba(30, 30, 30, 0.8), rgba(10, 10, 10, 0.9)), radial-gradient(circle at top left, rgba(212, 175, 55, 0.15), transparent 50%), radial-gradient(circle at bottom right, rgba(0, 191, 255, 0.1), transparent 50%); background-blend-mode: normal; border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1); animation: pulse-border-white 4s infinite alternate; position: relative; overflow: hidden; }
-@keyframes pulse-border-white { from { border-color: rgba(255, 255, 255, 0.3); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1); } to { border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.3); } }
-.master-recommendation-card h5 { font-size: 1.3rem; color: var(--text-primary); margin-bottom: 1.5rem; text-shadow: 0 0 10px rgba(255, 255, 255, 0.7); }
-.master-bet { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--primary); text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; }
+.master-recommendation-card { margin-top: 2rem; padding: 2rem; border-radius: 16px; text-align: center;
+    background: linear-gradient(145deg, rgba(30, 30, 30, 0.8), rgba(10, 10, 10, 0.9)), radial-gradient(circle at top left, rgba(212, 175, 55, 0.15), transparent 50%), radial-gradient(circle at bottom right, rgba(0, 191, 255, 0.1), transparent 50%);
+    background-blend-mode: normal; border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
+    animation: pulse-border-white 4s infinite alternate; position: relative; overflow: hidden; }
+@keyframes pulse-border-white { from { border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
+} to { border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.3);
+} }
+.master-recommendation-card h5 { font-size: 1.3rem; color: var(--text-primary); margin-bottom: 1.5rem; text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+}
+.master-bet { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--primary);
+    text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate;
+}
 .master-confidence { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
-.master-confidence strong.glowing-text-white { color: var(--text-primary) !important; text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5); animation: pulse-glow-white 3s infinite alternate; }
+.master-confidence strong.glowing-text-white { color: var(--text-primary) !important;
+    text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5); animation: pulse-glow-white 3s infinite alternate;
+}
 .master-reasoning { font-size: 0.95rem; color: var(--text-secondary); font-style: italic; max-width: 600px; margin: 0 auto; line-height: 1.6; }
 
-.analysis-body { line-height: 1.7; color: var(--text-secondary); }
-.analysis-body h4 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+.analysis-body { line-height: 1.7;
+    color: var(--text-secondary); }
+.analysis-body h4 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;
+}
 .analysis-section { margin-bottom: 1.5rem; padding: 1.5rem; background: rgba(var(--card-bg-rgb), 0.5); border: 1px solid var(--border-color); border-radius: 12px; }
-.analysis-section h4 { margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem; color: var(--primary); }
-.analysis-section p { margin-bottom: 0; }
+.analysis-section h4 { margin-top: 0;
+    border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem; color: var(--primary); }
+.analysis-section p { margin-bottom: 0;
+}
 
 @media (max-width: 768px) {
   body { overflow-y: auto; } .kanban-container { display: none !important; } .mobile-list-container { display: block !important; }
