@@ -25,8 +25,7 @@ const LEAGUE_CATEGORIES = {
     hockey: {
         'Top Ligák': [ 'NHL' ],
         'Kiemelt Bajnokságok': [ 'KHL', 'SHL', 'Liiga', 'DEL', 'AHL', 'ICEHL', 'Champions Hockey League' ],
-        // JAVÍTÁS: 
-        A sortörés megszüntetve az array-en belül.
+        // JAVÍTÁS: A sortörés megszüntetve az array-en belül.
         'Egyéb Meccsek': [ 'IIHF World Championship', 'Olimpiai Játékok', 'Spengler Cup', 'Extraliga' ]
     },
     basketball: {
