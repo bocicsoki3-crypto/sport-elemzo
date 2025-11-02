@@ -1,25 +1,26 @@
-// --- ALKALMAZÁS ÁLLAPOT (VÉGLEGES) ---
+// --- ALKALMAZÁS ÁLLAPOT (VÉGLEGES - v52 TS/JWT) ---
 const appState = {
     // A VÉGLEGES RENDER.COM SZERVER CÍME
-    gasUrl: 'https://king-ai-backend.onrender.com', // Ellenőrizd, hogy ez a helyes URL!
-    fixtures: [],
+    gasUrl: 'https://king-ai-backend.onrender.com', // Ellenőrizze, hogy ez a helyes URL!
+    fixtures: [] as any[], // Ideális esetben egy IFixture interfész kellene
     currentSport: 'soccer',
     sheetUrl: '', // Ezt a backend most már a .env-ből olvassa
     currentAnalysisContext: '',
-    chatHistory: [],
-    selectedMatches: new Set()
+    chatHistory: [] as any[], // Ideális esetben IChatMessage interfész
+    selectedMatches: new Set<string>(),
+    authToken: null as string | null // ÚJ: A JWT tárolására
 };
-// === JELSZÓVÉDELEM: Itt add meg a saját jelszavad! ===
-const CORRECT_PASSWORD = 'Rmadrid1987!';
-// <<< --- CSERÉLD LE EGY SAJÁT, BIZTONSÁGOS JELSZÓRA!
 
-// --- LIGA KATEGÓRIÁK (JAVÍTVA) ---
-const LEAGUE_CATEGORIES = {
+// === JELSZÓVÉDELEM: A keménykódolt jelszó TÖRÖLVE ===
+// const CORRECT_PASSWORD = '...'; // TÖRÖLVE
+
+// --- LIGA KATEGÓRIÁK (Változatlan) ---
+const LEAGUE_CATEGORIES: { [key: string]: { [key: string]: string[] } } = {
     soccer: {
         'Top Ligák': [ 'Champions League', 'Premier League', 'Bundesliga', 'LaLiga', 'Serie A' ],
         'Kiemelt Bajnokságok': [ 'Europa League', 'Ligue 1', 'Eredivisie', 'Liga Portugal' ],
-        'Figyelmet Érdemlő': [ 'Championship', '2.Bundesliga', 'Serie B', 'LaLiga2', 'Super Lig', 'Premiership', 'MLS' ],
-        'Egyéb Meccsek': [ 'FIFA World Cup', 'UEFA European Championship', 'Conference League', 'Brazil Serie A', 'Argentinian Liga Profesional', 'Greek Super League', 'Nemzetek Ligája', 'Kupa', 'Copa', 'Cup' ] // Hozzáadva általánosabb kupamegnevezések
+        'Figyelmet Érdemlő': [ 'Championship', '2. Bundesliga', 'Serie B', 'LaLiga2', 'Super Lig', 'Premiership', 'MLS' ],
+        'Egyéb Meccsek': [ 'FIFA World Cup', 'UEFA European Championship', 'Conference League', 'Brazil Serie A', 'Argentinian Liga Profesional', 'Greek Super League', 'Nemzetek Ligája', 'Kupa', 'Copa', 'Cup' ]
     },
     hockey: {
         'Top Ligák': [ 'NHL' ],
@@ -32,17 +33,23 @@ const LEAGUE_CATEGORIES = {
         'Egyéb Meccsek': [ 'FIBA World Cup', 'Olimpiai Játékok', 'EuroBasket', 'FIBA Champions League', 'EuroCup', 'LNB Pro A' ]
     }
 };
+
 // --- INICIALIZÁLÁS (JELSZÓVÉDELEMMEL KIEGÉSZÍTVE) ---
 document.addEventListener('DOMContentLoaded', () => {
     setupLoginProtection(); // Jelszó ellenőrzés indítása
 });
-// === JELSZÓVÉDELEM LOGIKÁJA ===
+
+// === JAVÍTOTT JELSZÓVÉDELEM LOGIKÁJA (JWT) ===
 function setupLoginProtection() {
-    const loginOverlay = document.getElementById('login-overlay');
-    const appContainer = document.querySelector('.app-container');
-    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+    const loginOverlay = document.getElementById('login-overlay') as HTMLElement;
+    const appContainer = document.querySelector('.app-container') as HTMLElement;
+
+    // Token ellenőrzése a sessionStorage-ből
+    const storedToken = sessionStorage.getItem('authToken');
+    if (storedToken) {
+        appState.authToken = storedToken;
         loginOverlay.style.display = 'none';
-        appContainer.style.display = 'flex'; // Konténer megjelenítése
+        appContainer.style.display = 'flex';
         initializeApp();
         return;
     } else {
@@ -50,37 +57,68 @@ function setupLoginProtection() {
         appContainer.style.display = 'none';
     }
 
-    const loginButton = document.getElementById('login-button');
-    const passwordInput = document.getElementById('password-input');
-    const handleLogin = () => {
-        if (passwordInput.value === CORRECT_PASSWORD) {
-            sessionStorage.setItem('isLoggedIn', 'true');
+    const loginButton = document.getElementById('login-button') as HTMLButtonElement;
+    const passwordInput = document.getElementById('password-input') as HTMLInputElement;
+
+    const handleLogin = async () => {
+        if (!passwordInput.value) {
+            showToast('Kérlek, add meg a jelszót.', 'error');
+            return;
+        }
+        
+        loginButton.disabled = true;
+        loginButton.textContent = 'Hitelesítés...';
+        
+        try {
+            const response = await fetch(`${appState.gasUrl}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: passwordInput.value })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Hiba (${response.status})`);
+            }
+
+            const data = await response.json();
+            if (!data.token) {
+                throw new Error("A szerver nem küldött tokent.");
+            }
+            
+            appState.authToken = data.token;
+            sessionStorage.setItem('authToken', data.token); // Token mentése
+
             loginOverlay.style.display = 'none';
             appContainer.style.display = 'flex';
             initializeApp();
-        } else {
-            showToast('Hibás jelszó!', 'error');
+
+        } catch (e: any) {
+            showToast(`Sikertelen belépés: ${e.message}`, 'error');
             passwordInput.value = '';
             passwordInput.focus();
+            loginButton.disabled = false;
+            loginButton.textContent = 'Belépés';
         }
     };
     loginButton.addEventListener('click', handleLogin);
     passwordInput.addEventListener('keyup', (event) => {
-        if (event.key === 'Enter') { // Enter lennyomására is működjön
-            handleLogin();
-        }
+        if (event.key === 'Enter') handleLogin();
     });
 }
 
 // === ALKALMAZÁS INICIALIZÁLÁSA (Sikeres login után hívódik) ===
 function initializeApp() {
     setupThemeSwitcher();
-    document.getElementById('loadFixturesBtn').addEventListener('click', loadFixtures);
+    document.getElementById('loadFixturesBtn')?.addEventListener('click', loadFixtures);
+    document.getElementById('historyBtn')?.addEventListener('click', openHistoryModal);
+    document.getElementById('manualBtn')?.addEventListener('click', openManualAnalysisModal);
+    
     createGlowingOrbs();
-    createHeaderOrbs(); // Fejléc animációk
+    createHeaderOrbs();
     initMultiSelect();
 
-    document.getElementById('userInfo').textContent = `Csatlakozva...`;
+    (document.getElementById('userInfo') as HTMLElement).textContent = `Csatlakozva...`;
     appState.sheetUrl = localStorage.getItem('sheetUrl') || ''; 
 
     const toastContainer = document.createElement('div');
@@ -90,8 +128,49 @@ function initializeApp() {
 }
 
 
+// --- ÚJ: BIZTONSÁGOS FETCH SEGÉDFÜGGVÉNY ---
+/**
+ * Wrapper a 'fetch' köré, amely automatikusan hozzáadja a JWT tokent.
+ * Kezeli a 401-es (lejárt token) hibát.
+ */
+async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+    if (!appState.authToken) {
+        showToast("Hitelesítés lejárt. Kérlek, lépj be újra.", "error");
+        sessionStorage.removeItem('authToken');
+        location.reload();
+        throw new Error("Nincs hitelesítési token.");
+    }
+
+    const defaultHeaders: HeadersInit = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${appState.authToken}` // Token hozzáadása
+    };
+
+    const config: RequestInit = {
+        ...options,
+        headers: {
+            ...defaultHeaders,
+            ...options.headers,
+        }
+    };
+
+    const response = await fetch(url, config);
+
+    if (response.status === 401) { // Lejárt vagy érvénytelen token
+        showToast("Hitelesítés lejárt vagy érvénytelen. Kérlek, lépj be újra.", "error");
+        sessionStorage.removeItem('authToken');
+        appState.authToken = null;
+        // Visszairányítás a login képernyőre
+        (document.getElementById('login-overlay') as HTMLElement).style.display = 'flex';
+        (document.querySelector('.app-container') as HTMLElement).style.display = 'none';
+        throw new Error("Hitelesítés sikertelen (401).");
+    }
+
+    return response;
+}
+
 // --- HIBAKEZELŐ SEGÉDFÜGGVÉNY ---
-async function handleFetchError(response) {
+async function handleFetchError(response: Response) {
     try {
         const errorData = await response.json();
         throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
@@ -100,41 +179,43 @@ async function handleFetchError(response) {
     }
 }
 
-// --- FŐ FUNKCIÓK ---
+// --- FŐ FUNKCIÓK (MÓDOSÍTVA 'fetchWithAuth'-ra) ---
 
 async function loadFixtures() {
-    const loadBtn = document.getElementById('loadFixturesBtn');
+    const loadBtn = document.getElementById('loadFixturesBtn') as HTMLButtonElement;
     loadBtn.disabled = true;
     loadBtn.textContent = 'Betöltés...';
     appState.selectedMatches.clear(); 
     updateMultiSelectButton();
 
     try {
-        const response = await fetch(`${appState.gasUrl}/getFixtures?sport=${appState.currentSport}&days=2`);
+        // MÓDOSÍTÁS: fetch -> fetchWithAuth
+        const response = await fetchWithAuth(`${appState.gasUrl}/getFixtures?sport=${appState.currentSport}&days=2`);
         if (!response.ok) await handleFetchError(response); 
 
         const data = await response.json();
-        if (data.error) throw new Error(data.error); 
-
-        appState.fixtures = (data.fixtures || []).map((fx) => ({
+        if (data.error) throw new Error(data.error);
+        
+        appState.fixtures = (data.fixtures || []).map((fx: any) => ({
             ...fx,
             uniqueId: `${appState.currentSport}_${fx.home.toLowerCase().replace(/\s+/g, '')}_${fx.away.toLowerCase().replace(/\s+/g, '')}`
         }));
         sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
+        
         if (isMobile()) {
             renderFixturesForMobileList(appState.fixtures);
         } else {
             renderFixturesForDesktop(appState.fixtures);
         }
         addCheckboxListeners(); 
-        document.getElementById('userInfo').textContent = `Csatlakozva (Meccsek betöltve)`;
-        document.getElementById('placeholder').style.display = 'none'; 
-    } catch (e) {
+        (document.getElementById('userInfo') as HTMLElement).textContent = `Csatlakozva (Meccsek betöltve)`;
+        (document.getElementById('placeholder') as HTMLElement).style.display = 'none';
+    } catch (e: any) {
         showToast(`Hiba a meccsek betöltésekor: ${e.message}`, 'error');
-        document.getElementById('userInfo').textContent = `Hiba a csatlakozáskor`;
-        document.getElementById('placeholder').style.display = 'flex'; 
-        document.getElementById('kanban-board').innerHTML = '';
-        document.getElementById('mobile-list-container').innerHTML = '';
+        (document.getElementById('userInfo') as HTMLElement).textContent = `Hiba a csatlakozáskor`;
+        (document.getElementById('placeholder') as HTMLElement).style.display = 'flex'; 
+        (document.getElementById('kanban-board') as HTMLElement).innerHTML = '';
+        (document.getElementById('mobile-list-container') as HTMLElement).innerHTML = '';
         console.error(e);
     } finally {
         loadBtn.disabled = false;
@@ -142,23 +223,28 @@ async function loadFixtures() {
     }
 }
 
-async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false) {
+async function runAnalysis(home: string, away: string, utcKickoff: string, leagueName: string, forceNew: boolean = false) {
     home = unescape(home);
     away = unescape(away);
-if (isMobile() && forceNew) {
+    
+    if (isMobile() && forceNew) {
         showToast("Elemzés folyamatban... Ez hosszabb időt vehet igénybe.", 'info', 6000);
     }
 
-    openModal(`${home} vs ${away}`, document.getElementById('common-elements').innerHTML, 'modal-xl');
-const modalSkeleton = document.querySelector('#modal-container #loading-skeleton');
-    const modalResults = document.querySelector('#modal-container #analysis-results');
-    const modalChat = document.querySelector('#modal-container #chat-container');
-modalResults.innerHTML = '';
+    openModal(`${home} vs ${away}`, (document.getElementById('common-elements') as HTMLElement).innerHTML, 'modal-xl');
+    
+    const modalSkeleton = document.querySelector('#modal-container #loading-skeleton') as HTMLElement;
+    const modalResults = document.querySelector('#modal-container #analysis-results') as HTMLElement;
+    const modalChat = document.querySelector('#modal-container #chat-container') as HTMLElement;
+    
+    modalResults.innerHTML = '';
     modalChat.style.display = 'none';
     modalSkeleton.classList.add('active');
-modalChat.querySelector('#chat-send-btn').onclick = sendChatMessage;
-    modalChat.querySelector('#chat-input').onkeyup = (e) => e.key === "Enter" && sendChatMessage();
-try {
+    
+    (modalChat.querySelector('#chat-send-btn') as HTMLElement).onclick = sendChatMessage;
+    (modalChat.querySelector('#chat-input') as HTMLElement).onkeyup = (e: KeyboardEvent) => e.key === "Enter" && sendChatMessage();
+    
+    try {
         const analysisUrl = `${appState.gasUrl}/runAnalysis`;
         const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
         
@@ -168,17 +254,15 @@ try {
             sport: appState.currentSport,
             force: forceNew,
             utcKickoff: utcKickoff,
-           leagueName: leagueName || '', 
+            leagueName: leagueName || '', 
             sheetUrl: appState.sheetUrl,
             openingOdds: JSON.parse(openingOdds)
         };
-        const response = await fetch(analysisUrl, {
+        
+        // MÓDOSÍTÁS: fetch -> fetchWithAuth
+        const response = await fetchWithAuth(analysisUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify(payload) 
-    
         });
         
         if (!response.ok) await handleFetchError(response);
@@ -191,131 +275,133 @@ try {
         modalResults.innerHTML = `<div class="analysis-body">${data.html}</div>`;
         modalSkeleton.classList.remove('active');
         modalChat.style.display = 'block';
-        modalChat.querySelector('#chat-messages').innerHTML = '';
-    } catch (e) {
+        (modalChat.querySelector('#chat-messages') as HTMLElement).innerHTML = '';
+    } catch (e: any) {
         modalResults.innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba történt az elemzés során: ${e.message}</p>`;
         modalSkeleton.classList.remove('active'); 
         console.error(e);
     }
 }
 
-function getLeagueNameForMatch(home, away) {
+function getLeagueNameForMatch(home: string, away: string): string | null {
     const match = appState.fixtures.find(fx => fx.home === home && fx.away === away);
     return match ? match.league : null;
 }
 
 
 async function openHistoryModal() {
-    if (!appState.sheetUrl) {
-        const url = prompt("Kérlek, add meg a Google Táblázat URL-jét (opcionális, a szerver is tárolhatja):", localStorage.getItem('sheetUrl') || "");
-        if (url && url.startsWith('https://docs.google.com/spreadsheets/d/')) {
-            appState.sheetUrl = url;
-            localStorage.setItem('sheetUrl', url); 
-        } else if (url) { 
-            showToast('Érvénytelen Google Sheet URL formátum.', 'error');
-        }
-    }
+    // A sheetUrl bekérése már nem szükséges, a szerver kezeli
+    // if (!appState.sheetUrl) { ... } // TÖRÖLVE
 
     const modalSize = isMobile() ? 'modal-fullscreen' : 'modal-lg';
-    const loadingHTML = document.getElementById('loading-skeleton').outerHTML;
+    const loadingHTML = (document.getElementById('loading-skeleton') as HTMLElement).outerHTML;
     openModal('Előzmények', loadingHTML, modalSize); 
-    document.querySelector('#modal-container #loading-skeleton').classList.add('active');
+    (document.querySelector('#modal-container #loading-skeleton') as HTMLElement).classList.add('active');
 
     try {
-        const response = await fetch(`${appState.gasUrl}/getHistory`);
+        // MÓDOSÍTÁS: fetch -> fetchWithAuth
+        const response = await fetchWithAuth(`${appState.gasUrl}/getHistory`);
         if (!response.ok) await handleFetchError(response);
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-        document.getElementById('modal-body').innerHTML = renderHistory(data.history || []);
-    } catch (e) {
-        document.getElementById('modal-body').innerHTML = `<p class="muted" style="color:var(--danger); text-align:center; padding: 2rem;">Hiba az előzmények betöltésekor: ${e.message}</p>`;
+        
+        (document.getElementById('modal-body') as HTMLElement).innerHTML = renderHistory(data.history || []);
+    } catch (e: any) {
+        (document.getElementById('modal-body') as HTMLElement).innerHTML = `<p class="muted" style="color:var(--danger); text-align:center; padding: 2rem;">Hiba az előzmények betöltésekor: ${e.message}</p>`;
         console.error(e);
     }
 }
 
-async function deleteHistoryItem(id) {
+async function deleteHistoryItem(id: string) {
     if (!confirm("Biztosan törölni szeretnéd ezt az elemet a naplóból? Ez a művelet nem vonható vissza.")) return;
     try {
-        const response = await fetch(`${appState.gasUrl}/deleteHistoryItem`, {
+        // MÓDOSÍTÁS: fetch -> fetchWithAuth
+        const response = await fetchWithAuth(`${appState.gasUrl}/deleteHistoryItem`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: id }) 
         });
+        
         if (!response.ok) await handleFetchError(response); 
 
         const data = await response.json();
         if (data.error) throw new Error(data.error); 
 
         showToast('Elem sikeresen törölve.', 'success');
-        openHistoryModal();
-    } catch (e) {
+        openHistoryModal(); // Frissíti a listát
+    } catch (e: any) {
         showToast(`Hiba a törlés során: ${e.message}`, 'error');
         console.error(e);
     }
 }
 
-async function runFinalCheck(home, away, sport) {
+async function runFinalCheck(home: string, away: string, sport: string) {
     alert("A 'Végső Ellenőrzés' funkció jelenleg nincs implementálva a szerver oldalon.");
 }
 
-async function viewHistoryDetail(id) {
+async function viewHistoryDetail(id: string) {
     const originalId = unescape(id);
-    openModal('Elemzés Betöltése...', document.getElementById('loading-skeleton').outerHTML, 'modal-xl');
-    document.querySelector('#modal-container #loading-skeleton').classList.add('active');
+    openModal('Elemzés Betöltése...', (document.getElementById('loading-skeleton') as HTMLElement).outerHTML, 'modal-xl');
+    (document.querySelector('#modal-container #loading-skeleton') as HTMLElement).classList.add('active');
+    
     try {
-        const response = await fetch(`${appState.gasUrl}/getAnalysisDetail?id=${encodeURIComponent(originalId)}`);
-        if (!response.ok) await handleFetchError(response); 
-
+        // MÓDOSÍTÁS: fetch -> fetchWithAuth
+        const response = await fetchWithAuth(`${appState.gasUrl}/getAnalysisDetail?id=${encodeURIComponent(originalId)}`);
+        if (!response.ok) await handleFetchError(response);
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error); 
 
         const { record } = data;
         if (!record || !record.html) throw new Error("A szerver nem találta a kért elemzést, vagy az hiányos.");
-        document.getElementById('modal-title').textContent = `${record.home || 'Ismeretlen'} vs ${record.away || 'Ismeretlen'}`;
-        const modalBody = document.getElementById('modal-body');
+        
+        (document.getElementById('modal-title') as HTMLElement).textContent = `${record.home || 'Ismeretlen'} vs ${record.away || 'Ismeretlen'}`;
+        const modalBody = document.getElementById('modal-body') as HTMLElement;
 
-        modalBody.innerHTML = document.getElementById('common-elements').innerHTML;
-        modalBody.querySelector('#loading-skeleton').style.display = 'none'; 
-        modalBody.querySelector('#analysis-results').innerHTML = `<div class="analysis-body">${record.html}</div>`;
-        const modalChat = modalBody.querySelector('#chat-container');
+        modalBody.innerHTML = (document.getElementById('common-elements') as HTMLElement).innerHTML;
+        (modalBody.querySelector('#loading-skeleton') as HTMLElement).style.display = 'none'; 
+        (modalBody.querySelector('#analysis-results') as HTMLElement).innerHTML = `<div class="analysis-body">${record.html}</div>`;
+        
+        const modalChat = modalBody.querySelector('#chat-container') as HTMLElement;
         modalChat.style.display = 'block';
         appState.currentAnalysisContext = record.html;
         appState.chatHistory = [];
-        modalChat.querySelector('#chat-messages').innerHTML = '';
-        modalChat.querySelector('#chat-send-btn').onclick = sendChatMessage;
-        modalChat.querySelector('#chat-input').onkeyup = (e) => e.key === "Enter" && sendChatMessage();
-    } catch(e) {
-        document.getElementById('modal-body').innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a részletek betöltésekor: ${e.message}</p>`;
+        (modalChat.querySelector('#chat-messages') as HTMLElement).innerHTML = '';
+        (modalChat.querySelector('#chat-send-btn') as HTMLElement).onclick = sendChatMessage;
+        (modalChat.querySelector('#chat-input') as HTMLElement).onkeyup = (e: KeyboardEvent) => e.key === "Enter" && sendChatMessage();
+    } catch(e: any) {
+        (document.getElementById('modal-body') as HTMLElement).innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a részletek betöltésekor: ${e.message}</p>`;
         console.error("Hiba a részletek megtekintésekor:", e);
     }
 }
 
 async function sendChatMessage() {
-    const modal = document.getElementById('modal-container');
-    const input = modal.querySelector('#chat-input');
-    const messagesContainer = modal.querySelector('#chat-messages'); 
-    const thinkingIndicator = modal.querySelector('#chat-thinking-indicator');
-    const sendButton = modal.querySelector('#chat-send-btn'); 
+    const modal = document.getElementById('modal-container') as HTMLElement;
+    const input = modal.querySelector('#chat-input') as HTMLInputElement;
+    const messagesContainer = modal.querySelector('#chat-messages') as HTMLElement; 
+    const thinkingIndicator = modal.querySelector('#chat-thinking-indicator') as HTMLElement;
+    const sendButton = modal.querySelector('#chat-send-btn') as HTMLButtonElement; 
 
     const message = input.value.trim();
-    if (!message) return; 
-
+    if (!message) return;
+    
     addMessageToChat(message, 'user');
     input.value = '';
     thinkingIndicator.style.display = 'block'; 
     sendButton.disabled = true;
     input.disabled = true;
-
+    
     try {
-        const response = await fetch(`${appState.gasUrl}/askChat`, {
+        // MÓDOSÍTÁS: fetch -> fetchWithAuth
+        const response = await fetchWithAuth(`${appState.gasUrl}/askChat`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 context: appState.currentAnalysisContext, 
                 history: appState.chatHistory, 
                 question: message 
             })
         });
+        
         if (!response.ok) await handleFetchError(response); 
 
         const data = await response.json();
@@ -324,7 +410,7 @@ async function sendChatMessage() {
         addMessageToChat(data.answer, 'ai');
         appState.chatHistory.push({ role: 'user', parts: [{ text: message }] });
         appState.chatHistory.push({ role: 'model', parts: [{ text: data.answer }] });
-    } catch (e) {
+    } catch (e: any) {
         addMessageToChat(`Hiba történt a válasszal: ${e.message}`, 'ai');
         console.error(e);
     } finally {
@@ -342,6 +428,7 @@ async function runMultiAnalysis() {
         showToast('Válassz ki 1-3 meccset a többes elemzéshez.', 'error');
         return;
     }
+    
     const matchesToAnalyze = appState.fixtures.filter(fx => selectedIds.includes(fx.uniqueId));
     if (matchesToAnalyze.length !== selectedIds.length) {
          showToast('Hiba: Nem található minden kiválasztott meccs. Próbáld újra betölteni a meccseket.', 'error');
@@ -349,12 +436,14 @@ async function runMultiAnalysis() {
     }
 
     openModal(`Többes Elemzés (${matchesToAnalyze.length} meccs)`, '<div id="multi-analysis-results"></div><div id="multi-loading-skeleton" style="padding: 1rem;"></div>', 'modal-xl');
-const resultsContainer = document.getElementById('multi-analysis-results');
-    const loadingContainer = document.getElementById('multi-loading-skeleton');
+    
+    const resultsContainer = document.getElementById('multi-analysis-results') as HTMLElement;
+    const loadingContainer = document.getElementById('multi-loading-skeleton') as HTMLElement;
 
-    loadingContainer.innerHTML = document.getElementById('loading-skeleton').outerHTML;
-const modalSkeleton = loadingContainer.querySelector('.loading-skeleton');
+    loadingContainer.innerHTML = (document.getElementById('loading-skeleton') as HTMLElement).outerHTML;
+    const modalSkeleton = loadingContainer.querySelector('.loading-skeleton') as HTMLElement;
     if (modalSkeleton) modalSkeleton.classList.add('active');
+    
     const analysisPromises = matchesToAnalyze.map(match => {
         const analysisUrl = `${appState.gasUrl}/runAnalysis`;
         
@@ -369,32 +458,28 @@ const modalSkeleton = loadingContainer.querySelector('.loading-skeleton');
             openingOdds: JSON.parse(sessionStorage.getItem('openingOdds') || '{}')
         };
 
-       
-         return fetch(analysisUrl, {
+        // MÓDOSÍTÁS: fetch -> fetchWithAuth
+         return fetchWithAuth(analysisUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' 
-},
             body: JSON.stringify(payload) 
         })
         .then(response => { 
             if (!response.ok) { 
-               
-             return response.json().then(errorData => { 
- throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
- }).catch(() => { 
+                return response.json().then(errorData => { 
+                    throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
+                }).catch(() => { 
                     throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
                 });
- }
+            }
             return response.json();
         })
         .then(data => { 
             if (data.error) throw new Error(`Elemzési hiba (${match.home} vs ${match.away}): ${data.error}`);
             return { match: `${match.home} vs ${match.away}`, html: data.html };
         })
-  .catch(error => { 
+        .catch(error => { 
              console.error(`Hiba ${match.home} vs ${match.away} elemzésekor:`, error);
-      
-               return { match: `${match.home} vs ${match.away}`, error: error.message };
+             return { match: `${match.home} vs ${match.away}`, error: (error as Error).message };
         });
     });
 
@@ -421,18 +506,18 @@ const modalSkeleton = loadingContainer.querySelector('.loading-skeleton');
             }
 
             resultsContainer.innerHTML += `
-   
-                 <div class="multi-analysis-item">
+                <div class="multi-analysis-item">
                     ${matchHeader}
                     ${recommendationHtml}
-     </div>
+                </div>
             `;
         });
+        
          appState.selectedMatches.clear();
          document.querySelectorAll('.selectable-card.selected, .selectable-item.selected').forEach(el => el.classList.remove('selected'));
-         document.querySelectorAll('.match-checkbox:checked').forEach(cb => cb.checked = false);
+         document.querySelectorAll('.match-checkbox:checked').forEach(cb => (cb as HTMLInputElement).checked = false);
          updateMultiSelectButton();
-    } catch (e) { 
+    } catch (e: any) { 
          console.error("Váratlan hiba a többes elemzés során:", e);
          loadingContainer.innerHTML = ''; 
          resultsContainer.innerHTML = `<p style="color:var(--danger); text-align:center;">Váratlan hiba történt az elemzések összesítésekor: ${e.message}</p>`;
@@ -442,7 +527,7 @@ const modalSkeleton = loadingContainer.querySelector('.loading-skeleton');
 
 // --- JAVÍTOTT ÉS VÁLTOZATLAN SEGÉDFÜGGVÉNYEK ---
 
-const parseHungarianDate = (huDate) => {
+const parseHungarianDate = (huDate: string): Date => {
     let date = new Date(huDate);
     if (!isNaN(date.getTime())) {
         return date;
@@ -464,11 +549,11 @@ const parseHungarianDate = (huDate) => {
 };
 
 function handleSportChange() {
-    appState.currentSport = document.getElementById('sportSelector').value;
+    appState.currentSport = (document.getElementById('sportSelector') as HTMLSelectElement).value;
     appState.selectedMatches.clear(); 
-    document.getElementById('kanban-board').innerHTML = '';
-    document.getElementById('mobile-list-container').innerHTML = '';
-    document.getElementById('placeholder').style.display = 'flex'; 
+    (document.getElementById('kanban-board') as HTMLElement).innerHTML = '';
+    (document.getElementById('mobile-list-container') as HTMLElement).innerHTML = '';
+    (document.getElementById('placeholder') as HTMLElement).style.display = 'flex'; 
     updateMultiSelectButton();
 }
 
@@ -480,30 +565,27 @@ function openManualAnalysisModal() {
         </div>
         <div class="control-group" style="margin-top: 1rem;">
             <label for="manual-away">Vendég csapat</label>
-           
- 
- <input id="manual-away" placeholder="Pl. Manchester City"/>
+            <input id="manual-away" placeholder="Pl. Manchester City"/>
         </div>
-        
         <div class="control-group" style="margin-top: 1rem;">
             <label for="manual-league">Bajnokságnév (Pontos név az ESPN listából)</label>
             <input id="manual-league" placeholder="Pl. Premier League"/>
         </div>
-        
         <div class="control-group" style="margin-top: 1rem;">
             <label for="manual-kickoff">Kezdési idő (UTC Dátum és Idő)</label>
             <input id="manual-kickoff" type="datetime-local" placeholder="Válassz időpontot"/>
              <p class="muted" style="font-size: 0.8rem; margin-top: 5px;">Fontos: A böngésző a helyi időt mutatja, de UTC-ként lesz elküldve.</p>
         </div>
-      
-    <button class="btn btn-primary" onclick="runManualAnalysis()" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
+        <button id="run-manual-btn" class="btn btn-primary" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
     `;
     openModal('Kézi Elemzés Indítása', content, 'modal-sm');
+    
+    (document.getElementById('run-manual-btn') as HTMLElement).onclick = runManualAnalysis;
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(15, 0, 0, 0);
-    const kickoffInput = document.getElementById('manual-kickoff');
+    const kickoffInput = document.getElementById('manual-kickoff') as HTMLInputElement;
     const year = tomorrow.getFullYear();
     const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
     const day = String(tomorrow.getDate()).padStart(2, '0');
@@ -513,11 +595,11 @@ function openManualAnalysisModal() {
 }
 
 function runManualAnalysis() {
-    const home = document.getElementById('manual-home').value.trim();
-    const away = document.getElementById('manual-away').value.trim();
-    const leagueName = document.getElementById('manual-league').value.trim(); 
-    const kickoffLocal = document.getElementById('manual-kickoff').value;
-
+    const home = (document.getElementById('manual-home') as HTMLInputElement).value.trim();
+    const away = (document.getElementById('manual-away') as HTMLInputElement).value.trim();
+    const leagueName = (document.getElementById('manual-league') as HTMLInputElement).value.trim(); 
+    const kickoffLocal = (document.getElementById('manual-kickoff') as HTMLInputElement).value;
+    
     if (!home || !away || !leagueName) { 
         showToast('Minden mezőt ki kell tölteni (Hazai, Vendég, Bajnokságnév).', 'error');
         return;
@@ -535,22 +617,21 @@ function runManualAnalysis() {
         const utcKickoff = kickoffDate.toISOString();
 
         closeModal();
-        runAnalysis(home, away, utcKickoff, leagueName, true); 
-    } catch (e) {
+        runAnalysis(home, away, utcKickoff, leagueName, true);
+    } catch (e: any) {
          showToast(`Hiba a dátum feldolgozásakor: ${e.message}`, 'error');
          console.error("Dátum hiba:", e);
     }
 }
 
 
-function isMobile() { return window.innerWidth <= 1024;
-} 
+function isMobile(): boolean { return window.innerWidth <= 1024; } 
 
-function getLeagueGroup(leagueName) {
+function getLeagueGroup(leagueName: string | null | undefined): string {
     if (!leagueName || typeof leagueName !== 'string') return 'Egyéb Meccsek';
     const sportGroups = LEAGUE_CATEGORIES[appState.currentSport] || {};
     const lowerLeagueName = leagueName.toLowerCase().trim();
-
+    
     for (const groupName in sportGroups) {
         if (sportGroups[groupName].some(l => lowerLeagueName === l.toLowerCase())) {
             return groupName;
@@ -565,51 +646,44 @@ function getLeagueGroup(leagueName) {
 }
 
 
-function renderFixturesForDesktop(fixtures) {
+function renderFixturesForDesktop(fixtures: any[]) {
     const board = document.getElementById('kanban-board');
     if (!board) return;
-    document.getElementById('placeholder').style.display = 'none';
-    board.innerHTML = ''; 
+    (document.getElementById('placeholder') as HTMLElement).style.display = 'none';
+    board.innerHTML = '';
+    
     const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
-    const groupedByCategory = groupBy(fixtures, fx => getLeagueGroup(fx.league));
-
+    const groupedByCategory = groupBy(fixtures, (fx: any) => getLeagueGroup(fx.league));
+    
     groupOrder.forEach(group => { 
         let columnContent = ''; 
         let cardIndex = 0; 
 
         if (groupedByCategory[group]) { 
-            const groupedByDate = groupBy(groupedByCategory[group], fx => 
-{
+            const groupedByDate = groupBy(groupedByCategory[group], (fx: any) => {
                 try {
                     return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
                 } catch (e) { return 'Ismeretlen dátum'; } 
-        
-    });
+            });
 
             Object.keys(groupedByDate)
-                .sort((a, b) => parseHungarianDate(a) - parseHungarianDate(b)) 
+                .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
                 .forEach(dateKey => {
                     columnContent += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
                     groupedByDate[dateKey]
-                        .sort((a, b) => new Date(a.utcKickoff) - new Date(b.utcKickoff))
-                        .forEach(fx => { 
-                const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
-   
+                        .sort((a: any, b: any) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
+                        .forEach((fx: any) => { 
+                            const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             columnContent += `
                                 <div class="match-card selectable-card ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}" style="animation-delay: ${cardIndex * 0.05}s">
-                             
-        <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ?
- 'checked' : ''}>
+                                    <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
                                      <div class="match-card-content" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league)}', true)">
                                          <div class="match-card-teams">${fx.home} – ${fx.away}</div>
-            
-                             <div class="match-card-meta">
-                                             <span>${fx.league ||
- 'Ismeretlen Liga'}</span>
+                                         <div class="match-card-meta">
+                                             <span>${fx.league || 'Ismeretlen Liga'}</span>
                                              <span>${time}</span>
                                          </div>
-             
-                        </div>
+                                    </div>
                                 </div>`;
                             cardIndex++;
                         });
@@ -621,66 +695,56 @@ function renderFixturesForDesktop(fixtures) {
             <div class="kanban-column">
                 <h4 class="kanban-column-header">${group}</h4>
                 <div class="column-content">
-                    ${columnContent ||
- '<p class="muted" style="text-align: center; padding-top: 2rem;">Nincs meccs ebben a kategóriában.</p>'}
+                    ${columnContent || '<p class="muted" style="text-align: center; padding-top: 2rem;">Nincs meccs ebben a kategóriában.</p>'}
                 </div>
             </div>`;
     });
 }
 
-function renderFixturesForMobileList(fixtures) {
+function renderFixturesForMobileList(fixtures: any[]) {
     const container = document.getElementById('mobile-list-container');
     if (!container) return;
-    document.getElementById('placeholder').style.display = 'none'; 
+    (document.getElementById('placeholder') as HTMLElement).style.display = 'none'; 
     container.innerHTML = '';
+    
     const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
-    const groupedByCategory = groupBy(fixtures, fx => getLeagueGroup(fx.league));
+    const groupedByCategory = groupBy(fixtures, (fx: any) => getLeagueGroup(fx.league));
     let html = '';
 
     groupOrder.forEach(group => { 
         if (groupedByCategory[group]) { 
             html += `<h4 class="league-header-mobile">${group}</h4>`; 
-            const groupedByDate = groupBy(groupedByCategory[group], fx => {
-                try { return new 
-Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); }
+            const groupedByDate = groupBy(groupedByCategory[group], (fx: any) => {
+                try { return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); }
                 catch (e) { return 'Ismeretlen dátum'; }
             });
 
             Object.keys(groupedByDate)
-                .sort((a, b) => parseHungarianDate(a) - parseHungarianDate(b)) 
-        
-        .forEach(dateKey => {
+                .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
+                .forEach(dateKey => {
                     html += `<div class="date-header-mobile">${formatDateLabel(dateKey)}</div>`; 
-
                     groupedByDate[dateKey]
-                  
-      .sort((a, b) => new Date(a.utcKickoff) - new Date(b.utcKickoff))
-                        .forEach(fx => { 
+                        .sort((a: any, b: any) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
+                        .forEach((fx: any) => { 
                             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             html += `
-                              
-  <div class="list-item selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
-                                    <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ?
- 'checked' : ''}>
+                                <div class="list-item selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
+                                    <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
                                     <div class="list-item-content" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league)}', true)">
                                         <div class="list-item-title">${fx.home} – ${fx.away}</div>
-              
-                          <div class="list-item-meta">${fx.league ||
- 'Ismeretlen Liga'} - ${time}</div>
+                                        <div class="list-item-meta">${fx.league || 'Ismeretlen Liga'} - ${time}</div>
                                     </div>
                                     <svg class="list-item-arrow" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      
-                          </div>`;
+                                </div>`;
                         });
                 });
         }
     });
-    container.innerHTML = html ||
- '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek elérhető mérkőzések.</p>';
+    container.innerHTML = html || '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek elérhető mérkőzések.</p>';
 }
 
 
-function renderHistory(historyData) {
+function renderHistory(historyData: any[]): string {
     if (!historyData || !Array.isArray(historyData) || historyData.length === 0) {
         return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek mentett előzmények.</p>';
     }
@@ -689,50 +753,42 @@ function renderHistory(historyData) {
          return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek érvényes előzmény adatok.</p>';
     }
 
-    const groupedByDate = groupBy(history, item => {
+    const groupedByDate = groupBy(history, (item: any) => {
         try { return new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); }
         catch (e) { return 'Ismeretlen dátum'; }
     });
+    
     let html = '';
     Object.keys(groupedByDate)
-        .sort((a, b) => parseHungarianDate(b) - parseHungarianDate(a)) 
+        .sort((a, b) => parseHungarianDate(b).getTime() - parseHungarianDate(a).getTime()) 
         .forEach(dateKey => {
             html += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
 
-        
-    const sortedItems = groupedByDate[dateKey].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const sortedItems = groupedByDate[dateKey].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-            sortedItems.forEach(item => {
+            sortedItems.forEach((item: any) => {
                 const analysisTime = new Date(item.date); 
-                
-                const isCheckable = false; 
-
                 const finalCheckButton = `
                     <button class="btn btn-final-check"
-                             
-onclick="runFinalCheck('${escape(item.home)}', '${escape(item.away)}', '${item.sport}'); event.stopPropagation();"
-                            title="Végső Ellenőrzés (Jelenleg nem elérhető)"
-                            disabled>
+                        onclick="runFinalCheck('${escape(item.home)}', '${escape(item.away)}', '${item.sport}'); event.stopPropagation();"
+                        title="Végső Ellenőrzés (Jelenleg nem elérhető)"
+                        disabled>
                         ✔️
                     </button>`;
-                const time = isNaN(analysisTime.getTime()) ?
- 'Ismeretlen idő' : analysisTime.toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
+                const time = isNaN(analysisTime.getTime()) ? 'Ismeretlen idő' : analysisTime.toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                 const safeItemId = escape(item.id);
+                
                 html += `
                     <div class="list-item">
-                        <div style="flex-grow:1; cursor: pointer;"
- onclick="viewHistoryDetail('${safeItemId}')">
-                            <div class="list-item-title">${item.home ||
- '?'} – ${item.away || '?'}</div>
-                            <div class="list-item-meta">${item.sport ?
- item.sport.charAt(0).toUpperCase() + item.sport.slice(1) : 'Sport?'} - Elemzés: ${time}</div>
+                        <div style="flex-grow:1; cursor: pointer;" onclick="viewHistoryDetail('${safeItemId}')">
+                            <div class="list-item-title">${item.home || '?'} – ${item.away || '?'}</div>
+                            <div class="list-item-meta">${item.sport ? item.sport.charAt(0).toUpperCase() + item.sport.slice(1) : 'Sport?'} - Elemzés: ${time}</div>
                         </div>
                          ${finalCheckButton}
                          <button class="btn" onclick="deleteHistoryItem('${safeItemId}'); event.stopPropagation();"
- title="Törlés" style="color: var(--danger); border-color: var(--danger);">
+                            title="Törlés" style="color: var(--danger); border-color: var(--danger);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                   
-      </button>
+                        </button>
                     </div>`;
             });
             html += `</details>`; 
@@ -741,55 +797,57 @@ onclick="runFinalCheck('${escape(item.home)}', '${escape(item.away)}', '${item.s
 }
 
 
-function openModal(title, content = '', sizeClass = 'modal-xl') {
-    const modalContainer = document.getElementById('modal-container');
-    const modalContent = modalContainer.querySelector('.modal-content');
+function openModal(title: string, content: string = '', sizeClass: string = 'modal-xl') {
+    const modalContainer = document.getElementById('modal-container') as HTMLElement;
+    const modalContent = modalContainer.querySelector('.modal-content') as HTMLElement;
+    
     modalContent.classList.remove('modal-sm', 'modal-lg', 'modal-xl', 'modal-fullscreen');
     modalContent.classList.add(sizeClass);
-    document.getElementById('modal-title').textContent = title;
-    document.getElementById('modal-body').innerHTML = content;
+    
+    (document.getElementById('modal-title') as HTMLElement).textContent = title;
+    (document.getElementById('modal-body') as HTMLElement).innerHTML = content;
+    
     modalContainer.classList.add('open');
     window.addEventListener('keydown', handleEscKey);
     modalContainer.addEventListener('click', handleOutsideClick);
 }
 
 function closeModal() {
-    const modalContainer = document.getElementById('modal-container');
+    const modalContainer = document.getElementById('modal-container') as HTMLElement;
     modalContainer.classList.remove('open');
     window.removeEventListener('keydown', handleEscKey);
     modalContainer.removeEventListener('click', handleOutsideClick);
 }
 
-function handleEscKey(event) {
+function handleEscKey(event: KeyboardEvent) {
     if (event.key === 'Escape') {
         closeModal();
     }
 }
-function handleOutsideClick(event) {
+function handleOutsideClick(event: MouseEvent) {
     if (event.target === document.getElementById('modal-container')) {
         closeModal();
     }
 }
 
 
-function groupBy(arr, keyFn) {
+function groupBy(arr: any[], keyFn: (item: any) => string): { [key: string]: any[] } {
     if (!Array.isArray(arr)) return {};
     return arr.reduce((acc, item) => {
-        let key;
+        let key: string;
         try {
             key = keyFn(item);
-        } catch (e) {
-            console.warn("Hiba a groupBy kulcs generálásakor:", e);
+        } catch (e: any) {
+            console.warn("Hiba a groupBy kulcs generálásakor:", e.message);
             key = 'hibás_kulcs'; 
-  
-      }
+        }
         if (!acc[key]) acc[key] = [];
         acc[key].push(item); 
         return acc;
-    }, {});
+    }, {} as { [key: string]: any[] });
 }
 
-function formatDateLabel(dateStr) {
+function formatDateLabel(dateStr: string): string {
     const today = new Date().toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
     const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
     if (dateStr === today) return 'MA';
@@ -797,9 +855,10 @@ function formatDateLabel(dateStr) {
     return dateStr;
 }
 
-function addMessageToChat(text, role) {
+function addMessageToChat(text: string, role: 'user' | 'ai') {
     const messagesContainer = document.querySelector('#modal-container #chat-messages');
     if (!messagesContainer) return;
+    
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${role}`;
     bubble.textContent = text;
@@ -807,23 +866,25 @@ function addMessageToChat(text, role) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-function showToast(message, type = 'info', duration = 4000) {
+function showToast(message: string, type: 'info' | 'success' | 'error' = 'info', duration: number = 4000) {
     const container = document.getElementById('toast-notification-container');
     if (!container) return;
+    
     const toast = document.createElement('div');
     toast.className = `toast-notification ${type}`;
     toast.textContent = message; 
     container.appendChild(toast);
-
+    
     const fadeOutTimer = setTimeout(() => {
         toast.style.animation = 'fadeOut 0.5s forwards'; 
         const removeTimer = setTimeout(() => toast.remove(), 500);
-        toast.dataset.removeTimer = removeTimer;
+        (toast as any).dataset.removeTimer = removeTimer.toString();
     }, duration);
+    
     toast.addEventListener('click', () => {
         clearTimeout(fadeOutTimer); 
-        if (toast.dataset.removeTimer) {
-             clearTimeout(parseInt(toast.dataset.removeTimer)); 
+        if ((toast as any).dataset.removeTimer) {
+             clearTimeout(parseInt((toast as any).dataset.removeTimer)); 
         }
         toast.style.animation = 'fadeOut 0.3s forwards';
         setTimeout(() => toast.remove(), 300);
@@ -831,18 +892,19 @@ function showToast(message, type = 'info', duration = 4000) {
 }
 
 function setupThemeSwitcher() {
-    const themeSwitcher = document.getElementById('theme-switcher');
+    const themeSwitcher = document.getElementById('theme-switcher') as HTMLElement;
     const htmlEl = document.documentElement;
-    const setIcon = (theme) => {
+    
+    const setIcon = (theme: string) => {
         themeSwitcher.innerHTML = theme === 'dark'
-            ?
-            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>' // Nap ikon
-            : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>' // Nap ikon
+            : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'; // Hold ikon
     };
+    
     const currentTheme = localStorage.getItem('theme') || 'dark';
     htmlEl.className = `${currentTheme}-theme`; 
     setIcon(currentTheme);
-
+    
     themeSwitcher.addEventListener('click', () => {
         let newTheme = htmlEl.className.includes('dark') ? 'light' : 'dark'; 
         htmlEl.className = `${newTheme}-theme`; 
@@ -865,16 +927,17 @@ function createGlowingOrbs() {
             orb.className = 'glowing-orb'; 
             const size = Math.random() * (isMobile() ? 20 : 30) + 10;
             const scale = Math.random() * 0.5 + 0.5;
-            const opacity = Math.random() * 0.3 + 0.1; 
+            const opacity = Math.random() * 0.3 + 0.1;
             const duration = Math.random() * 20 + 15;
             const delay = Math.random() * -duration; 
 
             orb.style.width = `${size}px`;
             orb.style.height = `${size}px`;
-            orb.style.setProperty('--scale', scale);
-            orb.style.setProperty('--opacity', opacity);
+            orb.style.setProperty('--scale', scale.toString());
+            orb.style.setProperty('--opacity', opacity.toString());
             orb.style.animationDuration = `${duration}s`;
             orb.style.animationDelay = `${delay}s`;
+            
             const startX = Math.random() * 120 - 10;
             const startY = Math.random() * 120 - 10;
             const endX = Math.random() * 120 - 10;
@@ -884,10 +947,10 @@ function createGlowingOrbs() {
             orb.style.setProperty('--end-x', `${endX}vw`);
             orb.style.setProperty('--end-y', `${endY}vh`);
 
-            orbContainer.appendChild(orb); 
+            orbContainer.appendChild(orb);
         }
-    } catch (e) {
-        console.error("Hiba a háttér fénygömbök létrehozásakor:", e);
+    } catch (e: any) {
+        console.error("Hiba a háttér fénygömbök létrehozásakor:", e.message);
     }
 }
 
@@ -911,10 +974,11 @@ function createHeaderOrbs() {
 
             orb.style.width = `${size}px`;
             orb.style.height = `${size}px`;
-            orb.style.setProperty('--scale', scale);
-            orb.style.setProperty('--opacity', opacity);
+            orb.style.setProperty('--scale', scale.toString());
+            orb.style.setProperty('--opacity', opacity.toString());
             orb.style.animationDuration = `${duration}s`;
             orb.style.animationDelay = `${delay}s`;
+            
             const startX = Math.random() * 100;
             const startY = Math.random() * 80 - 10;
             const endX = Math.random() * 100;
@@ -926,8 +990,8 @@ function createHeaderOrbs() {
 
             orbContainer.appendChild(orb);
         }
-    } catch (e) {
-        console.error("Hiba a fejléc fénygömbök létrehozásakor:", e);
+    } catch (e: any) {
+        console.error("Hiba a fejléc fénygömbök létrehozásakor:", e.message);
     }
 }
 
@@ -935,7 +999,7 @@ function initMultiSelect() {
     const controlsBarActions = document.querySelector('.controls-bar .main-actions');
     if (controlsBarActions) {
         const multiSelectButton = document.createElement('button');
-        multiSelectButton.id = 'multiAnalysisBtn'; 
+        multiSelectButton.id = 'multiAnalysisBtn';
         multiSelectButton.className = 'btn btn-special btn-lg';
         multiSelectButton.textContent = 'Kiválasztottak Elemzése (0)';
         multiSelectButton.disabled = true;
@@ -955,8 +1019,8 @@ function addCheckboxListeners() {
     });
 }
 
-function handleCheckboxChange(event) {
-    const checkbox = event.target;
+function handleCheckboxChange(event: Event) {
+    const checkbox = event.target as HTMLInputElement;
     const matchId = checkbox.dataset.matchId;
     const cardOrItem = checkbox.closest('.selectable-card, .selectable-item');
     if (!matchId) return; 
@@ -977,7 +1041,7 @@ function handleCheckboxChange(event) {
 }
 
 function updateMultiSelectButton() {
-    const btn = document.getElementById('multiAnalysisBtn');
+    const btn = document.getElementById('multiAnalysisBtn') as HTMLButtonElement;
     if (!btn) return;
     const count = appState.selectedMatches.size;
     btn.textContent = `Kiválasztottak Elemzése (${count})`;
