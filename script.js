@@ -25,7 +25,8 @@ const LEAGUE_CATEGORIES = {
     hockey: {
         'Top Ligák': [ 'NHL' ],
         'Kiemelt Bajnokságok': [ 'KHL', 'SHL', 'Liiga', 'DEL', 'AHL', 'ICEHL', 'Champions Hockey League' ],
-        // JAVÍTÁS: A sortörés megszüntetve az array-en belül.
+        // JAVÍTÁS: 
+        A sortörés megszüntetve az array-en belül.
         'Egyéb Meccsek': [ 'IIHF World Championship', 'Olimpiai Játékok', 'Spengler Cup', 'Extraliga' ]
     },
     basketball: {
@@ -83,7 +84,7 @@ function setupLoginProtection() {
     // Eseménykezelők hozzáadása
     loginButton.addEventListener('click', handleLogin);
     passwordInput.addEventListener('keyup', (event) => {
-        if (event.key === 'Enter') { // Enter lenyomására is működjön
+        if (event.key === 'Enter') { // Enter lennyomására is működjön
             handleLogin();
         }
     });
@@ -486,7 +487,7 @@ const modalSkeleton = loadingContainer.querySelector('.loading-skeleton');
              sport: appState.currentSport,
             force: true, // A többes elemzés mindig kényszerített
             utcKickoff: match.utcKickoff,
-            leagueName: match.league || '',
+            leagueName: match.league || '', // v50.2 JAVÍTÁS: Átadjuk a liga nevét
             sheetUrl: appState.sheetUrl,
             openingOdds: JSON.parse(sessionStorage.getItem('openingOdds') || '{}')
         };
@@ -536,20 +537,22 @@ const modalSkeleton = loadingContainer.querySelector('.loading-skeleton');
              let recommendationHtml = '<p style="color:var(--danger);">Ismeretlen hiba történt az elemzés során ennél a meccsnél.</p>'; 
 
             if (!result.error && result.html) { 
-      const tempDiv = document.createElement('div');
-         
-               tempDiv.innerHTML = result.html;
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = result.html;
                 const recommendationCard = tempDiv.querySelector('.master-recommendation-card');
                 if (recommendationCard) {
-         recommendationHtml = recommendationCard.outerHTML; 
+                    recommendationHtml = recommendationCard.outerHTML; 
+                
+                // --- v50.2 SZINTAKTIKAI HIBA JAVÍTÁSA ---
+                // Az 546-547. sorok egyetlen, helyes sorba vonása:
                 } else {
-                     recommendationHtml = '<p 
- class="muted">A fő elemzői ajánlás nem található ebben az elemzésben.</p>';
+                     recommendationHtml = '<p class="muted">A fő elemzői ajánlás nem található ebben az elemzésben.</p>';
                 }
             } else if (result.error) { 
-// Ha volt hiba
+                // Ha volt hiba
                  recommendationHtml = `<p style="color:var(--danger);">Hiba: ${result.error}</p>`;
-}
+            }
+            // --- JAVÍTÁS VÉGE ---
 
             // Hozzáadjuk a meccs eredményét a konténerhez
             resultsContainer.innerHTML += `
