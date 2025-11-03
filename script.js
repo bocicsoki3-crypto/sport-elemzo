@@ -1,4 +1,4 @@
-// --- ALKALMAZÁS ÁLLAPOT (VÉGLEGES - v54.3 SSOT) ---
+// --- ALKALMAZÁS ÁLLAPOT (VÉGLEGES - v52 JS/JWT) ---
 const appState = {
     // A VÉGLEGES RENDER.COM SZERVER CÍME
     gasUrl: 'https://king-ai-backend.onrender.com', // Ellenőrizze, hogy ez a helyes URL!
@@ -10,6 +10,7 @@ const appState = {
     selectedMatches: new Set(),
     authToken: null // ÚJ: A JWT tárolására
 };
+
 // --- LIGA KATEGÓRIÁK (Változatlan) ---
 const LEAGUE_CATEGORIES = {
     soccer: {
@@ -21,8 +22,7 @@ const LEAGUE_CATEGORIES = {
     hockey: {
         'Top Ligák': [ 'NHL' ],
         'Kiemelt Bajnokságok': [ 'KHL', 'SHL', 'Liiga', 'DEL', 'AHL', 'ICEHL', 'Champions Hockey League' ],
-        'Egyéb Meccsek': [ 'IIHF World Championship', 'Olimpiai Játékok', 'Spengler Cup', 
-'Extraliga' ]
+        'Egyéb Meccsek': [ 'IIHF World Championship', 'Olimpiai Játékok', 'Spengler Cup', 'Extraliga' ]
     },
     basketball: {
         'Top Ligák': [ 'NBA', 'Euroleague' ],
@@ -30,14 +30,17 @@ const LEAGUE_CATEGORIES = {
         'Egyéb Meccsek': [ 'FIBA World Cup', 'Olimpiai Játékok', 'EuroBasket', 'FIBA Champions League', 'EuroCup', 'LNB Pro A' ]
     }
 };
+
 // --- INICIALIZÁLÁS (JELSZÓVÉDELEMMEL KIEGÉSZÍTVE) ---
 document.addEventListener('DOMContentLoaded', () => {
     setupLoginProtection(); // Jelszó ellenőrzés indítása
 });
+
 // === JAVÍTOTT JELSZÓVÉDELEM LOGIKÁJA (JWT) ===
 function setupLoginProtection() {
     const loginOverlay = document.getElementById('login-overlay');
     const appContainer = document.querySelector('.app-container');
+
     // Token ellenőrzése a sessionStorage-ből
     const storedToken = sessionStorage.getItem('authToken');
     if (storedToken) {
@@ -53,6 +56,7 @@ function setupLoginProtection() {
 
     const loginButton = document.getElementById('login-button');
     const passwordInput = document.getElementById('password-input');
+
     const handleLogin = async () => {
         if (!passwordInput.value) {
             showToast('Kérlek, add meg a jelszót.', 'error');
@@ -68,9 +72,10 @@ function setupLoginProtection() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: passwordInput.value })
             });
+
             if (!response.ok) {
                  const errorData = await response.json();
-                 throw new Error(errorData.error || `Hiba (${response.status})`);
+                throw new Error(errorData.error || `Hiba (${response.status})`);
             }
 
             const data = await response.json();
@@ -132,6 +137,7 @@ async function fetchWithAuth(url, options = {}) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${appState.authToken}`
     };
+
     const config = {
          ...options,
         headers: {
@@ -139,6 +145,7 @@ async function fetchWithAuth(url, options = {}) {
             ...options.headers,
         }
     };
+
     const response = await fetch(url, config);
 
     if (response.status === 401) { 
@@ -179,15 +186,10 @@ async function loadFixtures() {
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         
-        // === JAVÍTÁS (v54.3) ===
-        // A 'data.fixtures' mostantól tartalmazza a natív ID-kat
-        // az '...fx' (spread operator) miatt az 'appState.fixtures' is tartalmazni fogja őket.
         appState.fixtures = (data.fixtures || []).map((fx) => ({
-             ...fx, // Ez tartalmazza: home, away, league, utcKickoff, ÉS apiFootball...ID-k
+             ...fx,
             uniqueId: `${appState.currentSport}_${fx.home.toLowerCase().replace(/\s+/g, '')}_${fx.away.toLowerCase().replace(/\s+/g, '')}`
         }));
-        // === JAVÍTÁS VÉGE ===
-
         sessionStorage.setItem('openingOdds', JSON.stringify(data.odds || {}));
         
         if (isMobile()) {
@@ -211,38 +213,10 @@ async function loadFixtures() {
     }
 }
 
-// === JAVÍTÁS (v54.3): Új segédfüggvény a listából való híváshoz ===
-/**
- * Megkeresi a meccset az appState-ben ID alapján és meghívja a fő elemző függvényt.
- */
-function runAnalysisFromList(uniqueId, forceNew = false) {
-    const match = appState.fixtures.find(fx => fx.uniqueId === uniqueId);
-    if (!match) {
-        showToast(`Hiba: A meccs adatai nem találhatók (ID: ${uniqueId}). Próbálja frissíteni a meccslistát.`, 'error');
-        return;
-    }
-    // A 'match' objektum most már tartalmazza a natív API-Football ID-kat
-    runAnalysis(match, forceNew);
-}
-// === JAVÍTÁS VÉGE ===
-
-
-// === JAVÍTÁS (v54.3): 'runAnalysis' átalakítva, hogy egy objektumot fogadjon ===
-/**
- * Futtatja a fő elemzést.
- * @param {object} matchData - A meccs objektum (tartalmaznia kell: home, away, utcKickoff, leagueName, és opcionálisan apiFootball... ID-k)
- * @param {boolean} forceNew - Kényszeríti-e az újraelemzést
- */
-async function runAnalysis(matchData, forceNew = false) {
-    // home, away, stb. kinyerése az objektumból
-    const { home, away, utcKickoff, leagueName } = matchData;
+async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false) {
+    home = unescape(home);
+    away = unescape(away);
     
-    if (!home || !away || !utcKickoff || !leagueName) {
-        showToast('Hiba: Hiányos meccs adatok az elemzés indításához.', 'error');
-        console.error("Hiányos matchData:", matchData);
-        return;
-    }
-
     if (isMobile() && forceNew) {
         showToast("Elemzés folyamatban... Ez hosszabb időt vehet igénybe.", 'info', 6000);
     }
@@ -264,22 +238,22 @@ async function runAnalysis(matchData, forceNew = false) {
         const analysisUrl = `${appState.gasUrl}/runAnalysis`;
         const openingOdds = sessionStorage.getItem('openingOdds') || '{}';
         
-        // === JAVÍTÁS (v54.3) ===
-        // A 'matchData' objektumot (ami már tartalmazza az ID-kat)
-        // egyesítjük a többi szükséges paraméterrel.
         const payload = {
-            ...matchData, // Ez tartalmazza: home, away, utcKickoff, leagueName, apiFootball...ID-k
+            home: home,
+            away: away,
             sport: appState.currentSport,
             force: forceNew,
+            utcKickoff: utcKickoff,
+            leagueName: leagueName || '', 
             sheetUrl: appState.sheetUrl,
             openingOdds: JSON.parse(openingOdds)
         };
-        // === JAVÍTÁS VÉGE ===
-
+        
         const response = await fetchWithAuth(analysisUrl, {
             method: 'POST',
             body: JSON.stringify(payload) 
         });
+        
         if (!response.ok) await handleFetchError(response);
 
         const data = await response.json();
@@ -297,7 +271,6 @@ async function runAnalysis(matchData, forceNew = false) {
         console.error(e);
     }
 }
-// === JAVÍTÁS VÉGE ===
 
 function getLeagueNameForMatch(home, away) {
     const match = appState.fixtures.find(fx => fx.home === home && fx.away === away);
@@ -306,14 +279,15 @@ function getLeagueNameForMatch(home, away) {
 
 
 async function openHistoryModal() {
-    const modalSize = isMobile() ?
-'modal-fullscreen' : 'modal-lg';
+    const modalSize = isMobile() ? 'modal-fullscreen' : 'modal-lg';
     const loadingHTML = (document.getElementById('loading-skeleton')).outerHTML;
     openModal('Előzmények', loadingHTML, modalSize); 
     (document.querySelector('#modal-container #loading-skeleton')).classList.add('active');
+
     try {
         const response = await fetchWithAuth(`${appState.gasUrl}/getHistory`);
         if (!response.ok) await handleFetchError(response);
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         
@@ -331,14 +305,14 @@ async function deleteHistoryItem(id) {
             method: 'POST',
             body: JSON.stringify({ id: id }) 
         });
+        
         if (!response.ok) await handleFetchError(response); 
 
         const data = await response.json();
         if (data.error) throw new Error(data.error); 
 
         showToast('Elem sikeresen törölve.', 'success');
-        openHistoryModal();
-// Frissíti a listát
+        openHistoryModal(); // Frissíti a listát
     } catch (e) {
         showToast(`Hiba a törlés során: ${e.message}`, 'error');
         console.error(e);
@@ -353,22 +327,24 @@ async function viewHistoryDetail(id) {
     const originalId = unescape(id);
     openModal('Elemzés Betöltése...', (document.getElementById('loading-skeleton')).outerHTML, 'modal-xl');
     (document.querySelector('#modal-container #loading-skeleton')).classList.add('active');
+    
     try {
         const response = await fetchWithAuth(`${appState.gasUrl}/getAnalysisDetail?id=${encodeURIComponent(originalId)}`);
         if (!response.ok) await handleFetchError(response);
+        
         const data = await response.json();
         if (data.error) throw new Error(data.error); 
 
         const { record } = data;
         if (!record || !record.html) throw new Error("A szerver nem találta a kért elemzést, vagy az hiányos.");
         
-        (document.getElementById('modal-title')).textContent = `${record.home ||
-'Ismeretlen'} vs ${record.away || 'Ismeretlen'}`;
+        (document.getElementById('modal-title')).textContent = `${record.home || 'Ismeretlen'} vs ${record.away || 'Ismeretlen'}`;
         const modalBody = document.getElementById('modal-body');
 
         modalBody.innerHTML = (document.getElementById('common-elements')).innerHTML;
         (modalBody.querySelector('#loading-skeleton')).style.display = 'none'; 
         (modalBody.querySelector('#analysis-results')).innerHTML = `<div class="analysis-body">${record.html}</div>`;
+        
         const modalChat = modalBody.querySelector('#chat-container');
         modalChat.style.display = 'block';
         appState.currentAnalysisContext = record.html;
@@ -378,7 +354,7 @@ async function viewHistoryDetail(id) {
         (modalChat.querySelector('#chat-input')).onkeyup = (e) => e.key === "Enter" && sendChatMessage();
     } catch(e) {
          (document.getElementById('modal-body')).innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a részletek betöltésekor: ${e.message}</p>`;
-         console.error("Hiba a részletek megtekintésekor:", e);
+        console.error("Hiba a részletek megtekintésekor:", e);
     }
 }
 
@@ -391,11 +367,13 @@ async function sendChatMessage() {
 
     const message = input.value.trim();
     if (!message) return;
+    
     addMessageToChat(message, 'user');
     input.value = '';
     thinkingIndicator.style.display = 'block'; 
     sendButton.disabled = true;
     input.disabled = true;
+    
     try {
         const response = await fetchWithAuth(`${appState.gasUrl}/askChat`, {
             method: 'POST',
@@ -403,9 +381,9 @@ async function sendChatMessage() {
                 context: appState.currentAnalysisContext, 
                 history: appState.chatHistory, 
                 question: message 
-     
-            })
+             })
         });
+        
         if (!response.ok) await handleFetchError(response); 
 
         const data = await response.json();
@@ -436,7 +414,7 @@ async function runMultiAnalysis() {
     const matchesToAnalyze = appState.fixtures.filter(fx => selectedIds.includes(fx.uniqueId));
     if (matchesToAnalyze.length !== selectedIds.length) {
          showToast('Hiba: Nem található minden kiválasztott meccs. Próbáld újra betölteni a meccseket.', 'error');
-        return;
+         return;
     }
 
     openModal(`Többes Elemzés (${matchesToAnalyze.length} meccs)`, '<div id="multi-analysis-results"></div><div id="multi-loading-skeleton" style="padding: 1rem;"></div>', 'modal-xl');
@@ -451,29 +429,27 @@ async function runMultiAnalysis() {
     const analysisPromises = matchesToAnalyze.map(match => {
         const analysisUrl = `${appState.gasUrl}/runAnalysis`;
         
-        // === JAVÍTÁS (v54.3) ===
-        // A 'match' objektumot küldjük el, ami már tartalmazza az ID-kat
         const payload = {
-            ...match, // Ez tartalmazza: home, away, utcKickoff, leagueName, apiFootball...ID-k
-            sport: appState.currentSport,
+            home: match.home,
+            away: match.away,
+             sport: appState.currentSport,
             force: true, 
+            utcKickoff: match.utcKickoff,
+            leagueName: match.league || '',
             sheetUrl: appState.sheetUrl,
             openingOdds: JSON.parse(sessionStorage.getItem('openingOdds') || '{}')
         };
-        // === JAVÍTÁS VÉGE ===
 
          return fetchWithAuth(analysisUrl, {
             method: 'POST',
             body: JSON.stringify(payload) 
         })
- 
-       .then(response => { 
+        .then(response => { 
             if (!response.ok) { 
                 return response.json().then(errorData => { 
                     throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
                 }).catch(() => { 
-         
-                   throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
+                    throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
                 });
             }
             return response.json();
@@ -484,16 +460,15 @@ async function runMultiAnalysis() {
         })
         .catch(error => { 
              console.error(`Hiba ${match.home} vs ${match.away} elemzésekor:`, error);
-           
-              return { match: `${match.home} vs ${match.away}`, error: error.message };
+             return { match: `${match.home} vs ${match.away}`, error: error.message };
         });
     });
-    
+
     try {
         const results = await Promise.all(analysisPromises);
         loadingContainer.innerHTML = '';
         resultsContainer.innerHTML = '';
-        
+
         results.forEach(result => {
              const matchHeader = `<h4>${result.match}</h4>`;
              let recommendationHtml = '<p style="color:var(--danger);">Ismeretlen hiba történt az elemzés során ennél a meccsnél.</p>'; 
@@ -501,21 +476,18 @@ async function runMultiAnalysis() {
             if (!result.error && result.html) { 
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = result.html;
-  
-               const recommendationCard = tempDiv.querySelector('.master-recommendation-card');
+                const recommendationCard = tempDiv.querySelector('.master-recommendation-card');
                 if (recommendationCard) {
                      recommendationHtml = recommendationCard.outerHTML; 
                 } else {
-                     recommendationHtml = 
-'<p class="muted">A fő elemzői ajánlás nem található ebben az elemzésben.</p>';
+                     recommendationHtml = '<p class="muted">A fő elemzői ajánlás nem található ebben az elemzésben.</p>';
                 }
             } else if (result.error) { 
                  recommendationHtml = `<p style="color:var(--danger);">Hiba: ${result.error}</p>`;
             }
 
             resultsContainer.innerHTML += `
-           
-                 <div class="multi-analysis-item">
+                <div class="multi-analysis-item">
                     ${matchHeader}
                     ${recommendationHtml}
                 </div>
@@ -574,8 +546,7 @@ function openManualAnalysisModal() {
         </div>
         <div class="control-group" style="margin-top: 1rem;">
             <label for="manual-away">Vendég csapat</label>
-            <input 
-id="manual-away" placeholder="Pl. Manchester City"/>
+            <input id="manual-away" placeholder="Pl. Manchester City"/>
         </div>
         <div class="control-group" style="margin-top: 1rem;">
             <label for="manual-league">Bajnokságnév (Pontos név az ESPN listából)</label>
@@ -583,13 +554,11 @@ id="manual-away" placeholder="Pl. Manchester City"/>
         </div>
         <div class="control-group" style="margin-top: 1rem;">
             <label for="manual-kickoff">Kezdési idő (UTC Dátum és Idő)</label>
-       
-             <input id="manual-kickoff" type="datetime-local" placeholder="Válassz időpontot"/>
+            <input id="manual-kickoff" type="datetime-local" placeholder="Válassz időpontot"/>
              <p class="muted" style="font-size: 0.8rem; margin-top: 5px;">Fontos: A böngésző a helyi időt mutatja, de UTC-ként lesz elküldve.</p>
         </div>
         
-        <button id="run-manual-btn" class="btn btn-primary" style="width:100%;
-margin-top:1.5rem;">Elemzés Futtatása</button>
+        <button id="run-manual-btn" class="btn btn-primary" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
     `;
     openModal('Kézi Elemzés Indítása', content, 'modal-sm');
     
@@ -605,15 +574,13 @@ margin-top:1.5rem;">Elemzés Futtatása</button>
     const day = String(tomorrow.getDate()).padStart(2, '0');
     const hours = String(tomorrow.getHours()).padStart(2, '0');
     const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
-    
     kickoffInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-// === JAVÍTÁS (v54.3): 'runManualAnalysis' hívja a refaktorált 'runAnalysis'-t ===
 function runManualAnalysis() {
     const home = (document.getElementById('manual-home')).value.trim();
     const away = (document.getElementById('manual-away')).value.trim();
-    const leagueName = (document.getElementById('manual-league')).value.trim();
+    const leagueName = (document.getElementById('manual-league')).value.trim(); 
     const kickoffLocal = (document.getElementById('manual-kickoff')).value;
     
     if (!home || !away || !leagueName) { 
@@ -632,33 +599,22 @@ function runManualAnalysis() {
         }
         const utcKickoff = kickoffDate.toISOString();
 
-        // Összeállítjuk a matchData objektumot
-        // FIGYELEM: A manuális futtatás nem fog natív ID-kat tartalmazni,
-        // ezért a backend a "fallback" (név-egyeztetéses) logikát fogja használni.
-        const matchData = {
-            home: home,
-            away: away,
-            utcKickoff: utcKickoff,
-            leagueName: leagueName
-        };
-
         closeModal();
-        runAnalysis(matchData, true); // <-- A refaktorált függvény hívása
+        runAnalysis(home, away, utcKickoff, leagueName, true);
     } catch (e) {
          showToast(`Hiba a dátum feldolgozásakor: ${e.message}`, 'error');
          console.error("Dátum hiba:", e);
     }
 }
-// === JAVÍTÁS VÉGE ===
 
 
-function isMobile() { return window.innerWidth <= 1024;
-} 
+function isMobile() { return window.innerWidth <= 1024; } 
 
 function getLeagueGroup(leagueName) {
     if (!leagueName || typeof leagueName !== 'string') return 'Egyéb Meccsek';
     const sportGroups = LEAGUE_CATEGORIES[appState.currentSport] || {};
     const lowerLeagueName = leagueName.toLowerCase().trim();
+    
     for (const groupName in sportGroups) {
         if (sportGroups[groupName].some(l => lowerLeagueName === l.toLowerCase())) {
             return groupName;
@@ -678,8 +634,10 @@ function renderFixturesForDesktop(fixtures) {
     if (!board) return;
     (document.getElementById('placeholder')).style.display = 'none';
     board.innerHTML = '';
+    
     const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
     const groupedByCategory = groupBy(fixtures, (fx) => getLeagueGroup(fx.league));
+    
     groupOrder.forEach(group => { 
         let columnContent = ''; 
         let cardIndex = 0; 
@@ -688,39 +646,28 @@ function renderFixturesForDesktop(fixtures) {
             const groupedByDate = groupBy(groupedByCategory[group], (fx) => {
                 try {
                     return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' });
- 
-                   } catch (e) { return 'Ismeretlen dátum'; } 
+                } catch (e) { return 'Ismeretlen dátum'; } 
             });
 
             Object.keys(groupedByDate)
                 .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
                 .forEach(dateKey => {
-             
-                   columnContent += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
+                    columnContent += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
                     groupedByDate[dateKey]
                         .sort((a, b) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
                         .forEach((fx) => { 
-           
-                             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
-                            
-                             // === JAVÍTÁS (v54.3): onclick hívás cseréje ===
-                             columnContent += `
+                            const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
+                            columnContent += `
                                 <div class="match-card selectable-card ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}" style="animation-delay: ${cardIndex * 0.05}s">
-                                    <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ?
-'checked' : ''}>
-                                     <div class="match-card-content" onclick="runAnalysisFromList('${fx.uniqueId}', true)">
+                                    <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
+                                     <div class="match-card-content" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league)}', true)">
                                          <div class="match-card-teams">${fx.home} – ${fx.away}</div>
-           
-                                           <div class="match-card-meta">
-                                             <span>${fx.league ||
-'Ismeretlen Liga'}</span>
+                                         <div class="match-card-meta">
+                                             <span>${fx.league || 'Ismeretlen Liga'}</span>
                                              <span>${time}</span>
                                          </div>
-             
-                                      </div>
+                                     </div>
                                 </div>`;
-                            // === JAVÍTÁS VÉGE ===
-                            
                             cardIndex++;
                         });
                     columnContent += `</details>`; 
@@ -731,8 +678,7 @@ function renderFixturesForDesktop(fixtures) {
             <div class="kanban-column">
                 <h4 class="kanban-column-header">${group}</h4>
                 <div class="column-content">
-                    ${columnContent ||
-'<p class="muted" style="text-align: center; padding-top: 2rem;">Nincs meccs ebben a kategóriában.</p>'}
+                    ${columnContent || '<p class="muted" style="text-align: center; padding-top: 2rem;">Nincs meccs ebben a kategóriában.</p>'}
                 </div>
             </div>`;
     });
@@ -743,6 +689,7 @@ function renderFixturesForMobileList(fixtures) {
     if (!container) return;
     (document.getElementById('placeholder')).style.display = 'none'; 
     container.innerHTML = '';
+    
     const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
     const groupedByCategory = groupBy(fixtures, (fx) => getLeagueGroup(fx.league));
     let html = '';
@@ -753,35 +700,25 @@ function renderFixturesForMobileList(fixtures) {
             const groupedByDate = groupBy(groupedByCategory[group], (fx) => {
                 try { return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); }
                 catch (e) { return 'Ismeretlen dátum'; }
- 
             });
 
             Object.keys(groupedByDate)
                 .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
                 .forEach(dateKey => {
                     html += `<div class="date-header-mobile">${formatDateLabel(dateKey)}</div>`; 
-             
-                   groupedByDate[dateKey]
+                    groupedByDate[dateKey]
                         .sort((a, b) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
                         .forEach((fx) => { 
-                            const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 
-'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
-
-                            // === JAVÍTÁS (v54.3): onclick hívás cseréje ===
+                            const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             html += `
                                 <div class="list-item selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
-                                    <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ?
-'checked' : ''}>
-                                    <div class="list-item-content" onclick="runAnalysisFromList('${fx.uniqueId}', true)">
+                                    <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
+                                    <div class="list-item-content" onclick="runAnalysis('${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league)}', true)">
                                         <div class="list-item-title">${fx.home} – ${fx.away}</div>
-             
-                                         <div class="list-item-meta">${fx.league ||
-'Ismeretlen Liga'} - ${time}</div>
+                                        <div class="list-item-meta">${fx.league || 'Ismeretlen Liga'} - ${time}</div>
                                     </div>
                                     <svg class="list-item-arrow" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      
-                                   </div>`;
-                            // === JAVÍTÁS VÉGE ===
+                                </div>`;
                         });
                 });
         }
@@ -803,6 +740,7 @@ function renderHistory(historyData) {
         try { return new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); }
         catch (e) { return 'Ismeretlen dátum'; }
     });
+    
     let html = '';
     Object.keys(groupedByDate)
         .sort((a, b) => parseHungarianDate(b).getTime() - parseHungarianDate(a).getTime()) 
@@ -813,13 +751,11 @@ function renderHistory(historyData) {
 
             sortedItems.forEach((item) => {
                 const analysisTime = new Date(item.date); 
- 
                 const finalCheckButton = `
                     <button class="btn btn-final-check"
                          onclick="runFinalCheck('${escape(item.home)}', '${escape(item.away)}', '${item.sport}'); event.stopPropagation();"
                         title="Végső Ellenőrzés (Jelenleg nem elérhető)"
-   
-                         disabled>
+                        disabled>
                          ✔️
                     </button>`;
                 const time = isNaN(analysisTime.getTime()) ? 'Ismeretlen idő' : analysisTime.toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
@@ -827,19 +763,15 @@ function renderHistory(historyData) {
                 
                 html += `
                     <div class="list-item">
-                        <div style="flex-grow:1; cursor: pointer;"
-                           onclick="viewHistoryDetail('${safeItemId}')">
-                             <div class="list-item-title">${item.home ||
-'?'} – ${item.away || '?'}</div>
-                            <div class="list-item-meta">${item.sport ?
-item.sport.charAt(0).toUpperCase() + item.sport.slice(1) : 'Sport?'} - Elemzés: ${time}</div>
+                        <div style="flex-grow:1; cursor: pointer;" onclick="viewHistoryDetail('${safeItemId}')">
+                             <div class="list-item-title">${item.home || '?'} – ${item.away || '?'}</div>
+                            <div class="list-item-meta">${item.sport ? item.sport.charAt(0).toUpperCase() + item.sport.slice(1) : 'Sport?'} - Elemzés: ${time}</div>
                         </div>
                          ${finalCheckButton}
                          <button class="btn" onclick="deleteHistoryItem('${safeItemId}'); event.stopPropagation();"
-                           title="Törlés" style="color: var(--danger); border-color: var(--danger);">
+                            title="Törlés" style="color: var(--danger); border-color: var(--danger);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                   
-             </button>
+                        </button>
                     </div>`;
             });
             html += `</details>`; 
@@ -893,8 +825,7 @@ function groupBy(arr, keyFn) {
             key = 'hibás_kulcs'; 
         }
         if (!acc[key]) acc[key] = [];
- 
-               acc[key].push(item); 
+        acc[key].push(item); 
         return acc;
     }, {});
 }
@@ -925,11 +856,13 @@ function showToast(message, type = 'info', duration = 4000) {
     toast.className = `toast-notification ${type}`;
     toast.textContent = message; 
     container.appendChild(toast);
+    
     const fadeOutTimer = setTimeout(() => {
         toast.style.animation = 'fadeOut 0.5s forwards'; 
         const removeTimer = setTimeout(() => toast.remove(), 500);
         (toast).dataset.removeTimer = removeTimer.toString();
     }, duration);
+    
     toast.addEventListener('click', () => {
         clearTimeout(fadeOutTimer); 
         if ((toast).dataset.removeTimer) {
@@ -943,17 +876,17 @@ function showToast(message, type = 'info', duration = 4000) {
 function setupThemeSwitcher() {
     const themeSwitcher = document.getElementById('theme-switcher');
     const htmlEl = document.documentElement;
+    
     const setIcon = (theme) => {
         themeSwitcher.innerHTML = theme === 'dark'
-            ?
-'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>' // Nap ikon
-            : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
-// Hold ikon
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>' // Nap ikon
+            : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'; // Hold ikon
     };
     
     const currentTheme = localStorage.getItem('theme') || 'dark';
     htmlEl.className = `${currentTheme}-theme`; 
     setIcon(currentTheme);
+    
     themeSwitcher.addEventListener('click', () => {
         let newTheme = htmlEl.className.includes('dark') ? 'light' : 'dark'; 
         htmlEl.className = `${newTheme}-theme`; 
