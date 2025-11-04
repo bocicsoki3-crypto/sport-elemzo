@@ -1,3 +1,4 @@
+/* style.css (v54.29 - Vizuális Izzás és Elrendezés Javítások) */
 :root {
     --bg-dark: #101010;
     --card-bg-dark: #181818;
@@ -11,12 +12,16 @@
     --text-secondary-light: #606770;
     --border-color-light: #DCE1E4;
     --shadow-color: rgba(0, 0, 0, 0.1);
-    --primary: #D4AF37; /* Narancs marad a fő kiemelő szín */
+    
+    /* === JAVÍTÁS (v54.29) Kérés 2: Színek definiálása === */
+    --primary: #D4AF37; /* Narancs (Döntetlen) */
     --secondary: #B8860B;
-    --accent: #00BFFF;
+    --accent: #00BFFF;   /* Kék (Vendég) */
+    /* === JAVÍTÁS VÉGE === */
+    
     --danger: #FF4747;
     --success: #39FF14;
-    --white-glow-color: #FFFFFF; /* Új: Fehér fényléshez */
+    --white-glow-color: #FFFFFF; /* Fehér (Hazai) */
     --font-family-header: 'Poppins', system-ui, sans-serif;
     --font-family-body: 'Inter', system-ui, sans-serif;
     --card-bg-dark-rgb: 24, 24, 24;
@@ -159,7 +164,12 @@ details > summary::-webkit-details-marker { display: none; }
     text-align: center;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    
+    /* === JAVÍTÁS (v54.29) Kérés 5: Elrendezés javítása === */
+    /* 'center'-ről 'flex-start'-ra váltva, hogy a címek igazodjanak */
+    justify-content: flex-start;
+    /* === JAVÍTÁS VÉGE === */
+    
     align-items: center; 
     min-height: 190px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -182,7 +192,7 @@ details > summary::-webkit-details-marker { display: none; }
     font-size: 1.5rem; 
     font-weight: 700;
     margin-bottom: 0.5rem;
-    line-height: 1.2; 
+    line-height: 1.2;
 }
 .summary-card .details {
     font-size: 0.75rem;
@@ -206,10 +216,12 @@ details > summary::-webkit-details-marker { display: none; }
 .radial-chart { width: 100%; height: 100%; transform: rotate(-90deg); }
 .radial-chart circle { fill: none; stroke-width: 8; stroke-linecap: round; transition: all 0.8s ease-out; }
 .radial-chart .track { stroke: rgba(255,255,255,0.05); }
+
+/* === JAVÍTÁS (v54.29) Kérés 2: Radiális diagram színei === */
 .radial-chart .progress { filter: none; } 
-.radial-chart .home,
-.radial-chart .draw,
-.radial-chart .away { stroke: var(--white-glow-color); }
+.radial-chart .home { stroke: var(--white-glow-color); filter: drop-shadow(0 0 3px var(--white-glow-color)); }
+.radial-chart .draw { stroke: var(--primary); filter: drop-shadow(0 0 3px var(--primary)); }
+.radial-chart .away { stroke: var(--accent); filter: drop-shadow(0 0 3px var(--accent)); }
 
 .diagram-legend {
     display: flex;
@@ -222,9 +234,20 @@ details > summary::-webkit-details-marker { display: none; }
     width: 100%;
 }
 .legend-item { display: flex; align-items: center; gap: 0.4rem; }
-.legend-color-box { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; background-color: var(--white-glow-color) !important; }
+.legend-color-box { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+/* A színek hozzárendelése a legendához */
+.diagram-legend .legend-item:nth-child(1) .legend-color-box { background-color: var(--white-glow-color); }
+.diagram-legend .legend-item:nth-child(2) .legend-color-box { background-color: var(--primary); }
+.diagram-legend .legend-item:nth-child(3) .legend-color-box { background-color: var(--accent); }
+/* === JAVÍTÁS VÉGE === */
+
 .legend-item span { color: var(--text-secondary); }
-.legend-item span strong { color: var(--text-primary) !important; animation: none !important; text-shadow: none !important; }
+.legend-item span strong { 
+    color: var(--text-primary) !important; 
+    /* Eltávolítva az izzás tiltása [cite: 1076] */
+    animation: pulse-glow-white 3s infinite alternate;
+    text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5);
+}
 
 /* xG értékek specifikus */
 .xg-value-container {
@@ -261,7 +284,11 @@ details > summary::-webkit-details-marker { display: none; }
     font-size: 1rem; 
 }
 .total-label { color: var(--text-secondary); margin-right: 8px; }
-.totals-breakdown strong { color: var(--text-primary) !important; animation: none !important; text-shadow: none !important; } 
+
+/* === JAVÍTÁS (v54.29) Kérés 4: Izzás engedélyezése === */
+/* A hibás  felülíró szabály eltávolítva. */
+/* A '.glowing-text-white' [cite: 1103-1105] most már érvényesülni fog. */
+/* === JAVÍTÁS VÉGE === */
 
 /* Gauge specifikus */
 .gauge-container {
@@ -269,7 +296,9 @@ details > summary::-webkit-details-marker { display: none; }
     max-width: 100px;
     margin: 0 auto;
     position: relative;
-    height: 90px;
+    /* === JAVÍTÁS (v54.29) Kérés 5: Elrendezés javítása === */
+    min-height: 90px; /* Biztosítja az egyenletes magasságot */
+    /* === JAVÍTÁS VÉGE === */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -301,7 +330,8 @@ details > summary::-webkit-details-marker { display: none; }
 
 .expert-confidence-card {
     grid-column: 1 / -1; margin-bottom: 1rem;
-    border: 1px solid var(--primary); background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15)); min-height: auto; padding: 1.5rem; display: flex;
+    border: 1px solid var(--primary);
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.15)); min-height: auto; padding: 1.5rem; display: flex;
     flex-direction: column;
 }
 .expert-confidence-card .value { display: none; }
@@ -396,12 +426,8 @@ details > summary::-webkit-details-marker { display: none; }
 @keyframes pulse-glow-orange { from { text-shadow: 0 0 6px var(--primary), 0 0 12px rgba(212, 175, 55, 0.3); } to { text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); } }
 
 /* Master Recommendation Card */
-.master-recommendation-card { margin-top: 2rem; padding: 2rem; border-radius: 16px; text-align: center;
-background: linear-gradient(145deg, rgba(30, 30, 30, 0.8), rgba(10, 10, 10, 0.9)), radial-gradient(circle at top left, rgba(212, 175, 55, 0.15), transparent 50%), radial-gradient(circle at bottom right, rgba(0, 191, 255, 0.1), transparent 50%);
-background-blend-mode: normal; border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
-animation: pulse-border-white 4s infinite alternate; position: relative; overflow: hidden; }
-@keyframes pulse-border-white { from { border-color: rgba(255, 255, 255, 0.3); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
-} to { border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.3); } }
+.master-recommendation-card { margin-top: 2rem; padding: 2rem; border-radius: 16px; text-align: center; background: linear-gradient(145deg, rgba(30, 30, 30, 0.8), rgba(10, 10, 10, 0.9)), radial-gradient(circle at top left, rgba(212, 175, 55, 0.15), transparent 50%), radial-gradient(circle at bottom right, rgba(0, 191, 255, 0.1), transparent 50%); background-blend-mode: normal; border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1); animation: pulse-border-white 4s infinite alternate; position: relative; overflow: hidden; }
+@keyframes pulse-border-white { from { border-color: rgba(255, 255, 255, 0.3); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1); } to { border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.3); } }
 .master-recommendation-card h5 { font-size: 1.3rem; color: var(--text-primary); margin-bottom: 1.5rem; text-shadow: 0 0 10px rgba(255, 255, 255, 0.7); }
 .master-bet { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--primary); text-shadow: 0 0 10px var(--primary), 0 0 20px rgba(212, 175, 55, 0.6); animation: pulse-glow-orange 3s infinite alternate; }
 .master-confidence { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
@@ -464,19 +490,8 @@ animation: pulse-border-white 4s infinite alternate; position: relative; overflo
 .match-checkbox:checked { background-color: rgba(var(--primary), 0.2); }
 .match-checkbox:focus { outline: none; }
 
-/* === JAVÍTÁS (v54.6): A kártya tartalmáról levettük a kattintást === */
-.match-card .match-card-content { 
-    padding: 1.25rem; 
-    flex-grow: 1; 
-    cursor: default; /* Eltávolítva a 'pointer' */
-    z-index: 2;
-}
-.list-item .list-item-content { 
-    padding: 12px; 
-    flex-grow: 1; 
-    cursor: default; /* Eltávolítva a 'pointer' */
-    z-index: 2; 
-}
+.match-card .match-card-content { padding: 1.25rem; flex-grow: 1; cursor: default; z-index: 2; }
+.list-item .list-item-content { padding: 12px; flex-grow: 1; cursor: default; z-index: 2; }
 
 .list-item .list-item-arrow { padding-right: 12px; z-index: 2; flex-shrink: 0; color: var(--text-secondary); }
 .list-item .match-checkbox { width: 40px; height: auto; }
@@ -499,17 +514,15 @@ animation: pulse-border-white 4s infinite alternate; position: relative; overflo
 #login-button { width: 100%; }
 
 /* === Kártya-szintű xG Beviteli Mezök Stílusai (v54.6) === */
-
 .manual-xg-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
     margin-top: 1rem;
 }
-
 .xg-input {
     width: 100%;
-    padding: 8px; /* Kisebb padding */
+    padding: 8px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     background: rgba(0,0,0,0.2);
@@ -518,19 +531,16 @@ animation: pulse-border-white 4s infinite alternate; position: relative; overflo
     text-align: center;
     font-family: var(--font-family-body);
 }
-
 .xg-input::placeholder {
     color: var(--text-secondary);
     opacity: 0.7;
 }
-
 .xg-input:focus {
     outline: none;
     border-color: var(--primary);
     background: var(--card-bg);
     box-shadow: 0 0 0 3px rgba(212,175,55,.3);
 }
-
 /* Chrome, Safari, Edge, Opera - Spinner elrejtése */
 .xg-input::-webkit-outer-spin-button,
 .xg-input::-webkit-inner-spin-button {
