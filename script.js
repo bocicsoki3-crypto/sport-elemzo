@@ -1,12 +1,12 @@
-// --- script.js (v54.29 - Jégkorong Döntetlen Elrejtése) ---
+// --- script.js (v54.31 - "A Próféta" UI Fix) ---
 // MÓDOSÍTÁS:
-// 1. A 'buildAnalysisHtml_CLIENTSIDE'  most már átadja a 'matchData.sport'
-//    paramétert a 'getRadialChartHtml'-nek .
-// 2. A 'getRadialChartHtml'  most már tartalmaz egy 'sport' paramétert,
-//    és elrejti a "Döntetlen" sort és diagram-szegmenst,
-//    ha a sport 'hockey' vagy 'basketball' (Kérés 1).
+// 1. A 'buildAnalysisHtml_CLIENTSIDE' függvény
+//    ténylegesen kiegészítve a hiányzó 'prophetCardHtml'
+//    definícióval és meghívásával.
+// 2. A 'prophetic_timeline' adat most már
+//    megjelenik a "Stratégiai Szintézis" előtt.
 
-// --- ALKALMAZÁS ÁLLAPOT (v54.6 - Kártya-szintű xG) ---
+// --- ALKALMAZÁS ÁLLAPOT ---
 const appState = {
     gasUrl: 'https://king-ai-backend.onrender.com', 
     fixtures: [], 
@@ -17,7 +17,7 @@ const appState = {
     selectedMatches: new Set(),
     authToken: null 
 };
-// --- LIGA KATEGÓRIÁK (Változatlan) ---
+// --- LIGA KATEGÓRIÁK ---
 const LEAGUE_CATEGORIES = {
     soccer: {
         'Top Ligák': [ 'Champions League', 'Premier League', 'Bundesliga', 'LaLiga', 'Serie A' ],
@@ -36,7 +36,7 @@ const LEAGUE_CATEGORIES = {
         'Egyéb Meccsek': [ 'FIBA World Cup', 'Olimpiai Játékok', 'EuroBasket', 'FIBA Champions League', 'EuroCup', 'LNB Pro A' ]
     }
 };
-// --- INICIALIZÁLÁS (JELSZÓVÉDELEMMEL KIEGÉSZÍTVE) ---
+// --- INICIALIZÁLÁS ---
 document.addEventListener('DOMContentLoaded', () => {
     setupLoginProtection(); 
 });
@@ -214,24 +214,17 @@ async function loadFixtures() {
     }
 }
 
-/**
- * ÚJ (v54.6) Segédfüggvény, amit a kártyákon lévő gomb hív meg.
- * Összegyűjti az adatokat a kártyáról és meghívja a fő runAnalysis-t.
- */
 function runAnalysisFromCard(buttonElement, home, away, utcKickoff, leagueName) {
     const card = buttonElement.closest('.match-card, .list-item');
     if (!card) return;
     
-    // Kiolvassuk az opcionális, kártya-specifikus xG adatokat
     const H_xG_raw = card.querySelector('.xg-input-h-xg').value;
     const H_xGA_raw = card.querySelector('.xg-input-h-xga').value;
     const A_xG_raw = card.querySelector('.xg-input-a-xg').value;
     const A_xGA_raw = card.querySelector('.xg-input-a-xga').value;
     
     let manualXgComponents = {};
-    // Csak akkor küldjük, ha mind a 4 ki van töltve
     if (H_xG_raw && H_xGA_raw && A_xG_raw && A_xGA_raw) {
-        // Fontos: A tizedesvesszőt pontra cseréljük a parseFloat előtt
         const H_xG = parseFloat(H_xG_raw.replace(',', '.'));
         const H_xGA = parseFloat(H_xGA_raw.replace(',', '.'));
         const A_xG = parseFloat(A_xG_raw.replace(',', '.'));
@@ -250,15 +243,9 @@ function runAnalysisFromCard(buttonElement, home, away, utcKickoff, leagueName) 
         }
     }
     
-    // Meghívjuk a fő elemző függvényt, átadva az adatokat
     runAnalysis(home, away, utcKickoff, leagueName, true, manualXgComponents);
 }
 
-
-/**
- * Fő Elemző Függvény (v54.5 - JSON API + Manual xG)
- * Ezt hívja a runAnalysisFromCard ÉS a runManualAnalysis is.
- */
 async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false, manualXg = {}) {
     home = unescape(home);
     away = unescape(away);
@@ -293,7 +280,7 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
             leagueName: leagueName || '', 
             sheetUrl: appState.sheetUrl,
             openingOdds: JSON.parse(openingOdds),
-            ...manualXg // Itt adjuk hozzá az opcionális xG adatokat
+            ...manualXg
         };
         
         const response = await fetchWithAuth(analysisUrl, {
@@ -306,10 +293,8 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         
-        // === Kliensoldali renderelés (v54.0) ===
         const { analysisData, debugInfo } = data;
         
-        // 1. Építsük fel a HTML-t kliens oldalon az új segédfüggvényekkel
         const finalHtml = buildAnalysisHtml_CLIENTSIDE(
             analysisData.committeeResults,
             analysisData.matchData,
@@ -320,20 +305,19 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
              analysisData.recommendation
         );
         
-        // 2. A HTML-t beillesztjük
         modalResults.innerHTML = `<div class="analysis-body">${finalHtml}</div>`;
-        // Adjunk hozzá egy debug sort az xG forrásáról
         modalResults.innerHTML += `<p class="muted" style="text-align: center; margin-top: 1rem; font-size: 0.8rem;">xG Forrás: ${analysisData.xgSource || 'Ismeretlen'}</p>`;
 
-        // 3. A Chat kontextusát beállítjuk (A nyers szöveggel)
+        // === JAVÍTÁS (v54.31): A Próféta hozzáadása a Chat Kontexushoz ===
         const { committeeResults, recommendation } = analysisData;
         appState.currentAnalysisContext = `Fő elemzés: ${committeeResults.strategic_conflict_resolution}\n
+Prófécia: ${committeeResults.prophetic_timeline || 'N/A'}\n
 Quant következtetés: ${committeeResults.data_driven_conclusion}\n
 Scout következtetés: ${committeeResults.narrative_conclusion}\n
 Ajánlás: ${recommendation.recommended_bet} (Bizalom: ${recommendation.final_confidence})`;
+        // === JAVÍTÁS VÉGE ===
             
         appState.chatHistory = [];
-        // === JAVÍTÁS VÉGE ===
 
         modalSkeleton.classList.remove('active');
         modalChat.style.display = 'block';
@@ -608,7 +592,6 @@ function handleSportChange() {
     updateMultiSelectButton();
 }
 
-// === JAVÍTÁS (v54.6): Ez az űrlap most már *csak* a csapatok/liga manuális megadására szolgál ===
 function openManualAnalysisModal() {
     let content = `
         <div class="control-group">
@@ -639,7 +622,6 @@ function openManualAnalysisModal() {
     
     (document.getElementById('run-manual-btn')).onclick = runManualAnalysis;
 
-    // Alapértelmezett dátum beállítása (holnap 15:00)
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(15, 0, 0, 0);
@@ -654,14 +636,13 @@ function openManualAnalysisModal() {
     kickoffInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-// === JAVÍTÁS (v54.6): A manuális xG logika eltávolítva innen ===
 function runManualAnalysis() {
     const home = (document.getElementById('manual-home')).value.trim();
     const away = (document.getElementById('manual-away')).value.trim();
     const leagueName = (document.getElementById('manual-league')).value.trim();
     const kickoffLocal = (document.getElementById('manual-kickoff')).value;
     
-    let manualXgComponents = {}; // Manuális xG-t itt már nem olvasunk
+    let manualXgComponents = {}; 
     
     if (!home || !away || !leagueName) { 
         showToast('Minden kötelező mezőt ki kell tölteni (Hazai, Vendég, Bajnokságnév).', 'error');
@@ -680,7 +661,6 @@ function runManualAnalysis() {
         const utcKickoff = kickoffDate.toISOString();
 
         closeModal();
-        // Futtatás az üres 'manualXgComponents' objektummal
         runAnalysis(home, away, utcKickoff, leagueName, true, manualXgComponents);
     } catch (e) {
          showToast(`Hiba a dátum feldolgozásakor: ${e.message}`, 'error');
@@ -709,7 +689,6 @@ function getLeagueGroup(leagueName) {
     return 'Egyéb Meccsek';
 }
 
-// === JAVÍTÁS (v54.6): Kártya HTML módosítása ===
 function renderFixturesForDesktop(fixtures) {
     const board = document.getElementById('kanban-board');
     if (!board) return;
@@ -780,7 +759,6 @@ function renderFixturesForDesktop(fixtures) {
     });
 }
 
-// === JAVÍTÁS (v54.6): Kártya HTML módosítása (Mobil) ===
 function renderFixturesForMobileList(fixtures) {
     const container = document.getElementById('mobile-list-container');
     if (!container) return;
@@ -875,7 +853,7 @@ function renderHistory(historyData) {
                         </div>
                          <button class="btn" onclick="deleteHistoryItem('${safeItemId}'); event.stopPropagation();"
                                 title="Törlés" style="color: var(--danger); border-color: var(--danger);">
-                            <svg xmlns="http://www.w.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                        </button>
                     </div>`;
             });
@@ -1137,8 +1115,7 @@ function updateMultiSelectButton() {
 }
 
 
-// --- KLIENSOLDALI HTML GENERÁTOROK (a htmlBuilder.ts helyett) ---
-// (Ezek a v54.0 JSON API refaktor óta szükségesek)
+// --- KLIENSOLDALI HTML GENERÁTOROK ---
 
 function escapeHTML(str) {
     if (str == null) return '';
@@ -1172,16 +1149,14 @@ function getRadialChartHtml(pHome, pDraw, pAway, sport) {
     const r = 40;
     const circumference = 2 * Math.PI * r;
     
-    // Határozzuk meg, hogy ez egy "Moneyline" sport-e (nincs döntetlen)
     const isMoneylineSport = sport === 'hockey' || sport === 'basketball';
     
-    // Ha Moneyline, a pDraw-t 0-ra állítjuk, és a többit normalizáljuk
     let pHomeSafe, pDrawSafe, pAwaySafe;
     if (isMoneylineSport) {
         const total = (parseFloat(String(pHome)) || 0) + (parseFloat(String(pAway)) || 0);
         pHomeSafe = (total > 0) ? (parseFloat(String(pHome)) / total) * 100 : 50;
         pAwaySafe = (total > 0) ? (parseFloat(String(pAway)) / total) * 100 : 50;
-        pDrawSafe = 0; // A döntetlen 0%
+        pDrawSafe = 0;
     } else {
         pHomeSafe = parseFloat(String(pHome)) || 0;
         pDrawSafe = parseFloat(String(pDraw)) || 0;
@@ -1196,7 +1171,6 @@ function getRadialChartHtml(pHome, pDraw, pAway, sport) {
     const drawOffset = -homeSegment;
     const awayOffset = -(homeSegment + drawSegment);
 
-    // A Döntetlen (draw) HTML generálása
     const drawSvgCircle = `
         <circle class="progress draw" cx="50" cy="50" r="${r}"
                 stroke-dasharray="${drawSegment} ${circumference}"
@@ -1238,7 +1212,6 @@ function getRadialChartHtml(pHome, pDraw, pAway, sport) {
         </div>
     </div>`;
 }
-// === JAVÍTÁS VÉGE ===
 
 function getGaugeHtml(confidence, label = "") {
     const safeConf = Math.max(0, Math.min(10, parseFloat(String(confidence)) || 0));
@@ -1276,13 +1249,15 @@ function getConfidenceInterpretationHtml(confidenceScore) {
     </div>`;
 }
 
+// === JAVÍTÁS (v54.29) Kérés 7: Mikromodellek bővítése ===
 function getMicroAnalysesHtml(microAnalyses) {
     if (!microAnalyses || Object.keys(microAnalyses).length === 0) {
         return "<p>Nem futottak speciális modellek ehhez a sporthoz.</p>";
     }
     let html = '';
     
-    // Kérés 7 (részleges): A lista kiegészítése a 'corner' és 'card' elemzésekkel
+    // A lista kiegészítve a 'corner' és 'card' elemzésekkel
+    // (Az AI_Service.ts (v54.30) már biztosítja ezeket)
     const analyses = { 
         'BTTS': microAnalyses.btts_analysis, 
         'GÓL O/U': microAnalyses.goals_ou_analysis,
@@ -1291,7 +1266,9 @@ function getMicroAnalysesHtml(microAnalyses) {
     };
     
     Object.entries(analyses).forEach(([key, text]) => {
-        if (!text) return; 
+        // Csak akkor jelenítjük meg, ha az AI adott rá valós választ (nem 'N/A')
+        if (!text || text === 'N/A' || text.includes('N/A')) return; 
+        
         const title = key.toUpperCase().replace(/_/g, ' ');
         const parts = (text || "Hiba.").split('Bizalom:');
         const analysisText = parts[0] || "Elemzés nem elérhető.";
@@ -1306,10 +1283,11 @@ function getMicroAnalysesHtml(microAnalyses) {
     if (html === '') { return "<p>Nem futottak speciális modellek ehhez a sporthoz.</p>"; }
     return html;
 }
+// === JAVÍTÁS VÉGE ===
 
 /**
  * Fő Kliensoldali HTML építő függvény.
- * JAVÍTVA (v54.29): Átadja a 'matchData.sport' paramétert a 'getRadialChartHtml'-nek.
+ * JAVÍTVA (v54.31): "A Próféta" kártya hozzáadva.
  */
 function buildAnalysisHtml_CLIENTSIDE(
     fullAnalysisReport, 
@@ -1428,6 +1406,19 @@ function buildAnalysisHtml_CLIENTSIDE(
          <div class="market-card-grid">${marketCardsHtml}</div>
     </div>`;
     
+    // === JAVÍTÁS (v54.31) Kérés: "A Próféta" ===
+    // Egy új kártya hozzáadása a Próféta narratívájának
+    const prophetText = fullAnalysisReport?.prophetic_timeline;
+    let prophetCardHtml = '';
+    if (prophetText && !prophetText.includes("Hiba")) {
+        prophetCardHtml = `
+        <div class="summary-card expert-confidence-card" style="border-color: var(--accent); background: linear-gradient(145deg, rgba(0, 191, 255, 0.05), rgba(0, 191, 255, 0.15));">
+            <h5><strong>A Próféta Látomása (Várható Meccskép)</strong></h5>
+            <div class="details" style="font-style: italic; max-width: 900px;">${processAiText(prophetText)}</div>
+        </div>`;
+    }
+    // === JAVÍTÁS VÉGE ===
+
     // --- 6. RÉSZLETES ELEMZÉS (ACCORDION) ---
     const accordionHtml = `
     <div class="analysis-accordion">
@@ -1492,6 +1483,6 @@ function buildAnalysisHtml_CLIENTSIDE(
         ${atAGlanceHtml}
         ${expertConfidenceCardHtml}
         ${marketSectionHtml}
-        ${accordionHtml}
+        ${prophetCardHtml} ${accordionHtml}
     `;
 }
