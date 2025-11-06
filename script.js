@@ -1,16 +1,13 @@
-// --- script.js (v63.0 - 6 Fős Bizottság - 1. Lépés: Frontend Logika) ---
-// MÓDOSÍTÁS (Feladat 1.1, 1.2, 1.3):
-// 1. ÚJ FÜGGVÉNY: 'addRosterToggleListeners' és 'handleRosterToggle'.
-//    Amikor a user a "P1 HIÁNYZÓK" nyílra kattint, ez a szkript
-//    most már *azonnal* hívja az új '/getRosters' végpontot,
-//    lekéri a kereteket, és betölti őket a 'rosterCache'-be.
-// 2. MÓDOSÍTOTT FÜGGVÉNY: '_buildRosterSelectorHtml' átírva,
-//    hogy két külön oszlopot (Hazai/Vendég) generáljon, pozíció
-//    szerint csoportosítva, ahogy kérted.
-// 3. MÓDOSÍTOTT FÜGGVÉNY: 'renderFixturesForDesktop/Mobile' frissítve,
-//    hogy a placeholder szöveg helyes legyen ("Kattints a betöltéshez...").
-// 4. MÓDOSÍTOTT FÜGGVÉNY: 'loadFixtures' most már meghívja az 'addRosterToggleListeners'-t.
-// 5. JAVÍTVA: Az összes '' és '' debug címke eltávolítva a szintaktikai hiba javítása érdekében.
+// --- script.js (v64.0 - Banker & Gambler Személyiségek) ---
+// MÓDOSÍTÁS (v64.0):
+// 1. A 'runAnalysis' frissítve, hogy a v64.0-s backend választ
+//    (modelConfidence és finalConfidenceScore) helyesen adja át.
+// 2. A 'buildAnalysisHtml_CLIENTSIDE' függvény frissítve, hogy
+//    megjelenítse a "Bankár" (konzervatív) és a "Szerencsejátékos" (agresszív)
+//    ajánlatát is.
+// 3. A "Bizalmi Híd" kártya frissítve, hogy a Quant (stat) és a
+//    Stratéga (súlyozott) bizalmat mutassa.
+// 4. JAVÍTVA: A szintaktikai hiba (sortörés) javítva.
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
     gasUrl: 'https://king-ai-backend.onrender.com', 
@@ -29,7 +26,7 @@ const LEAGUE_CATEGORIES = {
     soccer: {
         'Top Ligák': [ 'Champions League', 'Premier League', 'Bundesliga', 'LaLiga', 'Serie A' ],
         'Kiemelt Bajnokságok': [ 'Europa League', 'Ligue 1', 'Eredivisie', 'Liga Portugal' ],
-        'Figyelmet Érdemlő': [ 'Championship', '2.Bundesliga', 'Serie B', 'LaLiga2', 'Super Lig', 'Premiership', 'MLS' ],
+'Figyelmet Érdemlő': [ 'Championship', '2. Bundesliga', 'Serie B', 'LaLiga2', 'Super Lig', 'Premiership', 'MLS' ],
         'Egyéb Meccsek': [ 'FIFA World Cup', 'UEFA European Championship', 'Conference League', 'Serie A (Brazil)', 'Argentinian Liga Profesional', 'J1 League', 'Allsvenskan', 'Super League 1' ]
     },
     hockey: {
@@ -193,7 +190,8 @@ if (manualAbsentees.home.length > 0 || manualAbsentees.away.length > 0) {
 }
 
 /**
- * v62.1: Kezeli a P1 Komponens xG-t ÉS a P1 Manuális Hiányzókat
+ * v64.0: Módosítva, hogy a 'buildAnalysisHtml_CLIENTSIDE'
+ * hívása megfeleljen az új 'Banker/Gambler' fejlesztésnek
  */
 async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false, manualXg = {}) {
     home = unescape(home);
@@ -252,17 +250,17 @@ const { analysisData, debugInfo } = data;
 appState.rosterCache.set(uniqueId, analysisData.availableRosters);
         }
         
-        // === MÓDOSÍTÁS (v63.1) ===
+        // === MÓDOSÍTÁS (v64.0) ===
         // Most már átadjuk a 'finalConfidenceScore'-t is, hogy a "Bizalmi Híd" a helyes (Stratéga) pontszámot mutassa
         const finalHtml = buildAnalysisHtml_CLIENTSIDE(
-            analysisData.committee,
+            analysisData.committee, // Ez tartalmazza: { banker: ..., gambler: ... }
             analysisData.matchData,
             analysisData.oddsData,
             analysisData.valueBets,
             analysisData.modelConfidence, // Quant Bizalom
-            analysisData.finalConfidenceScore, // Stratéga Bizalom
+            analysisData.finalConfidenceScore, // Stratéga (Súlyozott) Bizalom
             analysisData.sim,
-            analysisData.recommendation,
+            analysisData.recommendation, // Ez az alapértelmezett (Banker) ajánlás
             analysisData.availableRosters
         );
 modalResults.innerHTML = `<div class="analysis-body">${finalHtml}</div>`;
@@ -273,13 +271,16 @@ if (chatWrapper) {
             chatWrapper.appendChild(modalChatContainer);
 }
 
-        // === MÓDOSÍTÁS (6 FŐS BIZOTTSÁG) ===
-        // Az appState.currentAnalysisContext feltöltése az ÚJ lánc kimenetével
+        // === MÓDOSÍTÁS (v64.0) ===
+        // A chat kontextus most már mindkét stratéga véleményét tartalmazza
         const { committee, recommendation } = analysisData;
-appState.currentAnalysisContext = `Fő elemzés: ${committee.strategist?.strategic_synthesis || 'N/A'}\n
-Prófécia: ${committee.strategist?.prophetic_timeline || 'N/A'}\n
-Kritika: ${committee.critic?.tactical_summary || 'N/A'}\n
-Ajánlás: ${recommendation.recommended_bet} (Bizalom: ${recommendation.final_confidence})`;
+const bankerReport = committee.strategist?.banker;
+        const gamblerReport = committee.strategist?.gambler;
+
+        appState.currentAnalysisContext = `Fő elemzés (Bankár): ${bankerReport?.strategic_synthesis || 'N/A'}\n
+Alternatív elemzés (Szerencsejátékos): ${gamblerReport?.strategic_synthesis || 'N/A'}\n
+Bankár Tipp: ${bankerReport?.master_recommendation?.recommended_bet} (Bizalom: ${bankerReport?.master_recommendation?.final_confidence})\n
+Szerencsejátékos Tipp: ${gamblerReport?.master_recommendation?.recommended_bet} (Bizalom: ${gamblerReport?.master_recommendation?.final_confidence})`;
             
         appState.chatHistory = [];
         modalSkeleton.classList.remove('active');
@@ -357,10 +358,10 @@ if (!record || !record.html) throw new Error("A szerver nem találta a kért ele
         let contentToDisplay = "";
 if (record.html.startsWith("JSON_API_MODE")) {
             // Próbáljuk meg az új (v63.0) módban renderelni
-            if (record.html.includes("v63.0 Lánc") || record.html.includes("v63.1 Lánc")) { // Módosítva
-                 contentToDisplay = `<p class="muted" style="text-align:center; padding: 2rem;">Ez egy "v63.x Bizottsági Lánc" elemzés.<br>A mentett JSON adatok visszatöltése és újrarajzolása jelenleg még nincs implementálva.</p>`;
+            if (record.html.includes("v63.0 Lánc") || record.html.includes("v63.1 Lánc") || record.html.includes("v64.0 Lánc")) { // Módosítva
+                 contentToDisplay = `<p class="muted" style="text-align:center; padding: 2rem;">Ez egy "v63/v64 Bizottsági Lánc" elemzés.<br>A mentett JSON adatok visszatöltése és újrarajzolása jelenleg még nincs implementálva.</p>`;
 } else {
-                 contentToDisplay = `<p class="muted" style="text-align:center; padding: 2rem;">Ez egy régebbi (v55-v62) JSON API-n keresztül mentett elemzés.<br>A JSON adatok újrafeldolgozása a v63.x nézethez nem lehetséges.<br><br><i>${escapeHTML(record.html)}</i></p>`;
+                 contentToDisplay = `<p class="muted" style="text-align:center; padding: 2rem;">Ez egy régebbi (v55-v62) JSON API-n keresztül mentett elemzés.<br>A JSON adatok újrafeldolgozása a v64.0 nézethez nem lehetséges.<br><br><i>${escapeHTML(record.html)}</i></p>`;
 }
         } else {
             contentToDisplay = `<div class="analysis-body">${record.html}</div>`;
@@ -538,14 +539,18 @@ results.forEach(result => {
              let recommendationHtml = '<p style="color:var(--danger);">Ismeretlen hiba történt az elemzés során ennél a meccsnél.</p>'; 
 
             if (!result.error && result.analysisData) { 
-                const rec = result.analysisData.recommendation;
+                // === MÓDOSÍTÁS (v64.0) ===
+                // A 'recommendation' a Bankár ajánlása.
+                const rec = result.analysisData.recommendation; 
+                // Kinyerjük a Gambler ajánlását is, ha van
+                const gamblerRec = result.analysisData.committee?.strategist?.gambler?.master_recommendation;
+                
                 if (rec) {
-  
-                  const highlightedReasoning = _highlightKeywords(rec.brief_reasoning, [result.analysisData.matchData.home, result.analysisData.matchData.away]);
+      const highlightedReasoning = _highlightKeywords(rec.brief_reasoning, [result.analysisData.matchData.home, result.analysisData.matchData.away]);
                     recommendationHtml = `
                         <div class="master-recommendation-card" style="margin-top:0; padding: 1rem; border: none; box-shadow: none; animation: none; background: transparent;">
                    
-         <div class="master-bet"><strong>${escapeHTML(rec.recommended_bet)}</strong></div>
+         <div class="master-bet"><strong>(Bankár) ${escapeHTML(rec.recommended_bet)}</strong></div>
                              <div class="master-confidence">
                                 Végső Bizalom: <strong class="glowing-text-white">${parseFloat(rec.final_confidence ||
 1.0).toFixed(1)}/10</strong>
@@ -553,8 +558,18 @@ results.forEach(result => {
                              <div class="master-reasoning" style="font-size: 0.9rem;">${highlightedReasoning}</div>
                         </div>`;
 } else {
-                     recommendationHtml = '<p class="muted">A fő elemzői ajánlás nem található ebben az elemzésben.</p>';
+                     recommendationHtml = '<p class="muted">A fő elemzői ajánlás (Bankár) nem található.</p>';
 }
+
+                if (gamblerRec && gamblerRec.recommended_bet !== rec.recommended_bet) {
+                    const gamblerReasoning = _highlightKeywords(gamblerRec.brief_reasoning, [result.analysisData.matchData.home, result.analysisData.matchData.away]);
+                    recommendationHtml += `
+                        <div class="master-recommendation-card" style="margin-top:0.5rem; padding: 1rem; border: none; box-shadow: none; animation: none; background: transparent; border-top: 1px dashed var(--danger);">
+                            <div class="master-bet" style="color: var(--danger);"><strong>(Szerencsejátékos) ${escapeHTML(gamblerRec.recommended_bet)}</strong></div>
+                             <div class="master-reasoning" style="font-size: 0.9rem; color: var(--text-secondary);">${gamblerReasoning}</div>
+                        </div>`;
+                }
+                // === MÓDOSÍTÁS VÉGE ===
             } else if (result.error) { 
                  recommendationHtml = `<p style="color:var(--danger);">Hiba: ${result.error}</p>`;
 }
@@ -742,220 +757,6 @@ if (isNaN(kickoffDate.getTime())) {
          showToast(`Hiba a dátum feldolgozásakor: ${e.message}`, 'error');
 console.error("Dátum hiba:", e);
     }
-}
-
-function isMobile() { return window.innerWidth <= 1024;
-} 
-
-function getLeagueGroup(leagueName) {
-    if (!leagueName || typeof leagueName !== 'string') return 'Egyéb Meccsek';
-const sportGroups = LEAGUE_CATEGORIES[appState.currentSport] || {};
-    const lowerLeagueName = leagueName.toLowerCase().trim();
-for (const groupName in sportGroups) {
-        if (sportGroups[groupName].some(l => lowerLeagueName === l.toLowerCase())) {
-            return groupName;
-}
-    }
-    for (const groupName in sportGroups) {
-        if (sportGroups[groupName].some(l => lowerLeagueName.includes(l.toLowerCase()))) {
-            return groupName;
-}
-    }
-    return 'Egyéb Meccsek';
-}
-
-/**
- * v62.1: Megjeleníti a 4-komponensű P1 xG-t ÉS a P1 Hiányzó Választót
- */
-function renderFixturesForDesktop(fixtures) {
-    const board = document.getElementById('kanban-board');
-if (!board) return;
-    
-    (document.getElementById('placeholder')).style.display = 'none';
-    board.innerHTML = '';
-    const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
-const groupedByCategory = groupBy(fixtures, (fx) => getLeagueGroup(fx.league));
-    
-    groupOrder.forEach(group => { 
-        let columnContent = ''; 
-        let cardIndex = 0; 
-
-        if (groupedByCategory[group]) { 
-            const groupedByDate = groupBy(groupedByCategory[group], (fx) => {
-                try { return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); } 
-           
-     catch (e) { return 'Ismeretlen dátum'; } 
-            });
-
-            Object.keys(groupedByDate)
-                .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
-                .forEach(dateKey => {
-                    columnContent += `<details class="date-section" 
-open><summary>${formatDateLabel(dateKey)}</summary>`;
-                    groupedByDate[dateKey]
-                        .sort((a, b) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
-                        .forEach((fx) => { 
-                      
-      const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
-// === MÓDOSÍTÁS (6 FŐS BIZOTTSÁG) ===
-                            // A placeholder szöveg módosítása és osztály/adat attribútumok hozzáadása a listener-hez
-                            const rosterHtml = `
-                         
-       <details style="margin-top: 0.5rem;">
-                                    <summary class="roster-selector-summary" data-match-id="${fx.uniqueId}" data-home="${escape(fx.home)}" data-away="${escape(fx.away)}" data-league="${escape(fx.league || '')}" data-kickoff="${escape(fx.utcKickoff)}" style="font-size: 0.8rem; color: var(--text-secondary); cursor: pointer;">
-                                        ► 
-P1 HIÁNYZÓK FELÜLBÍRÁLÁSA (Kattints a betöltéshez)
-                                    </summary>
-                                    <div class="roster-selector-container" data-match-id="${fx.uniqueId}" style="margin-top: 0.5rem; text-align: left;">
-                 
-                       <p class="muted roster-placeholder" style="font-size: 0.8rem;">Kattints a fenti "P1 HIÁNYZÓK..." feliratra a keretek betöltéséhez...</p>
-                                    </div>
-                             
-   </details>`;
-                            // === MÓDOSÍTÁS VÉGE ===
-
-                            columnContent += `
-                                <div class="match-card selectable-card ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}" style="animation-delay: ${cardIndex * 0.05}s">
-                  
-                  <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ?
-'checked' : ''}>
-                                     <div class="match-card-content">
-                                          <div class="match-card-teams">${fx.home} – ${fx.away}</div>
-               
-                           <div class="match-card-meta">
-                                              <span>${fx.league ||
-'Ismeretlen Liga'}</span>
-                                              <span>${time}</span>
-                                          </div>
-           
-                               <p class="muted" style="font-size: 0.8rem; margin-top: 1rem; margin-bottom: 0.5rem; text-align: left;">P1 (Komponens) xG:</p>
-                                          <div class="manual-xg-grid" style="margin-top: 0.5rem;">
-             
-                                 <input type="text" inputmode="decimal" placeholder="H xG" class="xg-input xg-input-h-xg" title="Hazai Csapat (Home) xG/90">
-                                              <input type="text" inputmode="decimal" placeholder="H xGA" class="xg-input xg-input-h-xga" title="Hazai Csapat (Home) xGA/90">
- 
-                                             <input type="text" inputmode="decimal" placeholder="V xG" class="xg-input xg-input-a-xg" title="Vendég Csapat (Away) xG/90">
-                                             
- <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input xg-input-a-xga" title="Vendég Csapat (Away) xGA/90">
-                                          </div>
-                                          
-     
-                                     ${(appState.currentSport === 'soccer') ?
-rosterHtml : ''}
-                                          
-                                          <button class="btn btn-primary" 
-           
-                                   style="width: 100%; margin-top: 1rem;"
-onclick="runAnalysisFromCard(this, '${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league || '')}')">
-                                            Elemzés Indítása
-                                          </button>
-       
-                               </div>
-                                </div>`;
-cardIndex++;
-                        });
-                    columnContent += `</details>`; 
-                });
-        }
-
-        board.innerHTML += `
-            <div class="kanban-column">
-                <h4 class="kanban-column-header">${group}</h4>
-                <div class="column-content">
-                    ${columnContent ||
-'<p class="muted" style="text-align: center; padding-top: 2rem;">Nincs meccs ebben a kategóriában.</p>'}
-                </div>
-            </div>`;
-});
-}
-
-/**
- * v62.1: Megjeleníti a 4-komponensű P1 xG-t ÉS a P1 Hiányzó Választót
- */
-function renderFixturesForMobileList(fixtures) {
-    const container = document.getElementById('mobile-list-container');
-if (!container) return;
-    (document.getElementById('placeholder')).style.display = 'none'; 
-    container.innerHTML = '';
-    
-    const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
-const groupedByCategory = groupBy(fixtures, (fx) => getLeagueGroup(fx.league));
-    let html = '';
-groupOrder.forEach(group => { 
-        if (groupedByCategory[group]) { 
-            html += `<h4 class="league-header-mobile">${group}</h4>`; 
-            const groupedByDate = groupBy(groupedByCategory[group], (fx) => {
-                try { return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); }
-                 catch (e) { return 'Ismeretlen dátum'; }
-    
-        });
-            Object.keys(groupedByDate)
-                .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
-                .forEach(dateKey => {
-                    html += `<div class="date-header-mobile">${formatDateLabel(dateKey)}</div>`; 
-                
-    groupedByDate[dateKey]
-                         .sort((a, b) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
-                        .forEach((fx) => { 
-                            const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: 
-'2-digit', minute: '2-digit' });
-                            
-                            // === MÓDOSÍTÁS (6 FŐS BIZOTTSÁG) ===
-                            const rosterHtml = `
-                                <details style="margin-top: 0.5rem;">
-                         
-           <summary class="roster-selector-summary" data-match-id="${fx.uniqueId}" data-home="${escape(fx.home)}" data-away="${escape(fx.away)}" data-league="${escape(fx.league || '')}" data-kickoff="${escape(fx.utcKickoff)}" style="font-size: 0.8rem; color: var(--text-secondary); cursor: pointer;">
-                                        ► P1 HIÁNYZÓK FELÜLBÍRÁLÁSA (Kattints a betöltéshez)
-                             
-       </summary>
-                                    <div class="roster-selector-container" data-match-id="${fx.uniqueId}" style="margin-top: 0.5rem; text-align: left;">
-                                        <p class="muted roster-placeholder" style="font-size: 0.8rem;">Kattints a fenti "P1 HIÁNYZÓK..." feliratra a 
-keretek betöltéséhez...</p>
-                                    </div>
-                                </details>`;
-// === MÓDOSÍTÁS VÉGE ===
-
-                            html += `
-                                <div class="list-item selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
-                          
-          <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ?
-'checked' : ''}>
-                                     
-                                    <div class="list-item-content">
-                        
-                <div class="list-item-title">${fx.home} – ${fx.away}</div>
-                                        <div class="list-item-meta">${fx.league ||
-'Ismeretlen Liga'} - ${time}</div>
-                                        
-                                        <p class="muted" style="font-size: 0.8rem; margin-top: 0.75rem; margin-bottom: 0.5rem;">P1 (Komponens) xG:</p>
-        
-                                <div class="manual-xg-grid" style="margin-top: 0.5rem;">
-                                           <input type="text" inputmode="decimal" placeholder="H xG" class="xg-input xg-input-h-xg" title="Hazai Csapat (Home) xG/90">
-            
-                               <input type="text" inputmode="decimal" placeholder="H xGA" class="xg-input xg-input-h-xga" title="Hazai Csapat (Home) xGA/90">
-                                           <input type="text" inputmode="decimal" placeholder="V xG" class="xg-input xg-input-a-xg" title="Vendég Csapat (Away) xG/90">
-      
-                                     <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input xg-input-a-xga" title="Vendég Csapat (Away) xGA/90">
-                                        </div>
-             
-                           
-                                        ${(appState.currentSport === 'soccer') ?
-rosterHtml : ''}
-                                    </div>
-
-                                    <button class="btn btn-primary" 
-                       
-                 style="margin-right: 1rem; align-self: center;"
-onclick="runAnalysisFromCard(this, '${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league || '')}')">
-                                        Elemzés
-                                    </button>
-                  
-              </div>`;
-                        });
-                });
-}
-    });
-    container.innerHTML = html || '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek elérhető mérkőzések.</p>';
 }
 function renderHistory(historyData) {
     if (!historyData || !Array.isArray(historyData) || historyData.length === 0) {
@@ -1582,20 +1383,20 @@ if (containerElement) {
 
 
 /**
- * === FŐ KLIENSOLDALI HTML ÉPÍTŐ (ÁTÍRVA v63.1) ===
+ * === FŐ KLIENSOLDALI HTML ÉPÍTŐ (ÁTÍRVA v64.0) ===
  * Módosítva, hogy a 'quantConfidence'-t (4. Ügynök) és a 'finalConfidenceScore'-t (6. Ügynök)
- * külön kezelje a Bizalmi Híd kártyán.
+ * külön kezelje, és megjelenítse a "Banker" és "Gambler" ajánlatokat.
  */
 function buildAnalysisHtml_CLIENTSIDE(
-    fullAnalysisReport, // Ez most már a 'committee' objektum
+    committeeReport,      // Ez most már a '{ banker: ..., gambler: ... }' objektum
     matchData, 
     oddsData, 
     valueBets, 
     quantConfidence,      // 4. Ügynök (Statisztikai) bizalom
     finalConfidenceScore, // 6. Ügynök (Végső, Súlyozott) bizalom
     sim, 
-    masterRecommendation,
-    availableRosters // ÚJ (v62.1)
+    masterRecommendation, // Ez az alapértelmezett (Banker) ajánlás
+    availableRosters
 ) {
     
     // --- 1. ADATOK KINYERÉSE ---
@@ -1611,40 +1412,36 @@ const pUnder = sim?.pUnder?.toFixed(1) || 'N/A';
     const topScore = `<strong>${sim?.topScore?.gh ??
 'N/A'} - ${sim?.topScore?.ga ?? 'N/A'}</strong>`;
     
-    // === MÓDOSÍTÁS (v63.1) ===
     const modelConf = quantConfidence?.toFixed(1) || '1.0'; // Quant (Statisztikai)
     const expertConfScore = finalConfidenceScore?.toFixed(1) || '1.0'; // Stratéga (Végső)
     
-// === MÓDOSÍTÁS (6 FŐS BIZOTTSÁG) ===
+    // === MÓDOSÍTÁS (v64.0) ===
     // Az új 'committee' objektum feldolgozása
-    let expertConfHtml, prophetText, synthesisText, microModelsHtml, quantReportHtml, scoutReportHtml;
-if (fullAnalysisReport && fullAnalysisReport.strategist) {
-        // --- B. ESET: Új (6 Fős Bizottság v63.0) Struktúra ---
-        // Itt már az AnalysisFlow.ts-ben definiált új 'committee' objektumot várjuk
-        const strategistReport = fullAnalysisReport.strategist;
-const criticReport = fullAnalysisReport.critic;
-        
-        expertConfHtml = strategistReport?.final_confidence_report || `**${expertConfScore}/10** - Stratéga hiba.`;
-// A pontszámot már a TS kódból kapjuk, nem az AI szövegéből olvassuk ki
+    const bankerReport = committeeReport?.strategist?.banker;
+    const gamblerReport = committeeReport?.strategist?.gambler;
+    const criticReport = committeeReport?.critic;
+    const quantReport = committeeReport?.quant;
 
-        prophetText = strategistReport?.prophetic_timeline ||
-"A Próféta nem adott meg jóslatot.";
+    let prophetText, synthesisText, microModelsHtml, quantReportHtml, scoutReportHtml, gamblerRecommendationHtml;
+
+if (bankerReport && gamblerReport && criticReport && quantReport) {
+        
+        prophetText = bankerReport.prophetic_timeline || "A Próféta nem adott meg jóslatot.";
         if (prophetText && !prophetText.includes("Hiba")) {
             prophetText += `\n(Súlyozott xG: ${mu_h} - ${mu_a}. Legvalószínűbb eredmény: ${sim?.topScore?.gh ?? 'N/A'} - ${sim?.topScore?.ga ?? 'N/A'}.)`;
 }
-        synthesisText = strategistReport?.strategic_synthesis || "A stratégiai szintézis nem elérhető.";
-// A mikromodellek most már a 'strategist' alatt fészkelve érkeznek
-        microModelsHtml = getMicroAnalysesHtml(strategistReport?.micromodels, teamNames);
+        synthesisText = bankerReport.strategic_synthesis || "A stratégiai szintézis (Bankár) nem elérhető.";
+// A mikromodellek a Bankár jelentéséből jönnek (mindkettőben ugyanaz)
+        microModelsHtml = getMicroAnalysesHtml(bankerReport.micromodels, teamNames);
 // A Quant/Scout jelentések
-        quantReportHtml = (fullAnalysisReport?.quant) ?
-`
+        quantReportHtml = `
             <div class="committee-card quant">
                 <h4>1.
 Ügynök: Quant Jelentése</h4>
-                <p><strong>Forrás:</strong> ${fullAnalysisReport.quant.source}</p>
-                <p><strong>Tiszta xG:</strong> ${fullAnalysisReport.quant.mu_h?.toFixed(2)} - ${fullAnalysisReport.quant.mu_a?.toFixed(2)}</p>
-            </div>` : '';
-scoutReportHtml = (criticReport?.tactical_summary) ? `
+                <p><strong>Forrás:</strong> ${quantReport.source}</p>
+                <p><strong>Tiszta xG:</strong> ${quantReport.mu_h?.toFixed(2)} - ${quantReport.mu_a?.toFixed(2)}</p>
+            </div>`;
+scoutReportHtml = `
             <div class="committee-card scout">
                 <h4>5.
 Ügynök: Kritikus Jelentése</h4>
@@ -1654,30 +1451,51 @@ scoutReportHtml = (criticReport?.tactical_summary) ? `
                     ${processAiList(criticReport.key_risks, teamNames)}
                 </ul>
                 <p style="margin-top: 0.5rem;"><strong>Kockázati Pontszám:</strong> ${criticReport.contradiction_score || '0.0'}</p>
-   </div>` : '';
+   </div>`;
+
+        // A "Gambler" ajánlás kártyájának elkészítése
+        const bankerRec = bankerReport.master_recommendation;
+        const gamblerRec = gamblerReport.master_recommendation;
+
+        if (gamblerRec && bankerRec && gamblerRec.recommended_bet !== bankerRec.recommended_bet) {
+            const gamblerReasoning = processAiText(gamblerRec.brief_reasoning, teamNames);
+            gamblerRecommendationHtml = `
+            <div class="master-recommendation-card" style="margin-top: 1rem; border: 1px dashed var(--danger); background: rgba(255, 71, 71, 0.05);">
+                <h5 style="color: var(--danger); text-shadow: 0 0 8px var(--danger);">🎲 6. Ügynök: Szerencsejátékos Ajánlása (Alternatív)</h5>
+                <div class="master-bet" style="color: var(--danger);"><strong>${escapeHTML(gamblerRec.recommended_bet)}</strong></div>
+                <div class="master-confidence">
+                    Végső Bizalom: <strong class="glowing-text-white">${(gamblerRec.final_confidence || 1.0).toFixed(1)}/10</strong>
+                </div>
+                <div class="master-reasoning">${gamblerReasoning}</div>
+            </div>`;
+        } else {
+            gamblerRecommendationHtml = `
+            <div class="synthesis-card" style="margin-top: 1rem; text-align: center;">
+                <p class="muted">A "Szerencsejátékos" (agresszív) ügynök egyetértett a "Bankár" (konzervatív) ajánlásával.</p>
+            </div>`;
+        }
+
 
     } else {
         // --- C. ESET: Hiba / Régi Struktúra (Fallback) ---
-        prophetText = fullAnalysisReport?.prophetic_timeline ||
-"Hiba: Az elemzési jelentés ('committee') struktúrája ismeretlen, vagy 'strategist' kulcs hiányzik.";
-        synthesisText = fullAnalysisReport?.strategic_synthesis ||
-"Hiba: Az elemzési jelentés ('committee') struktúrája ismeretlen.";
-        expertConfHtml = fullAnalysisReport?.final_confidence_report || `**${expertConfScore}/10** - Ismeretlen adatszerkezet.`;
-microModelsHtml = getMicroAnalysesHtml(fullAnalysisReport?.micromodels, teamNames) || "<p>Hiba: Mikromodellek betöltése sikertelen.</p>";
+        prophetText = "Hiba: Az elemzési jelentés ('committee') struktúrája ismeretlen, vagy 'strategist' kulcs hiányzik.";
+synthesisText = "Hiba: Az elemzési jelentés ('committee') struktúrája ismeretlen.";
+        microModelsHtml = "<p>Hiba: Mikromodellek betöltése sikertelen.</p>";
         quantReportHtml = "<p>Hiba: Quant jelentés betöltése sikertelen.</p>";
 scoutReportHtml = "<p>Hiba: Kritikus jelentés betöltése sikertelen.</p>";
+        gamblerRecommendationHtml = ""; // Hiba esetén nincs alternatív nézet
     }
     // === MÓDOSÍTÁS VÉGE ===
 
 
-    // --- 2. FŐ AJÁNLÁS (STRATÉGA) (v59.0 - Kiemelőt használ) ---
+    // --- 2. FŐ AJÁNLÁS (Bankár) (v59.0 - Kiemelőt használ) ---
     const finalRec = masterRecommendation ||
 { recommended_bet: "Hiba", final_confidence: 1.0, brief_reasoning: "Hiba" };
     const finalReasoningHtml = processAiText(finalRec.brief_reasoning, teamNames);
     const finalConfInterpretationHtml = getConfidenceInterpretationHtml(finalRec.final_confidence, teamNames);
 const masterRecommendationHtml = `
     <div class="master-recommendation-card">
-        <h5>👑 6. Ügynök: Vezető Stratéga Ajánlása 👑</h5>
+        <h5>👑 6. Ügynök: Vezető Stratéga Ajánlása (Bankár) 👑</h5>
         <div class="master-bet"><strong>${escapeHTML(finalRec.recommended_bet)}</strong></div>
         <div class="master-confidence">
             Végső Bizalom: <strong class="glowing-text-white">${(finalRec.final_confidence || 1.0).toFixed(1)}/10</strong>
@@ -1771,9 +1589,9 @@ rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         </div>
     </div>`;
     
-    // === VÉGSŐ JAVÍTÁS (v63.1) ===
+    // === VÉGSŐ JAVÍTÁS (v64.0) ===
     // A 'Bizalmi Híd' most már a helyes 'modelConf' (Quant) és 'expertConfScore' (Stratéga) változókat használja
-const expertConfReasoning = processAiText(expertConfHtml.split(' - ')[1] || 'N/A', teamNames);
+const expertConfReasoning = processAiText((bankerReport?.final_confidence_report || expertConfHtml).split(' - ')[1] || 'N/A', teamNames);
     const confidenceBridgeHtml = `
     <div class="confidence-bridge-card">
         <h5>Bizalmi Híd (Quant vs. Stratéga)</h5>
@@ -1819,12 +1637,13 @@ const sidebarAccordionHtml = `
             </div>
         </details>` : ''}
     </div>`;
-// --- 8. VÉGLEGES HTML ÖSSZEÁLLÍTÁSA (v62.1 Elrendezés) ---
+// --- 8. VÉGLEGES HTML ÖSSZEÁLLÍTÁSA (v64.0 Elrendezés) ---
     return `
         <div class="analysis-layout">
             
             <div class="analysis-layout-main">
                 ${masterRecommendationHtml}
+                ${gamblerRecommendationHtml || ''} 
                 ${prophetCardHtml}
                 ${synthesisCardHtml}
      
