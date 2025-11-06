@@ -190,11 +190,14 @@ background: rgba(var(--card-bg-rgb), 0.7); }
 .modal-close-btn svg { width: 24px; height: 24px; }
 .modal-close-btn:hover { color: var(--primary); }
 
+/* === VÉGLEGES JAVÍTÁS (1. LÉPÉS) === */
 .modal-body { 
     padding: 1.5rem;
     flex-grow: 1;
-    overflow: hidden; /* === JAVÍTÁS (1. HIBA) === Ez a sor lett hozzáadva, hogy a belső görgetés működjön */
-    min-height: 0;
+    overflow: hidden; /* Ez kényszeríti a belső elemeket a korlátozásra */
+    min-height: 0;    /* Ez biztosítja, hogy a flex-grow helyesen zsugorodjon */
+    display: flex;      /* ÚJ: Flex tárolóvá alakítva */
+    flex-direction: column; /* ÚJ: A belső elemek (pl. #analysis-results) függőlegesen rendeződnek */
 }
 
 .modal-content.modal-sm { max-width: 500px; max-height: 90vh; width: 95%;
@@ -672,8 +675,24 @@ text-shadow: 0 0 8px currentColor, 0 0 16px rgba(255, 255, 255, 0.5); animation:
 }
 .master-reasoning { font-size: 0.95rem; color: var(--text-secondary); font-style: italic; max-width: 600px; margin: 0 auto; line-height: 1.6; }
 
-.analysis-body { line-height: 1.7;
-color: var(--text-secondary); height: 100%; /* v59.0: Kitölti a modal-body-t */ }
+/* === VÉGLEGES JAVÍTÁS (2. LÉPÉS) === */
+/* Új szabály az #analysis-results-hez (amit a script.js [cite: 1207] használ) */
+#analysis-results {
+    flex-grow: 1;          /* Engedi, hogy kitöltse a .modal-body-t */
+    display: flex;         /* Flex tárolóvá alakítva */
+    flex-direction: column;/* A belső .analysis-body miatt */
+    min-height: 0;         /* Lehetővé teszi a zsugorodást a .modal-body-n belül */
+}
+
+/* === VÉGLEGES JAVÍTÁS (3. LÉPÉS) === */
+.analysis-body { 
+    line-height: 1.7;
+color: var(--text-secondary); 
+    /* height: 100%; */ /* TÖRÖLVE: Ez okozta a hibát */
+    flex-grow: 1;         /* ÚJ: Átveszi a height: 100% szerepét, de flexbox-kompatibilis */
+    display: flex;        /* ÚJ: Flex tárolóvá alakítva (bár a layout grid, ez a magassághoz kell) */
+    min-height: 0;        /* ÚJ: Lehetővé teszi a zsugorodást az #analysis-results-en belül */
+}
 .analysis-body h4 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--secondary);
 font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
 .analysis-section { margin-bottom: 1.5rem; padding: 1.5rem; background: rgba(var(--card-bg-rgb), 0.5);
@@ -683,12 +702,14 @@ color: var(--primary); }
 .analysis-section p { margin-bottom: 0; }
 
 /* === ÚJ (v59.0) Kétoszlopos Elrendezés === */
+/* === VÉGLEGES JAVÍTÁS (4. LÉPÉS) === */
 .analysis-layout {
     display: grid;
 grid-template-columns: 1fr; /* Alapértelmezett mobilon */
-grid-template-rows: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr); /* ÚJ: Korlátozza a sor magasságát, kényszeríti az oszlop-görgetést */
     gap: 1.5rem;
-    height: 100%;
+    /* height: 100%; */ /* TÖRÖLVE: Ez okozta a hibát */
+    flex-grow: 1;      /* ÚJ: Átveszi a height: 100% szerepét, de flexbox-kompatibilis */
 /* Kitölti a modal-body-t */
 }
 .analysis-layout-main {
