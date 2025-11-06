@@ -190,7 +190,10 @@ background: rgba(var(--card-bg-rgb), 0.7); }
 .modal-close-btn svg { width: 24px; height: 24px; }
 .modal-close-btn:hover { color: var(--primary); }
 
-.modal-body { padding: 1.5rem; /* Változás v59.0: A belső elemek görgetnek */ flex-grow: 1;
+.modal-body { 
+    padding: 1.5rem;
+    flex-grow: 1;
+    overflow: hidden; /* === JAVÍTÁS (1. HIBA) === Ez a sor lett hozzáadva, hogy a belső görgetés működjön */
 }
 
 .modal-content.modal-sm { max-width: 500px; max-height: 90vh; width: 95%;
@@ -689,7 +692,7 @@ grid-template-columns: 1fr; /* Alapértelmezett mobilon */
 .analysis-layout-main {
     /* Fő tartalom (Narratíva) */
     overflow-y: auto;
-    padding-right: 1rem;
+padding-right: 1rem;
 }
 .analysis-layout-sidebar {
     /* Oldalsáv (Adatok) */
