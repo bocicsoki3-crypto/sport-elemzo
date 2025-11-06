@@ -194,6 +194,7 @@ background: rgba(var(--card-bg-rgb), 0.7); }
     padding: 1.5rem;
     flex-grow: 1;
     overflow: hidden; /* === JAVÍTÁS (1. HIBA) === Ez a sor lett hozzáadva, hogy a belső görgetés működjön */
+    min-height: 0;
 }
 
 .modal-content.modal-sm { max-width: 500px; max-height: 90vh; width: 95%;
