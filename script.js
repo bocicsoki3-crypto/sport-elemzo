@@ -265,6 +265,22 @@ appState.rosterCache.set(uniqueId, analysisData.availableRosters);
             analysisData.recommendation,
             analysisData.availableRosters
         );
+const { analysisData, debugInfo } = data;
+        // ... (rosterCache mentés) ...
+        
+        // === MÓDOSÍTÁS (v64.0) ===
+        // Most már átadjuk a 'finalConfidenceScore'-t is, hogy a "Bizalmi Híd" a helyes (Stratéga) pontszámot mutassa
+        const finalHtml = buildAnalysisHtml_CLIENTSIDE(
+            analysisData.committee, // Ez tartalmazza: { banker: ..., gambler: ... }
+            analysisData.matchData,
+            analysisData.oddsData,
+            analysisData.valueBets,
+            analysisData.modelConfidence, // Quant Bizalom
+            analysisData.finalConfidenceScore, // Stratéga (Súlyozott) Bizalom
+            analysisData.sim,
+            analysisData.recommendation, // Ez az alapértelmezett (Banker) ajánlás
+            analysisData.availableRosters
+        );
 modalResults.innerHTML = `<div class="analysis-body">${finalHtml}</div>`;
         modalResults.innerHTML += `<p class="muted" style="text-align: center; margin-top: 1rem; font-size: 0.8rem;">xG Forrás: ${analysisData.xgSource || 'Ismeretlen'}</p>`;
 // v59.0: A #chat-container áthelyezése a 'common-elements'-ből a 'chat-content-wrapper'-be
@@ -273,13 +289,16 @@ if (chatWrapper) {
             chatWrapper.appendChild(modalChatContainer);
 }
 
-        // === MÓDOSÍTÁS (6 FŐS BIZOTTSÁG) ===
-        // Az appState.currentAnalysisContext feltöltése az ÚJ lánc kimenetével
+        // === MÓDOSÍTÁS (v64.0) ===
+        // A chat kontextus most már mindkét stratéga véleményét tartalmazza
         const { committee, recommendation } = analysisData;
-appState.currentAnalysisContext = `Fő elemzés: ${committee.strategist?.strategic_synthesis || 'N/A'}\n
-Prófécia: ${committee.strategist?.prophetic_timeline || 'N/A'}\n
-Kritika: ${committee.critic?.tactical_summary || 'N/A'}\n
-Ajánlás: ${recommendation.recommended_bet} (Bizalom: ${recommendation.final_confidence})`;
+const bankerReport = committee.strategist?.banker;
+        const gamblerReport = committee.strategist?.gambler;
+
+        appState.currentAnalysisContext = `Fő elemzés (Bankár): ${bankerReport?.strategic_synthesis || 'N/A'}\n
+Alternatív elemzés (Szerencsejátékos): ${gamblerReport?.strategic_synthesis || 'N/A'}\n
+Bankár Tipp: ${bankerReport?.master_recommendation?.recommended_bet} (Bizalom: ${bankerReport?.master_recommendation?.final_confidence})\n
+Szerencsejátékos Tipp: ${gamblerReport?.master_recommendation?.recommended_bet} (Bizalom: ${gamblerReport?.master_recommendation?.final_confidence})`;
             
         appState.chatHistory = [];
         modalSkeleton.classList.remove('active');
@@ -538,14 +557,18 @@ results.forEach(result => {
              let recommendationHtml = '<p style="color:var(--danger);">Ismeretlen hiba történt az elemzés során ennél a meccsnél.</p>'; 
 
             if (!result.error && result.analysisData) { 
-                const rec = result.analysisData.recommendation;
+                // === MÓDOSÍTÁS (v64.0) ===
+                // A 'recommendation' a Bankár ajánlása.
+                const rec = result.analysisData.recommendation; 
+                // Kinyerjük a Gambler ajánlását is, ha van
+                const gamblerRec = result.analysisData.committee?.strategist?.gambler?.master_recommendation;
+                
                 if (rec) {
-  
-                  const highlightedReasoning = _highlightKeywords(rec.brief_reasoning, [result.analysisData.matchData.home, result.analysisData.matchData.away]);
+      const highlightedReasoning = _highlightKeywords(rec.brief_reasoning, [result.analysisData.matchData.home, result.analysisData.matchData.away]);
                     recommendationHtml = `
                         <div class="master-recommendation-card" style="margin-top:0; padding: 1rem; border: none; box-shadow: none; animation: none; background: transparent;">
                    
-         <div class="master-bet"><strong>${escapeHTML(rec.recommended_bet)}</strong></div>
+         <div class="master-bet"><strong>(Bankár) ${escapeHTML(rec.recommended_bet)}</strong></div>
                              <div class="master-confidence">
                                 Végső Bizalom: <strong class="glowing-text-white">${parseFloat(rec.final_confidence ||
 1.0).toFixed(1)}/10</strong>
@@ -553,8 +576,18 @@ results.forEach(result => {
                              <div class="master-reasoning" style="font-size: 0.9rem;">${highlightedReasoning}</div>
                         </div>`;
 } else {
-                     recommendationHtml = '<p class="muted">A fő elemzői ajánlás nem található ebben az elemzésben.</p>';
+                     recommendationHtml = '<p class="muted">A fő elemzői ajánlás (Bankár) nem található.</p>';
 }
+
+                if (gamblerRec && gamblerRec.recommended_bet !== rec.recommended_bet) {
+                    const gamblerReasoning = _highlightKeywords(gamblerRec.brief_reasoning, [result.analysisData.matchData.home, result.analysisData.matchData.away]);
+                    recommendationHtml += `
+                        <div class="master-recommendation-card" style="margin-top:0.5rem; padding: 1rem; border: none; box-shadow: none; animation: none; background: transparent; border-top: 1px dashed var(--danger);">
+                            <div class="master-bet" style="color: var(--danger);"><strong>(Szerencsejátékos) ${escapeHTML(gamblerRec.recommended_bet)}</strong></div>
+                             <div class="master-reasoning" style="font-size: 0.9rem; color: var(--text-secondary);">${gamblerReasoning}</div>
+                        </div>`;
+                }
+                // === MÓDOSÍTÁS VÉGE ===
             } else if (result.error) { 
                  recommendationHtml = `<p style="color:var(--danger);">Hiba: ${result.error}</p>`;
 }
@@ -1587,15 +1620,15 @@ if (containerElement) {
  * külön kezelje a Bizalmi Híd kártyán.
  */
 function buildAnalysisHtml_CLIENTSIDE(
-    fullAnalysisReport, // Ez most már a 'committee' objektum
+    committeeReport,      // Ez most már a '{ banker: ..., gambler: ... }' objektum
     matchData, 
     oddsData, 
     valueBets, 
     quantConfidence,      // 4. Ügynök (Statisztikai) bizalom
     finalConfidenceScore, // 6. Ügynök (Végső, Súlyozott) bizalom
     sim, 
-    masterRecommendation,
-    availableRosters // ÚJ (v62.1)
+    masterRecommendation, // Ez az alapértelmezett (Banker) ajánlás
+    availableRosters
 ) {
     
     // --- 1. ADATOK KINYERÉSE ---
@@ -1611,40 +1644,36 @@ const pUnder = sim?.pUnder?.toFixed(1) || 'N/A';
     const topScore = `<strong>${sim?.topScore?.gh ??
 'N/A'} - ${sim?.topScore?.ga ?? 'N/A'}</strong>`;
     
-    // === MÓDOSÍTÁS (v63.1) ===
     const modelConf = quantConfidence?.toFixed(1) || '1.0'; // Quant (Statisztikai)
     const expertConfScore = finalConfidenceScore?.toFixed(1) || '1.0'; // Stratéga (Végső)
     
-// === MÓDOSÍTÁS (6 FŐS BIZOTTSÁG) ===
+    // === MÓDOSÍTÁS (v64.0) ===
     // Az új 'committee' objektum feldolgozása
-    let expertConfHtml, prophetText, synthesisText, microModelsHtml, quantReportHtml, scoutReportHtml;
-if (fullAnalysisReport && fullAnalysisReport.strategist) {
-        // --- B. ESET: Új (6 Fős Bizottság v63.0) Struktúra ---
-        // Itt már az AnalysisFlow.ts-ben definiált új 'committee' objektumot várjuk
-        const strategistReport = fullAnalysisReport.strategist;
-const criticReport = fullAnalysisReport.critic;
-        
-        expertConfHtml = strategistReport?.final_confidence_report || `**${expertConfScore}/10** - Stratéga hiba.`;
-// A pontszámot már a TS kódból kapjuk, nem az AI szövegéből olvassuk ki
+    const bankerReport = committeeReport?.strategist?.banker;
+    const gamblerReport = committeeReport?.strategist?.gambler;
+    const criticReport = committeeReport?.critic;
+    const quantReport = committeeReport?.quant;
 
-        prophetText = strategistReport?.prophetic_timeline ||
-"A Próféta nem adott meg jóslatot.";
+    let prophetText, synthesisText, microModelsHtml, quantReportHtml, scoutReportHtml, gamblerRecommendationHtml;
+
+if (bankerReport && gamblerReport && criticReport && quantReport) {
+        
+        prophetText = bankerReport.prophetic_timeline || "A Próféta nem adott meg jóslatot.";
         if (prophetText && !prophetText.includes("Hiba")) {
             prophetText += `\n(Súlyozott xG: ${mu_h} - ${mu_a}. Legvalószínűbb eredmény: ${sim?.topScore?.gh ?? 'N/A'} - ${sim?.topScore?.ga ?? 'N/A'}.)`;
 }
-        synthesisText = strategistReport?.strategic_synthesis || "A stratégiai szintézis nem elérhető.";
-// A mikromodellek most már a 'strategist' alatt fészkelve érkeznek
-        microModelsHtml = getMicroAnalysesHtml(strategistReport?.micromodels, teamNames);
+        synthesisText = bankerReport.strategic_synthesis || "A stratégiai szintézis (Bankár) nem elérhető.";
+// A mikromodellek a Bankár jelentéséből jönnek (mindkettőben ugyanaz)
+        microModelsHtml = getMicroAnalysesHtml(bankerReport.micromodels, teamNames);
 // A Quant/Scout jelentések
-        quantReportHtml = (fullAnalysisReport?.quant) ?
-`
+        quantReportHtml = `
             <div class="committee-card quant">
                 <h4>1.
 Ügynök: Quant Jelentése</h4>
-                <p><strong>Forrás:</strong> ${fullAnalysisReport.quant.source}</p>
-                <p><strong>Tiszta xG:</strong> ${fullAnalysisReport.quant.mu_h?.toFixed(2)} - ${fullAnalysisReport.quant.mu_a?.toFixed(2)}</p>
-            </div>` : '';
-scoutReportHtml = (criticReport?.tactical_summary) ? `
+                <p><strong>Forrás:</strong> ${quantReport.source}</p>
+                <p><strong>Tiszta xG:</strong> ${quantReport.mu_h?.toFixed(2)} - ${quantReport.mu_a?.toFixed(2)}</p>
+            </div>`;
+scoutReportHtml = `
             <div class="committee-card scout">
                 <h4>5.
 Ügynök: Kritikus Jelentése</h4>
@@ -1654,30 +1683,54 @@ scoutReportHtml = (criticReport?.tactical_summary) ? `
                     ${processAiList(criticReport.key_risks, teamNames)}
                 </ul>
                 <p style="margin-top: 0.5rem;"><strong>Kockázati Pontszám:</strong> ${criticReport.contradiction_score || '0.0'}</p>
-   </div>` : '';
+   </div>`;
+
+        // A "Gambler" ajánlás kártyájának elkészítése
+        const bankerRec = bankerReport.master_recommendation;
+        const gamblerRec = gamblerReport.master_recommendation;
+
+        if (gamblerRec && bankerRec && gamblerRec.recommended_bet !== bankerRec.recommended_bet) {
+            const gamblerReasoning = processAiText(gamblerRec.brief_reasoning, teamNames);
+            gamblerRecommendationHtml = `
+            <div class="master-recommendation-card" style="margin-top: 1rem; border: 1px dashed var(--danger); background: rgba(255, 71, 71, 0.05);">
+                <h5 style="color: var(--danger); text-shadow: 0 0 8px var(--danger);">🎲 6. Ügynök: Szerencsejátékos Ajánlása (Alternatív)</h5>
+                <div class="master-bet" style="color: var(--danger);"><strong>${escapeHTML(gamblerRec.recommended_bet)}</strong></div>
+                <div class="master-confidence">
+                    Végső Bizalom: <strong class="glowing-text-white">${(gamblerRec.final_confidence || 1.0).toFixed(1)}/10</strong>
+                </div>
+                <div class="master-reasoning">${gamblerReasoning}</div>
+            </div>`;
+        } else {
+            gamblerRecommendationHtml = `
+            <div class="synthesis-card" style="margin-top: 1rem; text-align: center;">
+                <p class="muted">A "Szerencsejátékos" (agresszív) ügynök egyetértett a "Bankár" (konzervatív) ajánlásával.</p>
+            </div>`;
+        }
+
 
     } else {
         // --- C. ESET: Hiba / Régi Struktúra (Fallback) ---
-        prophetText = fullAnalysisReport?.prophetic_timeline ||
-"Hiba: Az elemzési jelentés ('committee') struktúrája ismeretlen, vagy 'strategist' kulcs hiányzik.";
-        synthesisText = fullAnalysisReport?.strategic_synthesis ||
-"Hiba: Az elemzési jelentés ('committee') struktúrája ismeretlen.";
-        expertConfHtml = fullAnalysisReport?.final_confidence_report || `**${expertConfScore}/10** - Ismeretlen adatszerkezet.`;
-microModelsHtml = getMicroAnalysesHtml(fullAnalysisReport?.micromodels, teamNames) || "<p>Hiba: Mikromodellek betöltése sikertelen.</p>";
+        prophetText = "Hiba: Az elemzési jelentés ('committee') struktúrája ismeretlen, vagy 'strategist' kulcs hiányzik.";
+synthesisText = "Hiba: Az elemzési jelentés ('committee') struktúrája ismeretlen.";
+        // === JAVÍTÁS (v64.0) ===
+        // Biztosítjuk, hogy az expertConfHtml definiálva legyen a fallback esetére is
+        expertConfHtml = `**${expertConfScore}/10** - Ismeretlen adatszerkezet.`;
+        microModelsHtml = "<p>Hiba: Mikromodellek betöltése sikertelen.</p>";
         quantReportHtml = "<p>Hiba: Quant jelentés betöltése sikertelen.</p>";
 scoutReportHtml = "<p>Hiba: Kritikus jelentés betöltése sikertelen.</p>";
+        gamblerRecommendationHtml = ""; // Hiba esetén nincs alternatív nézet
     }
     // === MÓDOSÍTÁS VÉGE ===
 
 
-    // --- 2. FŐ AJÁNLÁS (STRATÉGA) (v59.0 - Kiemelőt használ) ---
+    // --- 2. FŐ AJÁNLÁS (Bankár) (v59.0 - Kiemelőt használ) ---
     const finalRec = masterRecommendation ||
 { recommended_bet: "Hiba", final_confidence: 1.0, brief_reasoning: "Hiba" };
     const finalReasoningHtml = processAiText(finalRec.brief_reasoning, teamNames);
     const finalConfInterpretationHtml = getConfidenceInterpretationHtml(finalRec.final_confidence, teamNames);
 const masterRecommendationHtml = `
     <div class="master-recommendation-card">
-        <h5>👑 6. Ügynök: Vezető Stratéga Ajánlása 👑</h5>
+        <h5>👑 6. Ügynök: Vezető Stratéga Ajánlása (Bankár) 👑</h5>
         <div class="master-bet"><strong>${escapeHTML(finalRec.recommended_bet)}</strong></div>
         <div class="master-confidence">
             Végső Bizalom: <strong class="glowing-text-white">${(finalRec.final_confidence || 1.0).toFixed(1)}/10</strong>
@@ -1726,7 +1779,7 @@ rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
   
   </div>`;
 
-    // --- 7. ADAT OSZLOP (SIDEBAR) (MÓDOSÍTVA v63.1) ---
+    // --- 7. ADAT OSZLOP (SIDEBAR) (MÓDOSÍTVA v64.0) ---
     const atAGlanceHtml = `
     <div class="at-a-glance-grid">
         <div class="summary-card">
@@ -1771,9 +1824,9 @@ rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         </div>
     </div>`;
     
-    // === VÉGSŐ JAVÍTÁS (v63.1) ===
+    // === VÉGSŐ JAVÍTÁS (v64.0) ===
     // A 'Bizalmi Híd' most már a helyes 'modelConf' (Quant) és 'expertConfScore' (Stratéga) változókat használja
-const expertConfReasoning = processAiText(expertConfHtml.split(' - ')[1] || 'N/A', teamNames);
+const expertConfReasoning = processAiText((bankerReport?.final_confidence_report || expertConfHtml).split(' - ')[1] || 'N/A', teamNames);
     const confidenceBridgeHtml = `
     <div class="confidence-bridge-card">
         <h5>Bizalmi Híd (Quant vs. Stratéga)</h5>
@@ -1819,12 +1872,13 @@ const sidebarAccordionHtml = `
             </div>
         </details>` : ''}
     </div>`;
-// --- 8. VÉGLEGES HTML ÖSSZEÁLLÍTÁSA (v62.1 Elrendezés) ---
+// --- 8. VÉGLEGES HTML ÖSSZEÁLLÍTÁSA (v64.0 Elrendezés) ---
     return `
         <div class="analysis-layout">
             
             <div class="analysis-layout-main">
                 ${masterRecommendationHtml}
+                ${gamblerRecommendationHtml || ''} 
                 ${prophetCardHtml}
                 ${synthesisCardHtml}
      
