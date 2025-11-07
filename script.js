@@ -1,16 +1,9 @@
-// --- script.js (v63.3 - P1 Hiányzó Modal UI) ---
-// MÓDOSÍTÁS (Feladat 5):
-// 1. MEGVÁLTOZTATVA: 'renderFixtures...' funkciók. A lenyíló <details> elem
-//    eltávolítva, helyette egy "Hiányzók Megadása (0)" gomb jelenik meg.
-// 2. ÚJ FUNKCIÓK: 'openP1AbsenteesModal', '_getAndRenderRosterModalHtml',
-//    '_buildRosterModalHtml', 'handleP1CheckboxChange', 'handleP1Search'.
-//    Ezek kezelik az új felugró ablakot, az API hívást, a kereshető
-//    játékoslista renderelését és a kiválasztást.
-// 3. ÚJ ÁLLAPOT: 'appState.p1SelectedAbsentees' (Map) hozzáadva,
-//    hogy a kiválasztott hiányzókat a DOM helyett a memóriában tárolja.
-// 4. MEGVÁLTOZTATVA: 'runAnalysisFromCard' és 'runMultiAnalysis' frissítve,
-//    hogy a hiányzókat az 'appState.p1SelectedAbsentees' Map-ből olvassák ki.
-// 5. TÖRÖLVE: 'handleRosterToggle' és 'addRosterToggleListeners' (már nincs rájuk szükség).
+// --- script.js (v63.4 - P1 Hiányzó Modal Görgetés Javítás) ---
+// MÓDOSÍTÁS:
+// 1. JAVÍTVA: A '_buildRosterModalHtml' funkció most már tartalmaz egy
+//    <style> blokkot, ami a '.roster-player-list'-et görgethetővé
+//    teszi ('overflow-y: auto') és beállítja a modal magasságát,
+//    megoldva a képen látható görgetési hibát.
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -201,6 +194,9 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
         showToast("Elemzés folyamatban... Ez hosszabb időt vehet igénybe.", 'info', 6000);
     }
 
+    // v63.3: matchId lekérése a runAnalysis számára
+    const matchId = `${appState.currentSport}_${home.toLowerCase().replace(/\s+/g, '')}_${away.toLowerCase().replace(/\s+/g, '')}`;
+
     openModal(`${home} vs ${away}`, (document.getElementById('common-elements')).innerHTML, 'modal-xl');
     
     const modalSkeleton = document.querySelector('#modal-container #loading-skeleton');
@@ -245,8 +241,7 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
 
         // v62.1: A kapott keretadatok mentése a globális cache-be
         if (analysisData.availableRosters) {
-            const uniqueId = `${appState.currentSport}_${home.toLowerCase().replace(/\s+/g, '')}_${away.toLowerCase().replace(/\s+/g, '')}`;
-            appState.rosterCache.set(uniqueId, analysisData.availableRosters);
+            appState.rosterCache.set(matchId, analysisData.availableRosters);
         }
         
         // === MÓDOSÍTÁS (v63.1) ===
@@ -350,29 +345,60 @@ async function viewHistoryDetail(id) {
         if (data.error) throw new Error(data.error); 
 
         const { record } = data;
-        if (!record || !record.html) throw new Error("A szerver nem találta a kért elemzést, vagy az hiányos.");
+        if (!record || (!record.html && !record.json_data)) throw new Error("A szerver nem találta a kért elemzést, vagy az hiányos.");
         
         (document.getElementById('modal-title')).textContent = `${record.home || 'Ismeretlen'} vs ${record.away || 'Ismeretlen'}`;
         const modalBody = document.getElementById('modal-body');
 
         let contentToDisplay = "";
-        if (record.html.startsWith("JSON_API_MODE")) {
-            // Próbáljuk meg az új (v63.0) módban renderelni
-            if (record.html.includes("v63.0 Lánc") || record.html.includes("v63.1 Lánc")) { // Módosítva
-                 contentToDisplay = `<p class="muted" style="text-align:center; padding: 2rem;">Ez egy "v63.x Bizottsági Lánc" elemzés.<br>A mentett JSON adatok visszatöltése és újrarajzolása jelenleg még nincs implementálva.</p>`;
-            } else {
-                 contentToDisplay = `<p class="muted" style="text-align:center; padding: 2rem;">Ez egy régebbi (v55-v62) JSON API-n keresztül mentett elemzés.<br>A JSON adatok újrafeldolgozása a v63.x nézethez nem lehetséges.<br><br><i>${escapeHTML(record.html)}</i></p>`;
+
+        // === JAVÍTÁS (v63.3): JSON ADATOK VISSZATÖLTÉSE ===
+        if (record.json_data) {
+            try {
+                const analysisData = JSON.parse(record.json_data);
+                const matchId = `${analysisData.matchData.sport}_${analysisData.matchData.home.toLowerCase().replace(/\s+/g, '')}_${analysisData.matchData.away.toLowerCase().replace(/\s+/g, '')}`;
+                
+                contentToDisplay = buildAnalysisHtml_CLIENTSIDE(
+                    analysisData.committee,
+                    analysisData.matchData,
+                    analysisData.oddsData,
+                    analysisData.valueBets,
+                    analysisData.modelConfidence,
+                    analysisData.finalConfidenceScore,
+                    analysisData.sim,
+                    analysisData.recommendation,
+                    analysisData.availableRosters,
+                    matchId
+                );
+            } catch (e) {
+                console.error("Hiba a mentett JSON elemzés feldolgozásakor:", e);
+                contentToDisplay = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a mentett elemzés (JSON) feldolgozásakor: ${e.message}</p><pre style="white-space: pre-wrap; color: white; background: #222; padding: 1rem;">${escapeHTML(record.json_data)}</pre>`;
             }
-        } else {
-            contentToDisplay = `<div class="analysis-body">${record.html}</div>`;
-            // Régi HTML-alapú mentések
         }
+        // === RÉGI (v63.0) FALLBACK ===
+        else if (record.html && record.html.startsWith("JSON_API_MODE")) {
+            contentToDisplay = `<p class="muted" style="text-align:center; padding: 2rem;">Ez egy régebbi (v63.0-v63.2) elemzés.<br>A mentett JSON adatok visszatöltése ehhez a verzióhoz még nem volt implementálva mentéskor.</p>`;
+        } 
+        // === ŐSRÉGI (v55) FALLBACK ===
+        else if (record.html) {
+            contentToDisplay = `<div class="analysis-body">${record.html}</div>`;
+        } 
+        // === VÉGSŐ HIBA ===
+        else {
+             contentToDisplay = `<p class="muted" style="text-align:center; padding: 2rem;">Ismeretlen hiba: Sem HTML, sem JSON adat nem található ehhez az elemzéshez.</p>`;
+        }
+        // === JAVÍTÁS VÉGE ===
 
         modalBody.innerHTML = (document.getElementById('common-elements')).innerHTML;
         (modalBody.querySelector('#loading-skeleton')).style.display = 'none'; 
         (modalBody.querySelector('#analysis-results')).innerHTML = contentToDisplay;
         const modalChat = modalBody.querySelector('#chat-container');
         modalChat.style.display = 'none';
+
+        // === ÚJ (v63.3) ===
+        // Eseményfigyelő hozzáadása az Előzmények modalon belüli "Hiányzók Megadása" gombhoz
+        addP1ModalButtonListeners('#modal-container');
+
     } catch(e) {
          (document.getElementById('modal-body')).innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a részletek betöltésekor: ${e.message}</p>`;
         console.error("Hiba a részletek megtekintésekor:", e);
@@ -565,384 +591,6 @@ async function runMultiAnalysis() {
 }
 
 // === Dátum és Adatkezelő Segédfüggvények ===
-
-const parseHungarianDate = (huDate) => {
-    let date = new Date(huDate);
-    if (!isNaN(date.getTime())) { return date; }
-    const parts = huDate.split('.').map(p => p.trim()).filter(p => p);
-    if (parts.length >= 3) {
-        const year = parseInt(parts[0]);
-        const month = parseInt(parts[1]) - 1; 
-        const day = parseInt(parts[2]);
-        if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-            date = new Date(Date.UTC(year, month, day));
-            if (!isNaN(date.getTime())) { return date; }
-        }
-    }
-    console.warn(`Nem sikerült feldolgozni a magyar dátumot: ${huDate}`);
-    return new Date('invalid date');
-};
-
-function handleSportChange() {
-    appState.currentSport = (document.getElementById('sportSelector')).value;
-    appState.selectedMatches.clear(); 
-    appState.rosterCache.clear();
-    appState.p1SelectedAbsentees.clear(); // v63.3
-    (document.getElementById('kanban-board')).innerHTML = '';
-    (document.getElementById('mobile-list-container')).innerHTML = '';
-    (document.getElementById('placeholder')).style.display = 'flex'; 
-    updateMultiSelectButton();
-}
-
-/**
- * v62.1: Kezeli a P1 Komponens xG-t ÉS a P1 Manuális Hiányzókat (szövegesen)
- */
-function openManualAnalysisModal() {
-    let content = `
-        <div class="control-group">
-            <label for="manual-home">Hazai csapat</label>
-            <input id="manual-home" placeholder="Pl. Liverpool"/>
-        </div>
-        <div class="control-group" style="margin-top: 1rem;">
-            <label for="manual-away">Vendég csapat</label>
-            <input id="manual-away" placeholder="Pl. Manchester City"/>
-        </div>
-        <div class="control-group" style="margin-top: 1rem;">
-            <label for="manual-league">Bajnokságnév (Pontos ESPN név)</label>
-            <input id="manual-league" placeholder="Pl. Premier League"/>
-        </div>
-        <div class="control-group" style="margin-top: 1rem;">
-            <label for="manual-kickoff">Kezdési idő (UTC Dátum és Idő)</label>
-            <input id="manual-kickoff" type="datetime-local" placeholder="Válassz időpontot"/>
-        </div>
-        
-        <h5 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary);">Opcionális P1 xG Felülbírálás (4-Komponensű)</h5>
-        <div class="manual-xg-grid" style="margin-top: 0.5rem;">
-            <input type="text" inputmode="decimal" placeholder="H xG" class="xg-input" id="manual-h-xg" title="Hazai Csapat (Home) xG/90">
-            <input type="text" inputmode="decimal" placeholder="H xGA" class="xg-input" id="manual-h-xga" title="Hazai Csapat (Home) xGA/90">
-            <input type="text" inputmode="decimal" placeholder="V xG" class="xg-input" id="manual-a-xg" title="Vendég Csapat (Away) xG/90">
-            <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input" id="manual-a-xga" title="Vendég Csapat (Away) xGA/90">
-        </div>
-
-        <h5 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--primary);">Opcionális P1 Hiányzó Felülbírálás</h5>
-        <div class="control-group" style="margin-top: 0.5rem;">
-            <label for="manual-abs-home">Hazai kulcshiányzók (vesszővel elválasztva)</label>
-            <input id="manual-abs-home" class="xg-input" style="text-align: left;" placeholder="Pl. Kovács, Nagy"/>
-        </div>
-        <div class="control-group" style="margin-top: 0.5rem;">
-            <label for="manual-abs-away">Vendég kulcshiányzók (vesszővel elválasztva)</label>
-            <input id="manual-abs-away" class="xg-input" style="text-align: left;" placeholder="Pl. Szabó"/>
-        </div>
-        
-        <button id="run-manual-btn" class="btn btn-primary" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
-    `;
-    openModal('Kézi Elemzés Indítása', content, 'modal-sm');
-    
-    (document.getElementById('run-manual-btn')).onclick = runManualAnalysis;
-
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(15, 0, 0, 0);
-    const kickoffInput = (document.getElementById('manual-kickoff'));
-    const year = tomorrow.getFullYear();
-    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
-    const day = String(tomorrow.getDate()).padStart(2, '0');
-    const hours = String(tomorrow.getHours()).padStart(2, '0');
-    const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
-    kickoffInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-}
-
-/**
- * v62.1: Kezeli a P1 Komponens xG-t ÉS a P1 Manuális Hiányzókat (szövegesen)
- */
-function runManualAnalysis() {
-    const home = (document.getElementById('manual-home')).value.trim();
-    const away = (document.getElementById('manual-away')).value.trim();
-    const leagueName = (document.getElementById('manual-league')).value.trim();
-    const kickoffLocal = (document.getElementById('manual-kickoff')).value;
-    
-    const H_xG_raw = (document.getElementById('manual-h-xg')).value;
-    const H_xGA_raw = (document.getElementById('manual-h-xga')).value;
-    const A_xG_raw = (document.getElementById('manual-a-xg')).value;
-    const A_xGA_raw = (document.getElementById('manual-a-xga')).value;
-    
-    const Abs_H_raw = (document.getElementById('manual-abs-home')).value;
-    const Abs_A_raw = (document.getElementById('manual-abs-away')).value;
-    
-    let manualXgData = {};
-    if (!home || !away || !leagueName) { 
-        showToast('Minden kötelező mezőt ki kell tölteni (Hazai, Vendég, Bajnokságnév).', 'error');
-        return;
-    }
-    if (!kickoffLocal) {
-        showToast('Kérlek, add meg a kezdési időpontot.', 'error');
-        return;
-    }
-
-    if (H_xG_raw && H_xGA_raw && A_xG_raw && A_xGA_raw) {
-        const H_xG = parseFloat(H_xG_raw.replace(',', '.'));
-        const H_xGA = parseFloat(H_xGA_raw.replace(',', '.'));
-        const A_xG = parseFloat(A_xG_raw.replace(',', '.'));
-        const A_xGA = parseFloat(A_xGA_raw.replace(',', '.'));
-        if (!isNaN(H_xG) && !isNaN(H_xGA) && !isNaN(A_xG) && !isNaN(A_xGA)) {
-            manualXgData = {
-                manual_H_xG: H_xG,
-                manual_H_xGA: H_xGA,
-                manual_A_xG: A_xG,
-                manual_A_xGA: A_xGA
-            };
-            console.log('Manuális (Komponens) xG-t küldök a kézi modalból:', manualXgData);
-        } else {
-            showToast('Manuális Komponens xG: Érvénytelen számformátum. Az xG felülbírálás kihagyva.', 'error');
-        }
-    }
-    
-    const manualAbsentees = {
-        home: Abs_H_raw.split(',').map(s => s.trim()).filter(Boolean),
-        away: Abs_A_raw.split(',').map(s => s.trim()).filter(Boolean)
-    };
-    if (manualAbsentees.home.length > 0 || manualAbsentees.away.length > 0) {
-        (manualXgData).manual_absentees = manualAbsentees;
-        console.log('Manuális (P1) Hiányzókat küldök a kézi modalból:', manualAbsentees);
-    }
-
-    try {
-        const kickoffDate = new Date(kickoffLocal);
-        if (isNaN(kickoffDate.getTime())) {
-             throw new Error('Érvénytelen dátum formátum.');
-        }
-        const utcKickoff = kickoffDate.toISOString();
-
-        closeModal();
-        runAnalysis(home, away, utcKickoff, leagueName, true, manualXgData);
-    } catch (e) {
-         showToast(`Hiba a dátum feldolgozásakor: ${e.message}`, 'error');
-        console.error("Dátum hiba:", e);
-    }
-}
-
-function isMobile() { return window.innerWidth <= 1024; } 
-
-function getLeagueGroup(leagueName) {
-    if (!leagueName || typeof leagueName !== 'string') return 'Egyéb Meccsek';
-    const sportGroups = LEAGUE_CATEGORIES[appState.currentSport] || {};
-    const lowerLeagueName = leagueName.toLowerCase().trim();
-    for (const groupName in sportGroups) {
-        if (sportGroups[groupName].some(l => lowerLeagueName === l.toLowerCase())) {
-            return groupName;
-        }
-    }
-    for (const groupName in sportGroups) {
-        if (sportGroups[groupName].some(l => lowerLeagueName.includes(l.toLowerCase()))) {
-            return groupName;
-        }
-    }
-    return 'Egyéb Meccsek';
-}
-
-/**
- * v63.3: Megjeleníti a 4-komponensű P1 xG-t ÉS az ÚJ P1 Hiányzó Gombot
- */
-function renderFixturesForDesktop(fixtures) {
-    const board = document.getElementById('kanban-board');
-    if (!board) return;
-    
-    (document.getElementById('placeholder')).style.display = 'none';
-    board.innerHTML = '';
-    const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
-    const groupedByCategory = groupBy(fixtures, (fx) => getLeagueGroup(fx.league));
-    
-    groupOrder.forEach(group => { 
-        let columnContent = ''; 
-        let cardIndex = 0; 
-
-        if (groupedByCategory[group]) { 
-            const groupedByDate = groupBy(groupedByCategory[group], (fx) => {
-                try { return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); } 
-                catch (e) { return 'Ismeretlen dátum'; } 
-            });
-
-            Object.keys(groupedByDate)
-                .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
-                .forEach(dateKey => {
-                    columnContent += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
-                    groupedByDate[dateKey]
-                        .sort((a, b) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
-                        .forEach((fx) => { 
-                            const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
-                            
-                            // === MÓDOSÍTÁS (v63.3): Új P1 Gomb ===
-                            const p1State = appState.p1SelectedAbsentees.get(fx.uniqueId) || { home: [], away: [] };
-                            const p1Count = p1State.home.length + p1State.away.length;
-                            
-                            const rosterButtonHtml = `
-                                <button class="btn btn-p1-absentees" data-match-id="${fx.uniqueId}" 
-                                    data-home="${escape(fx.home)}" 
-                                    data-away="${escape(fx.away)}" 
-                                    data-league="${escape(fx.league || '')}" 
-                                    data-kickoff="${escape(fx.utcKickoff)}"
-                                    style="width: 100%; margin-top: 0.75rem; background: rgba(255,255,255,0.05);">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                    P1 HIÁNYZÓK MEGADÁSA (${p1Count})
-                                </button>`;
-                            // === MÓDOSÍTÁS VÉGE ===
-
-                            columnContent += `
-                                <div class="match-card selectable-card ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}" style="animation-delay: ${cardIndex * 0.05}s">
-                                    <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
-                                     <div class="match-card-content">
-                                          <div class="match-card-teams">${fx.home} – ${fx.away}</div>
-                                          <div class="match-card-meta">
-                                              <span>${fx.league || 'Ismeretlen Liga'}</span>
-                                              <span>${time}</span>
-                                          </div>
-                                          <p class="muted" style="font-size: 0.8rem; margin-top: 1rem; margin-bottom: 0.5rem; text-align: left;">P1 (Komponens) xG:</p>
-                                          <div class="manual-xg-grid" style="margin-top: 0.5rem;">
-                                              <input type="text" inputmode="decimal" placeholder="H xG" class="xg-input xg-input-h-xg" title="Hazai Csapat (Home) xG/90">
-                                              <input type="text" inputmode="decimal" placeholder="H xGA" class="xg-input xg-input-h-xga" title="Hazai Csapat (Home) xGA/90">
-                                              <input type="text" inputmode="decimal" placeholder="V xG" class="xg-input xg-input-a-xg" title="Vendég Csapat (Away) xG/90">
-                                              <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input xg-input-a-xga" title="Vendég Csapat (Away) xGA/90">
-                                          </div>
-                                          
-                                          ${(appState.currentSport === 'soccer') ? rosterButtonHtml : ''}
-                                          
-                                          <button class="btn btn-primary" 
-                                            style="width: 100%; margin-top: 1rem;"
-                                            onclick="runAnalysisFromCard(this, '${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league || '')}')">
-                                            Elemzés Indítása
-                                          </button>
-                                    </div>
-                                </div>`;
-                            cardIndex++;
-                        });
-                    columnContent += `</details>`; 
-                });
-        }
-
-        board.innerHTML += `
-            <div class="kanban-column">
-                <h4 class="kanban-column-header">${group}</h4>
-                <div class="column-content">
-                    ${columnContent || '<p class="muted" style="text-align: center; padding-top: 2rem;">Nincs meccs ebben a kategóriában.</p>'}
-                </div>
-            </div>`;
-    });
-}
-
-/**
- * v63.3: Megjeleníti a 4-komponensű P1 xG-t ÉS az ÚJ P1 Hiányzó Gombot
- */
-function renderFixturesForMobileList(fixtures) {
-    const container = document.getElementById('mobile-list-container');
-    if (!container) return;
-    (document.getElementById('placeholder')).style.display = 'none'; 
-    container.innerHTML = '';
-    
-    const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
-    const groupedByCategory = groupBy(fixtures, (fx) => getLeagueGroup(fx.league));
-    let html = '';
-    groupOrder.forEach(group => { 
-        if (groupedByCategory[group]) { 
-            html += `<h4 class="league-header-mobile">${group}</h4>`; 
-            const groupedByDate = groupBy(groupedByCategory[group], (fx) => {
-                try { return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); }
-                 catch (e) { return 'Ismeretlen dátum'; }
-            });
-            Object.keys(groupedByDate)
-                .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
-                .forEach(dateKey => {
-                    html += `<div class="date-header-mobile">${formatDateLabel(dateKey)}</div>`; 
-                
-                    groupedByDate[dateKey]
-                         .sort((a, b) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
-                        .forEach((fx) => { 
-                            const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
-                            
-                            // === MÓDOSÍTÁS (v63.3): Új P1 Gomb ===
-                            const p1State = appState.p1SelectedAbsentees.get(fx.uniqueId) || { home: [], away: [] };
-                            const p1Count = p1State.home.length + p1State.away.length;
-                            
-                            const rosterButtonHtml = `
-                                <button class="btn btn-p1-absentees" data-match-id="${fx.uniqueId}" 
-                                    data-home="${escape(fx.home)}" 
-                                    data-away="${escape(fx.away)}" 
-                                    data-league="${escape(fx.league || '')}" 
-                                    data-kickoff="${escape(fx.utcKickoff)}"
-                                    style="width: 100%; margin-top: 0.75rem; background: rgba(255,255,255,0.05); padding: 10px 16px; font-size: 0.9rem;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                    P1 HIÁNYZÓK (${p1Count})
-                                </button>`;
-                            // === MÓDOSÍTÁS VÉGE ===
-
-                            html += `
-                                <div class="list-item selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
-                                    <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
-                                     
-                                    <div class="list-item-content">
-                                        <div class="list-item-title">${fx.home} – ${fx.away}</div>
-                                        <div class="list-item-meta">${fx.league || 'Ismeretlen Liga'} - ${time}</div>
-                                        
-                                        <p class="muted" style="font-size: 0.8rem; margin-top: 0.75rem; margin-bottom: 0.5rem;">P1 (Komponens) xG:</p>
-                                        <div class="manual-xg-grid" style="margin-top: 0.5rem;">
-                                           <input type="text" inputmode="decimal" placeholder="H xG" class="xg-input xg-input-h-xg" title="Hazai Csapat (Home) xG/90">
-                                           <input type="text" inputmode="decimal" placeholder="H xGA" class="xg-input xg-input-h-xga" title="Hazai Csapat (Home) xGA/90">
-                                           <input type="text" inputmode="decimal" placeholder="V xG" class="xg-input xg-input-a-xg" title="Vendég Csapat (Away) xG/90">
-                                           <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input xg-input-a-xga" title="Vendég Csapat (Away) xGA/90">
-                                        </div>
-                                        
-                                        ${(appState.currentSport === 'soccer') ? rosterButtonHtml : ''}
-                                    </div>
-
-                                    <button class="btn btn-primary" 
-                                        style="margin-right: 1rem; align-self: center;"
-                                        onclick="runAnalysisFromCard(this, '${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league || '')}')">
-                                        Elemzés
-                                    </button>
-                                </div>`;
-                        });
-                });
-        }
-    });
-    container.innerHTML = html || '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek elérhető mérkőzések.</p>';
-}
-function renderHistory(historyData) {
-    if (!historyData || !Array.isArray(historyData) || historyData.length === 0) {
-        return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek mentett előzmények.</p>';
-    }
-    const history = historyData.filter(item => item && item.id && item.home && item.away && item.date);
-    if (history.length === 0) {
-         return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek érvényes előzmény adatok.</p>';
-    }
-    const groupedByDate = groupBy(history, (item) => {
-        try { return new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); }
-        catch (e) { return 'Ismeretlen dátum'; }
-    });
-    let html = '';
-    Object.keys(groupedByDate)
-        .sort((a, b) => parseHungarianDate(b).getTime() - parseHungarianDate(a).getTime()) 
-        .forEach(dateKey => {
-         html += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
-            const sortedItems = groupedByDate[dateKey].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            sortedItems.forEach((item) => {
-                const analysisTime = new Date(item.date); 
-                const time = isNaN(analysisTime.getTime()) ? 'Ismeretlen idő' : analysisTime.toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
-                const safeItemId = escape(item.id);
-                html += `
-                    <div class="list-item">
-                        <div style="flex-grow:1; cursor: pointer;" onclick="viewHistoryDetail('${safeItemId}')">
-                             <div class="list-item-title">${item.home || '?'} – ${item.away || '?'}</div>
-                            <div class="list-item-meta">${item.sport ? item.sport.charAt(0).toUpperCase() + item.sport.slice(1) : 'Sport?'} - Elemzés: ${time}</div>
-                        </div>
-                         <button class="btn" onclick="deleteHistoryItem('${safeItemId}'); event.stopPropagation();"
-                            title="Törlés" style="color: var(--danger); border-color: var(--danger);">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                         </button>
-                    </div>`;
-            });
-            html += `</details>`; 
-        });
-    return html;
-}// === Dátum és Adatkezelő Segédfüggvények ===
 
 function addMessageToChat(text, role) {
     const messagesContainer = document.querySelector('#modal-container #chat-messages');
@@ -1231,7 +879,7 @@ async function _getAndRenderRosterModalHtml(matchId, homeName, awayName, leagueN
     }
 }
 
-// === ÚJ (v63.3): P1 Modal HTML Generátor (Keresővel és Kártyákkal) ===
+// === JAVÍTOTT (v63.4): P1 Modal HTML Generátor (Görgetéssel) ===
 function _buildRosterModalHtml(matchId, homeName, awayName, availableRosters) {
     
     // Lekérjük a jelenlegi állapotot az appState-ből
@@ -1291,6 +939,66 @@ function _buildRosterModalHtml(matchId, homeName, awayName, availableRosters) {
                 </div>
             </div>
         </div>
+        
+        <!-- === ITT A JAVÍTÁS (v63.4) === -->
+        <style>
+            .p1-roster-modal-container {
+                display: flex;
+                flex-direction: column;
+                /* A modal-body paddingjét (1.5rem * 2) és a title magasságát (~60px) veszi figyelembe */
+                /* A 95vh a .modal-content max-height értéke */
+                height: calc(95vh - 60px - 3rem); 
+                max-height: 700px; /* Biztonsági korlát */
+            }
+            .p1-search-bar {
+                flex-shrink: 0;
+                margin-bottom: 1rem;
+            }
+            .roster-selector-grid { 
+                display: grid;
+                grid-template-columns: 1fr 1fr; 
+                gap: 1rem; 
+                /* A kulcs: a grid kitölti a maradék helyet és engedi a belső görgetést */
+                flex-grow: 1;
+                min-height: 0; /* Fontos a flexbox görgetéshez */
+            }
+            .roster-selector-column {
+                display: flex;
+                flex-direction: column;
+                min-height: 0; /* Fontos a flexbox görgetéshez */
+            }
+            .roster-selector-column h5 {
+                flex-shrink: 0;
+                margin-top: 0;
+                margin-bottom: 0.5rem;
+                color: var(--primary);
+            }
+            .roster-player-list {
+                /* A HIBA JAVÍTÁSA: */
+                overflow-y: auto; 
+                flex-grow: 1;
+                background: rgba(0,0,0,0.2);
+                border: 1px solid var(--border-color);
+                border-radius: 8px; 
+                padding: 0.75rem; 
+                font-size: 0.85rem;
+            }
+            .roster-position-group { margin-bottom: 0.5rem; }
+            .roster-position-group strong { 
+                font-size: 0.75rem; 
+                text-transform: uppercase;
+                color: var(--text-secondary); 
+                display: block; 
+                margin-bottom: 0.25rem; 
+                position: sticky; top: -12px; /* A lista tetejére tapad */
+                background: var(--card-bg); /* Elfedi az alatta lévő szöveget */
+                padding: 5px 0;
+            }
+            .roster-checkbox-label { display: block; margin: 0.25rem 0; cursor: pointer; padding-left: 5px; }
+            .roster-checkbox-label:hover { color: var(--primary); }
+            .roster-checkbox-label input { margin-right: 0.5rem; }
+        </style>
+        <!-- === JAVÍTÁS VÉGE === -->
     `;
     return finalHtml;
 }
