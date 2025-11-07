@@ -1,4 +1,4 @@
-// --- script.js (v63.4 - P1 Hiányzó Modal Görgetés Javítás) ---
+// --- script.js (v63.5 - P1 Hiányzó Modal Görgetés Javítás) ---
 // MÓDOSÍTÁS:
 // 1. JAVÍTVA: A '_buildRosterModalHtml' funkció most már tartalmaz egy
 //    <style> blokkot, ami a '.roster-player-list'-et görgethetővé
@@ -879,7 +879,7 @@ async function _getAndRenderRosterModalHtml(matchId, homeName, awayName, leagueN
     }
 }
 
-// === JAVÍTOTT (v63.4): P1 Modal HTML Generátor (Görgetéssel) ===
+// === JAVÍTOTT (v63.5): P1 Modal HTML Generátor (Helyes Görgetéssel) ===
 function _buildRosterModalHtml(matchId, homeName, awayName, availableRosters) {
     
     // Lekérjük a jelenlegi állapotot az appState-ből
@@ -940,18 +940,20 @@ function _buildRosterModalHtml(matchId, homeName, awayName, availableRosters) {
             </div>
         </div>
         
-        <!-- === ITT A JAVÍTÁS (v63.4) === -->
+        <!-- === ITT A JAVÍTÁS (v63.5) === -->
         <style>
             .p1-roster-modal-container {
                 display: flex;
                 flex-direction: column;
-                /* A modal-body paddingjét (1.5rem * 2) és a title magasságát (~60px) veszi figyelembe */
-                /* A 95vh a .modal-content max-height értéke */
-                height: calc(95vh - 60px - 3rem); 
-                max-height: 700px; /* Biztonsági korlát */
+                /* JAVÍTÁS (v63.5): A height: 100% helyett flex-grow: 1-et és min-height: 0-t
+                   használunk, hogy helyesen kitöltse a flexibilis '.modal-body' tárolót. */
+                flex-grow: 1;
+                min-height: 0;
+                /* A height: 100% itt hibás volt, mert a '.modal-body'-nak paddingja van.
+                   Ez a flex-grow/min-height 0 a helyes megoldás. */
             }
             .p1-search-bar {
-                flex-shrink: 0;
+                flex-shrink: 0; /* Ne zsugorodjon */
                 margin-bottom: 1rem;
             }
             .roster-selector-grid { 
@@ -1571,6 +1573,163 @@ function initializeApp() {
     toastContainer.id = 'toast-notification-container';
     toastContainer.className = 'toast-notification-container';
     document.body.appendChild(toastContainer);
+}
+
+// === JAVÍTÁS (v63.4): Helyes parseHungarianDate ===
+const parseHungarianDate = (huDate) => {
+    let date = new Date(huDate);
+    if (!isNaN(date.getTime())) { return date; }
+    // A 'hu-HU' formátum 'YYYY. MM. DD.' - ponttal és szóközzel
+    const parts = huDate.split('.').map(p => p.trim()).filter(p => p);
+    if (parts.length >= 3) {
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1; // Hónap 0-indexelt
+        const day = parseInt(parts[2]);
+        if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+            date = new Date(Date.UTC(year, month, day));
+            if (!isNaN(date.getTime())) { return date; }
+        }
+    }
+    console.warn(`Nem sikerült feldolgozni a magyar dátumot: ${huDate}`);
+    return new Date('invalid date'); // Érvénytelen dátumot ad vissza, ha a parse sikertelen
+};
+
+function handleSportChange() {
+    appState.currentSport = (document.getElementById('sportSelector')).value;
+    appState.selectedMatches.clear(); 
+    appState.rosterCache.clear();
+    appState.p1SelectedAbsentees.clear(); // v63.3
+    (document.getElementById('kanban-board')).innerHTML = '';
+    (document.getElementById('mobile-list-container')).innerHTML = '';
+    (document.getElementById('placeholder')).style.display = 'flex'; 
+    updateMultiSelectButton();
+}
+
+/**
+ * v62.1: Kezeli a P1 Komponens xG-t ÉS a P1 Manuális Hiányzókat (szövegesen)
+ */
+function openManualAnalysisModal() {
+    let content = `
+        <div class="control-group">
+            <label for="manual-home">Hazai csapat</label>
+            <input id="manual-home" placeholder="Pl. Liverpool"/>
+        </div>
+        <div class="control-group" style="margin-top: 1rem;">
+            <label for="manual-away">Vendég csapat</label>
+            <input id="manual-away" placeholder="Pl. Manchester City"/>
+        </div>
+        <div class="control-group" style="margin-top: 1rem;">
+            <label for="manual-league">Bajnokságnév (Pontos ESPN név)</label>
+            <input id="manual-league" placeholder="Pl. Premier League"/>
+        </div>
+        <div class="control-group" style="margin-top: 1rem;">
+            <label for="manual-kickoff">Kezdési idő (UTC Dátum és Idő)</label>
+            <input id="manual-kickoff" type="datetime-local" placeholder="Válassz időpontot"/>
+        </div>
+        
+        <h5 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary);">Opcionális P1 xG Felülbírálás (4-Komponensű)</h5>
+        <div class="manual-xg-grid" style="margin-top: 0.5rem;">
+            <input type="text" inputmode="decimal" placeholder="H xG" class="xg-input" id="manual-h-xg" title="Hazai Csapat (Home) xG/90">
+            <input type="text" inputmode="decimal" placeholder="H xGA" class="xg-input" id="manual-h-xga" title="Hazai Csapat (Home) xGA/90">
+            <input type="text" inputmode="decimal" placeholder="V xG" class="xg-input" id="manual-a-xg" title="Vendég Csapat (Away) xG/90">
+            <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input" id="manual-a-xga" title="Vendég Csapat (Away) xGA/90">
+        </div>
+
+        <h5 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--primary);">Opcionális P1 Hiányzó Felülbírálás</h5>
+        <div class="control-group" style="margin-top: 0.5rem;">
+            <label for="manual-abs-home">Hazai kulcshiányzók (vesszővel elválasztva)</label>
+            <input id="manual-abs-home" class="xg-input" style="text-align: left;" placeholder="Pl. Kovács, Nagy"/>
+        </div>
+        <div class="control-group" style="margin-top: 0.5rem;">
+            <label for="manual-abs-away">Vendég kulcshiányzók (vesszővel elválasztva)</label>
+            <input id="manual-abs-away" class="xg-input" style="text-align: left;" placeholder="Pl. Szabó"/>
+        </div>
+        
+        <button id="run-manual-btn" class="btn btn-primary" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
+    `;
+    openModal('Kézi Elemzés Indítása', content, 'modal-sm');
+    
+    (document.getElementById('run-manual-btn')).onclick = runManualAnalysis;
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(15, 0, 0, 0);
+    const kickoffInput = (document.getElementById('manual-kickoff'));
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+    const hours = String(tomorrow.getHours()).padStart(2, '0');
+    const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
+    kickoffInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+/**
+ * v62.1: Kezeli a P1 Komponens xG-t ÉS a P1 Manuális Hiányzókat (szövegesen)
+ */
+function runManualAnalysis() {
+    const home = (document.getElementById('manual-home')).value.trim();
+    const away = (document.getElementById('manual-away')).value.trim();
+    const leagueName = (document.getElementById('manual-league')).value.trim();
+    const kickoffLocal = (document.getElementById('manual-kickoff')).value;
+    
+    const H_xG_raw = (document.getElementById('manual-h-xg')).value;
+    const H_xGA_raw = (document.getElementById('manual-h-xga')).value;
+    const A_xG_raw = (document.getElementById('manual-a-xg')).value;
+    const A_xGA_raw = (document.getElementById('manual-a-xga')).value;
+    
+    const Abs_H_raw = (document.getElementById('manual-abs-home')).value;
+    const Abs_A_raw = (document.getElementById('manual-abs-away')).value;
+    
+    let manualXgData = {};
+    if (!home || !away || !leagueName) { 
+        showToast('Minden kötelező mezőt ki kell tölteni (Hazai, Vendég, Bajnokságnév).', 'error');
+        return;
+    }
+    if (!kickoffLocal) {
+        showToast('Kérlek, add meg a kezdési időpontot.', 'error');
+        return;
+    }
+
+    if (H_xG_raw && H_xGA_raw && A_xG_raw && A_xGA_raw) {
+        const H_xG = parseFloat(H_xG_raw.replace(',', '.'));
+        const H_xGA = parseFloat(H_xGA_raw.replace(',', '.'));
+        const A_xG = parseFloat(A_xG_raw.replace(',', '.'));
+        const A_xGA = parseFloat(A_xGA_raw.replace(',', '.'));
+        if (!isNaN(H_xG) && !isNaN(H_xGA) && !isNaN(A_xG) && !isNaN(A_xGA)) {
+            manualXgData = {
+                manual_H_xG: H_xG,
+                manual_H_xGA: H_xGA,
+                manual_A_xG: A_xG,
+                manual_A_xGA: A_xGA
+            };
+            console.log('Manuális (Komponens) xG-t küldök a kézi modalból:', manualXgData);
+        } else {
+            showToast('Manuális Komponens xG: Érvénytelen számformátum. Az xG felülbírálás kihagyva.', 'error');
+        }
+    }
+    
+    const manualAbsentees = {
+        home: Abs_H_raw.split(',').map(s => s.trim()).filter(Boolean),
+        away: Abs_A_raw.split(',').map(s => s.trim()).filter(Boolean)
+    };
+    if (manualAbsentees.home.length > 0 || manualAbsentees.away.length > 0) {
+        (manualXgData).manual_absentees = manualAbsentees;
+        console.log('Manuális (P1) Hiányzókat küldök a kézi modalból:', manualAbsentees);
+    }
+
+    try {
+        const kickoffDate = new Date(kickoffLocal);
+        if (isNaN(kickoffDate.getTime())) {
+             throw new Error('Érvénytelen dátum formátum.');
+        }
+        const utcKickoff = kickoffDate.toISOString();
+
+        closeModal();
+        runAnalysis(home, away, utcKickoff, leagueName, true, manualXgData);
+    } catch (e) {
+         showToast(`Hiba a dátum feldolgozásakor: ${e.message}`, 'error');
+        console.error("Dátum hiba:", e);
+    }
 }
 
 function setupLoginProtection() {
