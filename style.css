@@ -611,7 +611,7 @@ margin-bottom: 10px; max-width: 80%; line-height: 1.5; word-wrap: break-word; }
 .toast-notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999;
 display: flex; flex-direction: column; gap: 10px; }
 .toast-notification { padding: 15px 20px; border-radius: 10px; color: #fff; font-weight: 500; font-size: 0.9rem;
-box-shadow: 0 5px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,0.2); animation: slideIn 0.3s ease forwards; }
+box-shadow: 0 5px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); animation: slideIn 0.3s ease forwards; }
 .toast-notification.info { background: linear-gradient(135deg, #00BFFF, #0077B6);
 }
 .toast-notification.success { background: linear-gradient(135deg, #39FF14, #28a745); }
@@ -939,23 +939,31 @@ background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55,
     line-height: 1.7;
 }
 
-/* === ÚJ (v63.3) P1 HIÁNYZÓ MODAL STÍLUSOK === */
-/* Ez a blokk javítja a görgetési hibát */
+/* === MÓDOSÍTVA (v63.4) P1 HIÁNYZÓ MODAL STÍLUSOK (KANBAN) === */
+/* Ez a blokk felülírja a v63.3-as listanézetet */
 
-.p1-roster-modal-container {
-    display: flex;
-    flex-direction: column;
+.p1-kanban-board {
+    display: grid;
+    /* 1. oszlop (Kereső) - teljes szélesség */
+    /* 2. oszlop (Kanban Oszlopok) - teljes szélesség */
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 1fr;
     height: 100%; /* Kitölti a .modal-body-t */
-    min-height: 0; /* Kritikus a flexbox zsugorodáshoz */
-    overflow: hidden; /* A belső görgetést kezeljük */
+    min-height: 0;
+    gap: 1rem;
 }
 
 .p1-search-bar {
     flex-shrink: 0; /* A keresősáv ne zsugorodjon */
-    margin-bottom: 1rem;
+    grid-row: 1;
+    grid-column: 1;
 }
 
 .roster-selector-grid {
+    /* Ez az osztály már nincs használatban a kanban nézetben, de a .p1-kanban-board átvette a szerepét */
+    /* A v63.4-es CSS-ben .kanban-column-grid-nek nevezzük a belső rácsot */
+    grid-row: 2;
+    grid-column: 1;
     display: grid;
     grid-template-columns: 1fr; /* Alapból 1 oszlop mobilon */
     gap: 1.5rem;
@@ -965,33 +973,71 @@ background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55,
 }
 
 @media (min-width: 768px) {
-    .roster-selector-grid {
-        grid-template-columns: 1fr 1fr; /* Két oszlop tableten/desktopon */
+    .p1-kanban-board {
+         /* 1. oszlop (Kereső), 2. oszlop (Elérhető), 3. oszlop (Hiányzók) */
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto 1fr; /* Kereső fent, oszlopok alatta */
+    }
+    .p1-search-bar {
+        grid-column: 1 / -1; /* A kereső átíveli mind a 3 oszlopot */
+        grid-row: 1;
+    }
+    .kanban-column.available-list {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    .kanban-column.drop-zone[data-column="absent-home"] {
+        grid-column: 2;
+        grid-row: 2;
+    }
+    .kanban-column.drop-zone[data-column="absent-away"] {
+        grid-column: 3;
+        grid-row: 2;
     }
 }
 
-.roster-selector-column {
+.kanban-column {
     display: flex;
     flex-direction: column;
     overflow: hidden; /* A belső görgetést kezeljük */
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    min-height: 200px; /* Biztosít egy minimális magasságot */
+    min-height: 300px; /* Biztosít egy minimális magasságot */
 }
 
-.roster-selector-column h5 {
+.kanban-column h5 {
     padding: 1rem 1rem 0.75rem;
     margin: 0;
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0; /* A fejléc ne görgessen */
     color: var(--primary);
+    text-align: center;
+    font-size: 1rem;
 }
 
-.roster-player-list {
+/* Külön stílus a "Hiányzó" oszlopok fejlécének */
+.kanban-column.drop-zone h5 {
+    color: var(--primary);
+}
+/* Külön stílus az "Elérhető" oszlop fejlécének */
+.kanban-column.available-list h5 {
+    color: var(--text-secondary);
+}
+
+.kanban-column-content {
     flex-grow: 1; /* Kitölti a maradék helyet az oszlopon belül */
     overflow-y: auto; /* --- EZ A JAVÍTÁS --- */
-    padding: 1rem;
+    padding: 0.75rem;
+}
+
+.team-subheader {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0.5rem;
 }
 
 .roster-position-group {
@@ -1009,27 +1055,42 @@ background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55,
     display: block;
     margin-bottom: 0.5rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-.roster-checkbox-label {
-    display: flex; /* Flexbox a pipa és a név egy sorba igazításához */
-    align-items: center;
-    padding: 8px 10px;
+/* Az új "Player Card" stílus */
+.player-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 10px 12px;
     border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+    cursor: grab;
+    transition: all 0.2s ease;
     font-size: 0.95rem;
+    margin-bottom: 6px;
+    display: block; /* Biztosítjuk, hogy a kereső elrejthesse */
 }
 
-.roster-checkbox-label:hover {
+.player-card:hover {
     background-color: rgba(212, 175, 55, 0.1);
+    border-color: var(--primary);
+    transform: scale(1.02);
 }
 
-.roster-checkbox-label input[type="checkbox"] {
-    margin-right: 12px; /* Távolság a pipa és a név között */
-    accent-color: var(--primary);
-    width: 1.1em;
-    height: 1.1em;
-    flex-shrink: 0;
+.player-card:active,
+.player-card.dragging {
+    cursor: grabbing;
+    background: var(--primary);
+    color: #000;
+    opacity: 0.9;
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
+
+/* Vizuális visszajelzés a "drop zone"-on */
+.kanban-column.drag-over {
+    background: rgba(212, 175, 55, 0.05);
+    border-color: var(--primary);
+    border-style: dashed;
+}
+/* === KANBAN STÍLUSOK VÉGE === */
