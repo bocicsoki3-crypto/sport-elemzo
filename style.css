@@ -611,7 +611,7 @@ margin-bottom: 10px; max-width: 80%; line-height: 1.5; word-wrap: break-word; }
 .toast-notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999;
 display: flex; flex-direction: column; gap: 10px; }
 .toast-notification { padding: 15px 20px; border-radius: 10px; color: #fff; font-weight: 500; font-size: 0.9rem;
-box-shadow: 0 5px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); animation: slideIn 0.3s ease forwards; }
+box-shadow: 0 5px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,0.2); animation: slideIn 0.3s ease forwards; }
 .toast-notification.info { background: linear-gradient(135deg, #00BFFF, #0077B6);
 }
 .toast-notification.success { background: linear-gradient(135deg, #39FF14, #28a745); }
@@ -937,4 +937,99 @@ background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55,
     font-size: 0.9rem;
     color: var(--text-secondary);
     line-height: 1.7;
+}
+
+/* === ÚJ (v63.3) P1 HIÁNYZÓ MODAL STÍLUSOK === */
+/* Ez a blokk javítja a görgetési hibát */
+
+.p1-roster-modal-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Kitölti a .modal-body-t */
+    min-height: 0; /* Kritikus a flexbox zsugorodáshoz */
+    overflow: hidden; /* A belső görgetést kezeljük */
+}
+
+.p1-search-bar {
+    flex-shrink: 0; /* A keresősáv ne zsugorodjon */
+    margin-bottom: 1rem;
+}
+
+.roster-selector-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Alapból 1 oszlop mobilon */
+    gap: 1.5rem;
+    flex-grow: 1; /* Kitölti a maradék helyet */
+    min-height: 0; /* Kritikus a flexbox zsugorodáshoz */
+    overflow: hidden; /* A belső görgetést kezeljük */
+}
+
+@media (min-width: 768px) {
+    .roster-selector-grid {
+        grid-template-columns: 1fr 1fr; /* Két oszlop tableten/desktopon */
+    }
+}
+
+.roster-selector-column {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* A belső görgetést kezeljük */
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    min-height: 200px; /* Biztosít egy minimális magasságot */
+}
+
+.roster-selector-column h5 {
+    padding: 1rem 1rem 0.75rem;
+    margin: 0;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0; /* A fejléc ne görgessen */
+    color: var(--primary);
+}
+
+.roster-player-list {
+    flex-grow: 1; /* Kitölti a maradék helyet az oszlopon belül */
+    overflow-y: auto; /* --- EZ A JAVÍTÁS --- */
+    padding: 1rem;
+}
+
+.roster-position-group {
+    margin-bottom: 1rem;
+}
+.roster-position-group:last-child {
+    margin-bottom: 0;
+}
+
+.roster-position-group strong {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.roster-checkbox-label {
+    display: flex; /* Flexbox a pipa és a név egy sorba igazításához */
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.roster-checkbox-label:hover {
+    background-color: rgba(212, 175, 55, 0.1);
+}
+
+.roster-checkbox-label input[type="checkbox"] {
+    margin-right: 12px; /* Távolság a pipa és a név között */
+    accent-color: var(--primary);
+    width: 1.1em;
+    height: 1.1em;
+    flex-shrink: 0;
 }
