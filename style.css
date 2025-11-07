@@ -144,7 +144,7 @@ text-align: center; text-shadow: 0 0 8px var(--primary), 0 0 16px rgba(212, 175,
 .column-content { overflow-y: auto; max-height: calc(100vh - 200px); padding-right: 5px;
 }
 .match-card { background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border-radius: 12px; padding: 0; cursor: default;
-transition: all .2s ease; border: 1px solid var(--border-color); position: relative; overflow: hidden; text-align: center; display: flex; align-items: stretch;
+transition: all .2s ease; border: 1px solid var(--border-color); position: relative; text-align: center; display: flex; align-items: stretch;
 }
 .match-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.1), transparent);
 transition: left 0.4s ease; z-index: 1; pointer-events: none;}
