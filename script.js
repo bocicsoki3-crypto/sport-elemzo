@@ -252,7 +252,6 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
         
         // === MÓDOSÍTÁS (v63.1) ===
         // Most már átadjuk a 'finalConfidenceScore'-t is, hogy a "Bizalmi Híd" a helyes (Stratéga) pontszámot mutassa
-        const matchId = `${appState.currentSport}_${home.toLowerCase().replace(/\s+/g, '')}_${away.toLowerCase().replace(/\s+/g, '')}`; // v63.3: ID lekérése
         const finalHtml = buildAnalysisHtml_CLIENTSIDE(
             analysisData.committee,
             analysisData.matchData,
