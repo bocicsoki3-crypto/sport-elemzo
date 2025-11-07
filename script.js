@@ -1,16 +1,14 @@
-// --- script.js (v63.3 - P1 Hiányzó Modal UI) ---
-// MÓDOSÍTÁS (Feladat 5):
-// 1. MEGVÁLTOZTATVA: 'renderFixtures...' funkciók. A lenyíló <details> elem
-//    eltávolítva, helyette egy "Hiányzók Megadása (0)" gomb jelenik meg.
-// 2. ÚJ FUNKCIÓK: 'openP1AbsenteesModal', '_getAndRenderRosterModalHtml',
-//    '_buildRosterModalHtml', 'handleP1CheckboxChange', 'handleP1Search'.
-//    Ezek kezelik az új felugró ablakot, az API hívást, a kereshető
-//    játékoslista renderelését és a kiválasztást.
-// 3. ÚJ ÁLLAPOT: 'appState.p1SelectedAbsentees' (Map) hozzáadva,
-//    hogy a kiválasztott hiányzókat a DOM helyett a memóriában tárolja.
-// 4. MEGVÁLTOZTATVA: 'runAnalysisFromCard' és 'runMultiAnalysis' frissítve,
-//    hogy a hiányzókat az 'appState.p1SelectedAbsentees' Map-ből olvassák ki.
-// 5. TÖRÖLVE: 'handleRosterToggle' és 'addRosterToggleListeners' (már nincs rájuk szükség).
+// --- script.js (v63.4 - P1 Kanban Drag-and-Drop) ---
+// MÓDOSÍTÁS (Feladat 5 alapján):
+// 1. MEGVÁLTOZTATVA: '_buildRosterModalHtml' teljesen átírva. Most már nem
+//    checkbox-listát, hanem "kanban" oszlopokat és "player-card" kártyákat generál.
+// 2. ÚJ FUNKCIÓK (Drag-and-Drop): 'handleP1DragStart', 'handleP1DragOver',
+//    'handleP1DragLeave', 'handleP1Drop' hozzáadva a mozgatás kezeléséhez.
+// 3. MEGVÁLTOZTATVA: 'handleP1Drop' frissíti az 'appState.p1SelectedAbsentees' állapotot,
+//    majd újrarajzolja a modalt (az állapot alapján).
+// 4. MEGVÁLTOZTATVA: '_getAndRenderRosterModalHtml' most már a drag-and-drop
+//    eseményfigyelőket csatolja a generált HTML-hez.
+// 5. TÖRÖLVE: 'handleP1CheckboxChange' (már nincs rá szükség).
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -244,13 +242,17 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
         const { analysisData, debugInfo } = data;
 
         // v62.1: A kapott keretadatok mentése a globális cache-be
+        // === JAVÍTÁS (v63.5): Hozzuk létre a matchId-t itt ===
+        const matchId = `${appState.currentSport}_${home.toLowerCase().replace(/\s+/g, '')}_${away.toLowerCase().replace(/\s+/g, '')}`;
+
         if (analysisData.availableRosters) {
-            const uniqueId = `${appState.currentSport}_${home.toLowerCase().replace(/\s+/g, '')}_${away.toLowerCase().replace(/\s+/g, '')}`;
-            appState.rosterCache.set(uniqueId, analysisData.availableRosters);
+            // const uniqueId = `${appState.currentSport}_${home.toLowerCase().replace(/\s+/g, '')}_${away.toLowerCase().replace(/\s+/g, '')}`; // Ez már létezik matchId néven
+            appState.rosterCache.set(matchId, analysisData.availableRosters);
         }
         
         // === MÓDOSÍTÁS (v63.1) ===
         // Most már átadjuk a 'finalConfidenceScore'-t is, hogy a "Bizalmi Híd" a helyes (Stratéga) pontszámot mutassa
+        const matchId = `${appState.currentSport}_${home.toLowerCase().replace(/\s+/g, '')}_${away.toLowerCase().replace(/\s+/g, '')}`; // v63.3: ID lekérése
         const finalHtml = buildAnalysisHtml_CLIENTSIDE(
             analysisData.committee,
             analysisData.matchData,
@@ -261,7 +263,7 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
             analysisData.sim,
             analysisData.recommendation,
             analysisData.availableRosters, // v63.3: Átadjuk a renderelőnek, hogy a modalban is működjön
-            matchId // v63.3: Átadjuk az ID-t a modal hívásához
+            matchId // v63.3: Átadjuk az ID-t a modal hívásához  <--- JAVÍTVA
         );
         modalResults.innerHTML = `<div class="analysis-body">${finalHtml}</div>`;
         modalResults.innerHTML += `<p class="muted" style="text-align: center; margin-top: 1rem; font-size: 0.8rem;">xG Forrás: ${analysisData.xgSource || 'Ismeretlen'}</p>`;
@@ -1178,7 +1180,7 @@ async function openP1AbsenteesModal(event) {
     await _getAndRenderRosterModalHtml(matchId, homeName, awayName, unescape(league), unescape(kickoff));
 }
 
-// === ÚJ (v63.3): P1 Modal Adatlekérés és Renderelés ===
+// === MÓDOSÍTVA (v63.4): P1 Modal Adatlekérés és Renderelés (Drag-and-Drop) ===
 async function _getAndRenderRosterModalHtml(matchId, homeName, awayName, leagueName, utcKickoff) {
     const modalBody = document.getElementById('modal-body');
     if (!modalBody) return;
@@ -1213,16 +1215,35 @@ async function _getAndRenderRosterModalHtml(matchId, homeName, awayName, leagueN
             console.log(`P1 Keret: Cache találat (${matchId})`);
         }
 
-        // HTML felépítése
+        // HTML felépítése (az új kanban-építő függvénnyel)
         const modalHtml = _buildRosterModalHtml(matchId, homeName, awayName, rosters);
+        
+        // Mentjük a keresőmező értékét (ha volt)
+        const currentSearch = (modalBody.querySelector('#p1-search-input'))?.value || '';
+        
         modalBody.innerHTML = modalHtml;
 
-        // Eseményfigyelők hozzáadása a modalon belül
+        // Visszaállítjuk a keresőmező értékét
         const searchInput = modalBody.querySelector('#p1-search-input');
-        searchInput?.addEventListener('keyup', handleP1Search);
+        if (searchInput) {
+            searchInput.value = currentSearch;
+            // Lefuttatjuk a szűrést, ha volt érték
+            if (currentSearch) {
+                handleP1Search({ target: searchInput });
+            }
+            searchInput.addEventListener('keyup', handleP1Search);
+        }
+
+        // Eseményfigyelők hozzáadása a Drag-and-Drop-hoz
+        modalBody.querySelectorAll('.player-card').forEach(card => {
+            card.addEventListener('dragstart', handleP1DragStart);
+        });
         
-        modalBody.querySelectorAll('.p1-player-checkbox').forEach(cb => {
-            cb.addEventListener('change', handleP1CheckboxChange);
+        modalBody.querySelectorAll('.kanban-column').forEach(column => {
+            column.addEventListener('dragover', handleP1DragOver);
+            column.addEventListener('dragenter', handleP1DragEnter);
+            column.addEventListener('dragleave', handleP1DragLeave);
+            column.addEventListener('drop', handleP1Drop);
         });
 
     } catch (e) {
@@ -1231,18 +1252,34 @@ async function _getAndRenderRosterModalHtml(matchId, homeName, awayName, leagueN
     }
 }
 
-// === ÚJ (v63.3): P1 Modal HTML Generátor (Keresővel és Kártyákkal) ===
+// === MÓDOSÍTVA (v63.4): P1 Modal HTML Generátor (Kanban verzió) ===
 function _buildRosterModalHtml(matchId, homeName, awayName, availableRosters) {
     
-    // Lekérjük a jelenlegi állapotot az appState-ből
+    // 1. Lekérjük a jelenlegi állapotot az appState-ből
     const p1State = appState.p1SelectedAbsentees.get(matchId) || { home: [], away: [] };
+    const absentHomeNames = new Set(p1State.home);
+    const absentAwayNames = new Set(p1State.away);
+
+    // 2. Szétválogatjuk a játékosokat
+    const allHomePlayers = availableRosters?.home || [];
+    const allAwayPlayers = availableRosters?.away || [];
+
+    const availableHome = allHomePlayers.filter(p => !absentHomeNames.has(p.name));
+    const availableAway = allAwayPlayers.filter(p => !absentAwayNames.has(p.name));
     
-    const buildList = (players, teamType) => {
-        if (!players || players.length === 0) return `<p class="muted" style="font-size: 0.8rem; text-align: center; padding: 1rem;">Nincs ${teamType} keretadat.</p>`;
+    // A hiányzó listák most már a teljes IPlayerStub objektumokat tartalmazzák
+    const absentHome = allHomePlayers.filter(p => absentHomeNames.has(p.name));
+    const absentAway = allAwayPlayers.filter(p => absentAwayNames.has(p.name));
+
+    // 3. Segédfüggvény a kártyák generálásához
+    const buildPlayerCards = (players, columnType) => {
+        if (!players || players.length === 0) {
+            return '<p class="muted" style="font-size: 0.8rem; text-align: center; padding: 1rem;">Nincs játékos ebben a listában.</p>';
+        }
         
         const grouped = groupBy(players, p => p.pos || 'N/A');
-        
         let html = '';
+        
         ['G', 'D', 'M', 'F', 'N/A'].forEach(pos => {
             if (grouped[pos]) {
                 const posLabel = { 'G': 'Kapusok', 'D': 'Védők', 'M': 'Középpályások', 'F': 'Támadók', 'N/A': 'Ismeretlen'}[pos];
@@ -1251,43 +1288,50 @@ function _buildRosterModalHtml(matchId, homeName, awayName, availableRosters) {
               
                 html += grouped[pos].map(player => {
                     const playerName = escapeHTML(player.name);
-                    // Ellenőrizzük, hogy a játékos ki van-e pipálva az appState alapján
-                    const isChecked = (teamType === 'home' ? p1State.home : p1State.away).includes(playerName);
-                    
                     return `
-                    <label class="roster-checkbox-label" data-name="${playerName.toLowerCase()}">
-                        <input type="checkbox" 
-                               class="p1-player-checkbox" 
-                               data-match-id="${matchId}"
-                               data-team-type="${teamType}"
-                               value="${playerName}"
-                               ${isChecked ? 'checked' : ''}>
+                    <div class="player-card" 
+                         draggable="true"
+                         data-match-id="${matchId}"
+                         data-player-name="${playerName}"
+                         data-column="${columnType}"
+                         data-team="${columnType.includes('home') ? 'home' : 'away'}">
                         ${playerName}
-                    </label>`;
+                    </div>`;
                 }).join('');
                 html += `</div>`;
             }
         });
         return html;
     };
-
+    
+    // 4. A teljes modal HTML felépítése
     const finalHtml = `
-        <div class="p1-roster-modal-container">
+        <div class="p1-kanban-board">
             <div class="p1-search-bar">
                 <input type="search" id="p1-search-input" class="xg-input" placeholder="Keresés a játékosok között..." style="width: 100%; text-align: left; padding: 12px; font-size: 1rem;">
             </div>
-            <div class="roster-selector-grid">
-                <div class="roster-selector-column">
-                    <h5>${escapeHTML(homeName)} (Hazai)</h5>
-                    <div class="roster-player-list">
-                        ${buildList(availableRosters?.home, 'home')}
-                    </div>
+
+            <div class="kanban-column available-list" data-column="available">
+                <h5>Elérhető Keret</h5>
+                <div class="kanban-column-content">
+                    <h6 class="team-subheader">${escapeHTML(homeName)} (Hazai)</h6>
+                    ${buildPlayerCards(availableHome, 'available-home')}
+                    <h6 class="team-subheader" style="margin-top: 1.5rem;">${escapeHTML(awayName)} (Vendég)</h6>
+                    ${buildPlayerCards(availableAway, 'available-away')}
                 </div>
-                <div class="roster-selector-column">
-                    <h5>${escapeHTML(awayName)} (Vendég)</h5>
-                    <div class="roster-player-list">
-                        ${buildList(availableRosters?.away, 'away')}
-                    </div>
+            </div>
+
+            <div class="kanban-column drop-zone" data-column="absent-home">
+                <h5>${escapeHTML(homeName)} HIÁNYZÓK</h5>
+                <div class="kanban-column-content">
+                    ${buildPlayerCards(absentHome, 'absent-home')}
+                </div>
+            </div>
+
+            <div class="kanban-column drop-zone" data-column="absent-away">
+                <h5>${escapeHTML(awayName)} HIÁNYZÓK</h5>
+                <div class="kanban-column-content">
+                    ${buildPlayerCards(absentAway, 'absent-away')}
                 </div>
             </div>
         </div>
@@ -1295,54 +1339,120 @@ function _buildRosterModalHtml(matchId, homeName, awayName, availableRosters) {
     return finalHtml;
 }
 
-// === ÚJ (v63.3): P1 Modal Kereső Logika ===
+// === MÓDOSÍTVA (v63.4): P1 Modal Kereső Logika (Kanban kártyákhoz) ===
 function handleP1Search(event) {
     const searchTerm = event.target.value.toLowerCase();
     const modalBody = event.target.closest('.modal-body');
     if (!modalBody) return;
     
-    modalBody.querySelectorAll('.roster-checkbox-label').forEach(label => {
-        const playerName = label.dataset.name;
+    modalBody.querySelectorAll('.player-card').forEach(card => {
+        const playerName = card.dataset.playerName.toLowerCase();
         if (playerName.includes(searchTerm)) {
-            label.style.display = 'block';
+            card.style.display = 'block';
         } else {
-            label.style.display = 'none';
+            card.style.display = 'none';
         }
     });
 }
 
-// === ÚJ (v63.3): P1 Modal Checkbox Állapotkezelés ===
-function handleP1CheckboxChange(event) {
-    const checkbox = event.currentTarget;
-    const matchId = checkbox.dataset.matchId;
-    const teamType = checkbox.dataset.teamType; // 'home' or 'away'
-    const playerName = checkbox.value;
+// === ÚJ (v63.4): P1 Drag-and-Drop Eseménykezelők ===
 
-    if (!matchId || !teamType) return;
+function handleP1DragStart(event) {
+    const target = event.target;
+    target.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    // Adatok átadása
+    event.dataTransfer.setData('text/plain', target.dataset.playerName);
+    event.dataTransfer.setData('source-column', target.dataset.column);
+    event.dataTransfer.setData('match-id', target.dataset.matchId);
+}
 
-    // 1. Állapot inicializálása (ha még nem létezik)
+function handleP1DragOver(event) {
+    event.preventDefault(); // Kötelező a 'drop' esemény fogadásához
+    event.dataTransfer.dropEffect = 'move';
+}
+
+function handleP1DragEnter(event) {
+    const column = event.target.closest('.kanban-column');
+    if (column) {
+        column.classList.add('drag-over');
+    }
+}
+
+function handleP1DragLeave(event) {
+    const column = event.target.closest('.kanban-column');
+    if (column) {
+        column.classList.remove('drag-over');
+    }
+}
+
+async function handleP1Drop(event) {
+    event.preventDefault();
+    const column = event.target.closest('.kanban-column');
+    if (!column) return;
+    
+    column.classList.remove('drag-over');
+    const draggingCard = document.querySelector('.player-card.dragging');
+    if (draggingCard) {
+        draggingCard.classList.remove('dragging');
+    }
+
+    // 1. Adatok kinyerése
+    const playerName = event.dataTransfer.getData('text/plain');
+    const sourceColumn = event.dataTransfer.getData('source-column');
+    const matchId = event.dataTransfer.getData('match-id');
+    const targetColumn = column.dataset.column;
+
+    if (!playerName || !sourceColumn || !matchId || !targetColumn) {
+        console.error("Drag-and-Drop hiba: Hiányzó adatok.", { playerName, sourceColumn, matchId, targetColumn });
+        return;
+    }
+    
+    // Ha ugyanabba az oszlopba dobta vissza, nem csinálunk semmit
+    if (sourceColumn === targetColumn) {
+        return;
+    }
+
+    // 2. Állapot frissítése (appState)
     if (!appState.p1SelectedAbsentees.has(matchId)) {
         appState.p1SelectedAbsentees.set(matchId, { home: [], away: [] });
     }
-    
-    const currentState = appState.p1SelectedAbsentees.get(matchId);
-    const targetArray = (teamType === 'home' ? currentState.home : currentState.away);
+    const p1State = appState.p1SelectedAbsentees.get(matchId);
 
-    // 2. Állapot frissítése
-    if (checkbox.checked) {
-        if (!targetArray.includes(playerName)) {
-            targetArray.push(playerName);
-        }
-    } else {
-        const index = targetArray.indexOf(playerName);
-        if (index > -1) {
-            targetArray.splice(index, 1);
-        }
+    // Eltávolítás a régi helyről
+    if (sourceColumn === 'absent-home') {
+        p1State.home = p1State.home.filter(name => name !== playerName);
+    } else if (sourceColumn === 'absent-away') {
+        p1State.away = p1State.away.filter(name => name !== playerName);
     }
+    
+    // Hozzáadás az új helyhez
+    if (targetColumn === 'absent-home') {
+        if (!p1State.home.includes(playerName)) p1State.home.push(playerName);
+    } else if (targetColumn === 'absent-away') {
+        if (!p1State.away.includes(playerName)) p1State.away.push(playerName);
+    }
+    
+    // 3. UI Frissítése (Újrarajzolással)
+    const modal = document.getElementById('modal-container');
+    const { home, away, league, kickoff } = draggingCard.dataset; // A gomb adatainak lekérése
+    
+    // Újrarajzoljuk a modal tartalmát a frissített állapot alapján
+    // A _getAndRenderRosterModalHtml már kezeli a listener-ek újracsatolását
+    await _getAndRenderRosterModalHtml(
+        matchId, 
+        modal.querySelector('.kanban-column[data-column="absent-home"] h5').textContent.replace(' HIÁNYZÓK', ''), 
+        modal.querySelector('.kanban-column[data-column="absent-away"] h5').textContent.replace(' HIÁNYZÓK', ''), 
+        "", // League/Kickoff itt már nem releváns, mert a keret már cache-ben van
+        ""
+    );
 
-    // 3. Gomb frissítése a főoldalon (Kanban/Lista)
+    // 4. Főoldali gomb frissítése
     _updateP1ButtonCount(matchId);
 }
+
+// === TÖRÖLVE (v63.4): P1 Modal Checkbox Állapotkezelés ===
+// function handleP1CheckboxChange(event) { ... }
 
 // === ÚJ (v63.3): P1 Gomb Számláló Frissítése ===
 function _updateP1ButtonCount(matchId) {
