@@ -1,14 +1,8 @@
-/* style.css (v59.0 - Vizuális Hierarchia Javítás) */
+/* style.css (v68.0 - Kanban Görgetés Javítva + Pozíció Jelvények) */
 /* MÓDOSÍTÁS:
- * 1. ÚJ (v59.0) Kétoszlopos Elrendezés: '.analysis-layout',
- * '.analysis-layout-main', '.analysis-layout-sidebar' osztályok hozzáadva.
-* 2. ÚJ (v59.0) Kiemelő Osztály: A kért "narancssárga világító"
- * kiemeléshez  hozzáadva a '.highlight-keyword' osztály.
-* 3. ÚJ (v59.0) Harmonika Stílus: '.sidebar-accordion' hozzáadva a
- * jobb oldali oldalsáv (Quant/Scout, Mikromodellek) számára.
-* 4. ÚJ (v59.0) Kártya Stílusok: '.prophet-card' és '.synthesis-card'
- * hozzáadva a fő narratív elemekhez.
-* 5. JAVÍTVA: Minden szintaktikai hiba eltávolítva.
+ * 1. v63.4: Teljes P1 Hiányzó modal átalakítva "Kanban" nézetre.
+ * 2. v63.5: JAVÍTVA a Kanban görgetési hiba (.kanban-column min-height: 0).
+ * 3. v68.0: HOZZÁADVA a .player-pos-badge stílusok a script.js v68.0-hoz.
  */
 :root {
     --bg-dark: #101010;
@@ -611,7 +605,7 @@ margin-bottom: 10px; max-width: 80%; line-height: 1.5; word-wrap: break-word; }
 .toast-notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999;
 display: flex; flex-direction: column; gap: 10px; }
 .toast-notification { padding: 15px 20px; border-radius: 10px; color: #fff; font-weight: 500; font-size: 0.9rem;
-box-shadow: 0 5px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); animation: slideIn 0.3s ease forwards; }
+box-shadow: 0 5px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,0.2); animation: slideIn 0.3s ease forwards; }
 .toast-notification.info { background: linear-gradient(135deg, #00BFFF, #0077B6);
 }
 .toast-notification.success { background: linear-gradient(135deg, #39FF14, #28a745); }
@@ -940,72 +934,62 @@ background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55,
 }
 
 /* === MÓDOSÍTVA (v63.4) P1 HIÁNYZÓ MODAL STÍLUSOK (KANBAN) === */
-/* Ez a blokk felülírja a v63.3-as listanézetet */
-
+/* Ez a blokk felülírja a v63.3-as listanézetet és bevezeti a kanban-t */
 .p1-kanban-board {
     display: grid;
-    /* 1. oszlop (Kereső) - teljes szélesség */
-    /* 2. oszlop (Kanban Oszlopok) - teljes szélesség */
-    grid-template-rows: auto 1fr;
-    grid-template-columns: 1fr;
-    /* height: 100%; */ /* <-- TÖRÖLD EZT A SORT (kb. 1018. sor) */
-    flex-grow: 1;       /* <-- ADD HOZZÁ EZT A SORT */
-    min-height: 0;
+    grid-template-columns: 1fr; /* Mobilon 1 oszlop */
+    grid-template-rows: auto minmax(0, 1fr); /* Kereső + 1fr a tartalomnak */
     gap: 1rem;
+    /* height: 100%; */ /* v63.5 Hiba: Eltávolítva */
+    flex-grow: 1; /* v63.5 Javítás: Kitölti a modal-body-t */
+    min-height: 0; /* Kritikus a zsugorodáshoz */
+    width: 100%;
 }
 
 .p1-search-bar {
-    flex-shrink: 0; /* A keresősáv ne zsugorodjon */
-    grid-row: 1;
-    grid-column: 1;
-}
-
-.roster-selector-grid {
-    /* Ez az osztály már nincs használatban a kanban nézetben, de a .p1-kanban-board átvette a szerepét */
-    /* A v63.4-es CSS-ben .kanban-column-grid-nek nevezzük a belső rácsot */
-    grid-row: 2;
-    grid-column: 1;
-    display: grid;
-    grid-template-columns: 1fr; /* Alapból 1 oszlop mobilon */
-    gap: 1.5rem;
-    flex-grow: 1; /* Kitölti a maradék helyet */
-    min-height: 0; /* Kritikus a flexbox zsugorodáshoz */
-    overflow: hidden; /* A belső görgetést kezeljük */
-}
-
-@media (min-width: 768px) {
-    .p1-kanban-board {
-         /* 1. oszlop (Kereső), 2. oszlop (Elérhető), 3. oszlop (Hiányzók) */
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: auto 1fr; /* Kereső fent, oszlopok alatta */
-    }
-    .p1-search-bar {
-        grid-column: 1 / -1; /* A kereső átíveli mind a 3 oszlopot */
-        grid-row: 1;
-    }
-    .kanban-column.available-list {
-        grid-column: 1;
-        grid-row: 2;
-    }
-    .kanban-column.drop-zone[data-column="absent-home"] {
-        grid-column: 2;
-        grid-row: 2;
-    }
-    .kanban-column.drop-zone[data-column="absent-away"] {
-        grid-column: 3;
-        grid-row: 2;
-    }
+    grid-column: 1 / -1; /* Átfogja az összes oszlopot */
+    flex-shrink: 0;
 }
 
 .kanban-column {
     display: flex;
     flex-direction: column;
-    /* overflow: hidden; */ /* <-- TÖRÖLD EZT A SORT (kb. 1046. sor) */
+    /* overflow: hidden; */ /* v63.5 Hiba: Eltávolítva */
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    min-height: 0; /* === JAVÍTÁS (v63.5): 300px-ről 0-ra cserélve === */
+    /* min-height: 300px; */ /* v63.5 Hiba: Eltávolítva */
+    min-height: 0; /* v63.5 JAVÍTÁS: Lehetővé teszi a zsugorodást */
 }
+
+/* Külön oszlop a kanban-ban */
+.p1-kanban-board .kanban-column.available-list {
+    grid-column: 1 / -1; /* 1. sor (a kereső után) */
+}
+.p1-kanban-board .kanban-column.drop-zone {
+    grid-column: 1 / -1; /* 2. és 3. sor */
+}
+
+/* Desktop nézet (3 oszlop) */
+@media (min-width: 768px) {
+    .p1-kanban-board {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto minmax(0, 1fr); /* Kereső + 1fr a tartalomnak */
+    }
+    .p1-kanban-board .kanban-column.available-list {
+        grid-column: 1 / 2;
+        grid-row: 2 / 3;
+    }
+    .p1-kanban-board .kanban-column.drop-zone[data-column="absent-home"] {
+        grid-column: 2 / 3;
+        grid-row: 2 / 3;
+    }
+    .p1-kanban-board .kanban-column.drop-zone[data-column="absent-away"] {
+        grid-column: 3 / 4;
+        grid-row: 2 / 3;
+    }
+}
+
 
 .kanban-column h5 {
     padding: 1rem 1rem 0.75rem;
@@ -1013,32 +997,34 @@ background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55,
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0; /* A fejléc ne görgessen */
     color: var(--primary);
-    text-align: center;
-    font-size: 1rem;
-}
-
-/* Külön stílus a "Hiányzó" oszlopok fejlécének */
-.kanban-column.drop-zone h5 {
-    color: var(--primary);
-}
-/* Külön stílus az "Elérhető" oszlop fejlécének */
-.kanban-column.available-list h5 {
-    color: var(--text-secondary);
 }
 
 .kanban-column-content {
     flex-grow: 1; /* Kitölti a maradék helyet az oszlopon belül */
-    overflow-y: auto; /* --- EZ A JAVÍTÁS --- */
-    padding: 0.75rem;
+    overflow-y: auto; /* --- EZ A JAVÍTÁS (v63.3) --- */
+    padding: 1rem;
+    min-height: 150px; /* Biztosít egy minimális magasságot, de a min-height:0 a .kanban-column-on felülbírálja, ha kell */
+}
+
+.kanban-column.drag-over {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: var(--primary);
+}
+.kanban-column .kanban-column-content {
+    background: transparent;
+    transition: background-color 0.2s ease;
+}
+.kanban-column.drag-over .kanban-column-content {
+    background-color: rgba(212, 175, 55, 0.05);
 }
 
 .team-subheader {
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-secondary);
-    padding: 0.5rem;
+    padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--border-color);
-    margin-bottom: 0.5rem;
+    margin: 0 0 0.75rem 0;
 }
 
 .roster-position-group {
@@ -1055,43 +1041,47 @@ background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(212, 175, 55,
     letter-spacing: 0.5px;
     display: block;
     margin-bottom: 0.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-/* Az új "Player Card" stílus */
 .player-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    display: flex; /* v68.0: Flexre váltva a badge-hez */
+    justify-content: space-between; /* v68.0: Név és badge szétválasztása */
+    align-items: center; /* v68.0: Középre igazítás */
     padding: 10px 12px;
     border-radius: 6px;
     cursor: grab;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
     font-size: 0.95rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
     margin-bottom: 6px;
-    display: block; /* Biztosítjuk, hogy a kereső elrejthesse */
+    color: var(--text-primary);
 }
-
 .player-card:hover {
     background-color: rgba(212, 175, 55, 0.1);
-    border-color: var(--primary);
-    transform: scale(1.02);
 }
-
-.player-card:active,
 .player-card.dragging {
+    opacity: 0.5;
+    background: rgba(212, 175, 55, 0.2);
+    border: 1px dashed var(--primary);
     cursor: grabbing;
-    background: var(--primary);
-    color: #000;
-    opacity: 0.9;
-    transform: scale(1.05);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
-/* Vizuális visszajelzés a "drop zone"-on */
-.kanban-column.drag-over {
-    background: rgba(212, 175, 55, 0.05);
-    border-color: var(--primary);
-    border-style: dashed;
+
+/* === ÚJ (v68.0) POZÍCIÓ JELVÉNYEK === */
+.player-pos-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    margin-left: 8px; /* Távolság a névtől */
+    flex-shrink: 0; /* Ne zsugorodjon */
 }
-/* === KANBAN STÍLUSOK VÉGE === */
+/* Színek a pozíciókhoz */
+.player-pos-badge.pos-G { background: #FFD700; color: #000; } /* Arany (Kapus) */
+.player-pos-badge.pos-D { background: #00BFFF; color: #000; } /* Kék (Védő) */
+.player-pos-badge.pos-M { background: #39FF14; color: #000; } /* Zöld (Középpályás) */
+.player-pos-badge.pos-F { background: #FF4747; color: #fff; } /* Piros (Támadó) */
+.player-pos-badge.pos-N\/A { background: var(--text-secondary); color: var(--bg-dark); } /* Szürke (Ismeretlen) */
