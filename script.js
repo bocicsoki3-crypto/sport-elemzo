@@ -1,10 +1,11 @@
-// --- script.js (v72.0 - Manuális Hiányzó Pozíció Javítás) ---
-// MÓDOSÍTÁS (v72.0):
-// 1. JAVÍTVA: 'runManualAnalysis' átalakítva, hogy a manuálisan bevitt hiányzókat
-//    is {name: string, pos: string} objektumokká parse-olja, ezzel biztosítva,
-//    hogy a DataFetch.ts (v71.0) és a Model.ts szerepkör-érzékeny logikája
-//    helyesen tudjon futni.
-// 2. MÓDOSÍTVA: A 'parseManualAbsentees' segédfüggvényt áthelyeztük az eseménykezelőn kívülre.
+// --- script.js (v68.1 - Előzmény Megjelenítő Javítás) ---
+// MÓDOSÍTÁS (v68.1):
+// 1. JAVÍTVA: A 'viewHistoryDetail' (280. sor környéke) most már helyesen
+//    képes feldolgozni a 'sheets.ts' (v71.0) által küldött <pre>JSON_Data</pre>
+//    formátumot, és a 'buildAnalysisHtml_CLIENTSIDE' segítségével kirajzolja azt.
+// 2. LOGIKA: A régi (HTML-alapú) előzmények és az új (JSON-alapú) előzmények
+//    megjelenítése is támogatott.
+// 3. Az összes korábbi v68.0 (P1 Kanban) funkció érintetlen marad.
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -243,16 +244,10 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
         const { analysisData, debugInfo } = data;
 
         // v62.1: A kapott keretadatok mentése a globális cache-be
-        // === JAVÍTÁS (v63.5): Hozzuk létre a matchId-t itt === (v68.0: már a függvény elején megtörténik)
-        // const matchId = `${appState.currentSport}_${home.toLowerCase().replace(/\s+/g, '')}_${away.toLowerCase().replace(/\s+/g, '')}`; // v68.0: Eltávolítva, mert már létezik
-
         if (analysisData.availableRosters) {
-            // const uniqueId = `${appState.currentSport}_${home.toLowerCase().replace(/\s+/g, '')}_${away.toLowerCase().replace(/\s+/g, '')}`; // Ez már létezik matchId néven
             appState.rosterCache.set(matchId, analysisData.availableRosters);
         }
         
-        // === MÓDOSÍTÁS (v63.1) ===
-        // Most már átadjuk a 'finalConfidenceScore'-t is, hogy a "Bizalmi Híd" a helyes (Stratéga) pontszámot mutassa
         const finalHtml = buildAnalysisHtml_CLIENTSIDE(
             analysisData.committee,
             analysisData.matchData,
@@ -262,19 +257,17 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
             analysisData.finalConfidenceScore, // Stratéga Bizalom
             analysisData.sim,
             analysisData.recommendation,
-            analysisData.availableRosters, // v63.3: Átadjuk a renderelőnek, hogy a modalban is működjön
-            matchId // v63.3: Átadjuk az ID-t a modal hívásához  <--- JAVÍTVA
+            analysisData.availableRosters, 
+            matchId 
         );
         modalResults.innerHTML = `<div class="analysis-body">${finalHtml}</div>`;
         modalResults.innerHTML += `<p class="muted" style="text-align: center; margin-top: 1rem; font-size: 0.8rem;">xG Forrás: ${analysisData.xgSource || 'Ismeretlen'}</p>`;
-        // v59.0: A #chat-container áthelyezése a 'common-elements'-ből a 'chat-content-wrapper'-be
+        
         const chatWrapper = modalResults.querySelector('#chat-content-wrapper');
         if (chatWrapper) {
             chatWrapper.appendChild(modalChatContainer);
         }
 
-        // === MÓDOSÍTÁS (6 FŐS BIZOTTSÁG) ===
-        // Az appState.currentAnalysisContext feltöltése az ÚJ lánc kimenetével
         const { committee, recommendation } = analysisData;
         appState.currentAnalysisContext = `Fő elemzés: ${committee.strategist?.strategic_synthesis || 'N/A'}\n
 Prófécia: ${committee.strategist?.prophetic_timeline || 'N/A'}\n
@@ -286,7 +279,6 @@ Ajánlás: ${recommendation.recommended_bet} (Bizalom: ${recommendation.final_co
         modalChatContainer.style.display = 'block';
         (modalChatContainer.querySelector('#chat-messages')).innerHTML = '';
         
-        // === ÚJ (v63.3) ===
         // Eseményfigyelő hozzáadása az elemzési modalon belüli "Hiányzók Megadása" gombhoz
         addP1ModalButtonListeners('#modal-container');
         
@@ -341,10 +333,14 @@ async function runFinalCheck(home, away, sport) {
     alert("A 'Végső Ellenőrzés' funkció jelenleg nincs implementálva a szerver oldalon.");
 }
 
+// === JAVÍTOTT FÜGGVÉNY (v68.1) ===
+// Ez a verzió már kezeli a <pre> taggel küldött v71.0+ JSON adatokat.
 async function viewHistoryDetail(id) {
     const originalId = unescape(id);
     openModal('Elemzés Betöltése...', (document.getElementById('loading-skeleton')).outerHTML, 'modal-xl');
     (document.querySelector('#modal-container #loading-skeleton')).classList.add('active');
+    
+    // === A JAVÍTÁS ITT KEZDŐDIK (A try blokk belseje) ===
     try {
         const response = await fetchWithAuth(`${appState.gasUrl}/getAnalysisDetail?id=${encodeURIComponent(originalId)}`);
         if (!response.ok) await handleFetchError(response);
@@ -357,20 +353,9 @@ async function viewHistoryDetail(id) {
         (document.getElementById('modal-title')).textContent = `${record.home || 'Ismeretlen'} vs ${record.away || 'Ismeretlen'}`;
         const modalBody = document.getElementById('modal-body');
 
-// ... existing code ...
-async function viewHistoryDetail(id) {
-    const originalId = unescape(id);
-// ... existing code ...
-        
-        (document.getElementById('modal-title')).textContent = `${record.home || 'Ismeretlen'} vs ${record.away || 'Ismeretlen'}`;
-        const modalBody = document.getElementById('modal-body');
-
-        // === CSERÉLD EZT A BLOKKOT (KEZDETE) ===
-        // A v68.0-s, 15 soros `contentToDisplay` blokk helyére
-        
         let contentToDisplay = "";
         
-         // 1. Ellenőrizzük, hogy v71.0+ JSON adat-e (a sheets.ts <pre> taggel menti)
+        // 1. Ellenőrizzük, hogy v71.0+ JSON adat-e (a sheets.ts <pre> taggel menti)
         // A 'sheets.ts' (v71.0) a JSON-t <pre> tagbe csomagolja.
         if (record.html.startsWith("<pre")) {
             try {
@@ -453,7 +438,7 @@ async function sendChatMessage() {
              body: JSON.stringify({
                 context: appState.currentAnalysisContext, 
                 history: appState.chatHistory, 
-                question: message  
+                question: message 
      
        })
         });
