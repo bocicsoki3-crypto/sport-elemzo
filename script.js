@@ -428,6 +428,9 @@ async function viewHistoryDetail(id) {
         (modalBody.querySelector('#analysis-results')).innerHTML = contentToDisplay;
         const modalChat = modalBody.querySelector('#chat-container');
         modalChat.style.display = 'none';
+// === ÚJ (v68.1) Eseményfigyelő hozzáadása a betöltött előzmény gombjához ===
+        addP1ModalButtonListeners('#modal-container');
+
     } catch(e) {
          (document.getElementById('modal-body')).innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a részletek betöltésekor: ${e.message}</p>`;
         console.error("Hiba a részletek megtekintésekor:", e);
