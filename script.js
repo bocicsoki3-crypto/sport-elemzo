@@ -370,11 +370,11 @@ async function viewHistoryDetail(id) {
         
         let contentToDisplay = "";
         
-        // 1. Ellenőrizzük, hogy v71.0+ JSON adat-e (a sheets.ts <pre> taggel menti)
+         // 1. Ellenőrizzük, hogy v71.0+ JSON adat-e (a sheets.ts <pre> taggel menti)
+        // A 'sheets.ts' (v71.0) a JSON-t <pre> tagbe csomagolja.
         if (record.html.startsWith("<pre")) {
             try {
                 // 2. Bontsuk ki a tiszta JSON stringet a <pre> tagból
-                // (Eltávolítjuk a 'sheets.ts' által hozzáadott formázást)
                 const jsonString = record.html
                     .replace(/<pre[^>]*>/, '') // Eltávolítja a nyitó <pre ...> taget
                     .replace(/<\/pre>$/, '')    // Eltávolítja a záró </pre> taget
@@ -385,7 +385,6 @@ async function viewHistoryDetail(id) {
                 // 3. Parse-oljuk vissza a teljes mentett objektumot
                 const storedResponse = JSON.parse(jsonString);
                 
-                // Ellenőrizzük, hogy a mentett struktúra megfelelő-e
                 if (!storedResponse || !storedResponse.analysisData || !storedResponse.analysisData.committee) {
                     throw new Error("A mentett JSON struktúra hiányos ('analysisData' vagy 'committee' kulcs hiányzik).");
                 }
@@ -394,7 +393,6 @@ async function viewHistoryDetail(id) {
                 const matchId = record.id; // Az elemzés ID-ja
 
                 // 4. Hívjuk meg a MEGLÉVŐ HTML építőt a MENTETT adatokkal
-                // (Ez ugyanaz a függvény, amit az élő elemzés is használ)
                 contentToDisplay = buildAnalysisHtml_CLIENTSIDE(
                     analysisData.committee,
                     analysisData.matchData,
@@ -411,30 +409,28 @@ async function viewHistoryDetail(id) {
             } catch (e) {
                 console.error("Hiba az előzmény JSON újrarajzolásakor:", e);
                 // Hiba esetén megmutatjuk a nyers JSON-t a debuggoláshoz
-                contentToDisplay = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a JSON elemzés újrarajzolásakor: ${e.message}</p><div style="text-align:left; margin-top: 1rem; font-size: 0.8rem; opacity: 0.7;">${record.html}</div>`;
+                contentToDisplay = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a JSON elemzés újrarajzolásakor: ${e.message}</p><div style="text-align:left; margin-top: 1rem; font-size: 0.8rem; opacity: 0.7; max-height: 200px; overflow-y: auto; background: #000; padding: 1rem;">${escapeHTML(record.html)}</div>`;
             }
         } 
         // 5. Fallback a v70.0 előtti, sima HTML mentésekre (ha nem <pre> taggel kezdődik)
         else {
             contentToDisplay = `<div class="analysis-body">${record.html}</div>`;
         }
-        // === CSERÉLD EZT A BLOKKOT (VÉGE) ===
-
-        modalBody.innerHTML = (document.getElementById('common-elements')).innerHTML;
-// ... existing code ...
 
         modalBody.innerHTML = (document.getElementById('common-elements')).innerHTML;
         (modalBody.querySelector('#loading-skeleton')).style.display = 'none'; 
         (modalBody.querySelector('#analysis-results')).innerHTML = contentToDisplay;
         const modalChat = modalBody.querySelector('#chat-container');
         modalChat.style.display = 'none';
-// === ÚJ (v68.1) Eseményfigyelő hozzáadása a betöltött előzmény gombjához ===
+
+        // === ÚJ (v68.1) Eseményfigyelő hozzáadása a betöltött előzmény gombjához ===
         addP1ModalButtonListeners('#modal-container');
 
     } catch(e) {
          (document.getElementById('modal-body')).innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a részletek betöltésekor: ${e.message}</p>`;
         console.error("Hiba a részletek megtekintésekor:", e);
     }
+    // === A JAVÍTÁS ITT VÉGZŐDIK (A függvény vége) ===
 }
 
 async function sendChatMessage() {
@@ -457,7 +453,7 @@ async function sendChatMessage() {
              body: JSON.stringify({
                 context: appState.currentAnalysisContext, 
                 history: appState.chatHistory, 
-                question: message 
+                question: message  
      
        })
         });
