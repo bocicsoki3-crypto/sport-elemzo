@@ -1,13 +1,10 @@
-// --- script.js (v68.0 - P1 Kanban Drag-and-Drop + POZÍCIÓ) ---
-// MÓDOSÍTÁS (Feladat 6 alapján):
-// 1. MÓDOSÍTVA: Az 'appState.p1SelectedAbsentees' most már nem string[] tömböt,
-//    hanem { name: string, pos: string }[] objektum tömböt tárol.
-// 2. MÓDOSÍTVA: '_buildRosterModalHtml' (és a belső 'buildPlayerCards') most már
-//    hozzáadja a 'data-player-pos' attribútumot a kanban kártyákhoz.
-// 3. MÓDOSÍTVA: 'handleP1DragStart' most már a 'player-pos'-t is átadja.
-// 4. MÓDOSÍTVA: 'handleP1Drop' most már a {name, pos} objektumot menti az appState-be.
-// 5. MÓDOSÍTVA: 'runManualAnalysis' átalakítva, hogy támogassa a "Név (Pos)"
-//    formátumot a kézi bevitelhez.
+// --- script.js (v72.0 - Manuális Hiányzó Pozíció Javítás) ---
+// MÓDOSÍTÁS (v72.0):
+// 1. JAVÍTVA: 'runManualAnalysis' átalakítva, hogy a manuálisan bevitt hiányzókat
+//    is {name: string, pos: string} objektumokká parse-olja, ezzel biztosítva,
+//    hogy a DataFetch.ts (v71.0) és a Model.ts szerepkör-érzékeny logikája
+//    helyesen tudjon futni.
+// 2. MÓDOSÍTVA: A 'parseManualAbsentees' segédfüggvényt áthelyeztük az eseménykezelőn kívülre.
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -658,7 +655,27 @@ function openManualAnalysisModal() {
 }
 
 /**
- * v68.0: MÓDOSÍTVA. A P1 Manuális Hiányzókat (szöveg) átalakítja {name, pos} objektumokká.
+ * v72.0: ÚJ SEGÉDFÜGGVÉNY: A P1 Manuális Hiányzó stringet {name, pos} objektumokká alakítja.
+ */
+const parseManualAbsentees = (rawString) => {
+    if (!rawString) return [];
+    return rawString.split(',')
+        .map(entry => {
+            // Támogatja: Név (G), Név (D), Név (M), Név (F), Név (N/A)
+            const match = entry.trim().match(/^(.*?)\s*\(([GDMFN/A]+)\)$/i); 
+            if (match) {
+                return { name: match[1].trim(), pos: match[2].toUpperCase() };
+            }
+            // Fallback (ha nincs pozíció megadva)
+            return { name: entry.trim(), pos: 'N/A' }; 
+        })
+        .filter(p => p.name);
+};
+
+
+/**
+ * v72.0: MÓDOSÍTVA. A P1 Manuális Hiányzókat (szöveg) átalakítja {name, pos} objektumokká
+ * és ezt küldi el a backendnek.
  */
 function runManualAnalysis() {
     const home = (document.getElementById('manual-home')).value.trim();
@@ -702,21 +719,7 @@ function runManualAnalysis() {
         }
     }
     
-    // MÓDOSÍTÁS (v68.0): A szöveget {name, pos} objektumokká alakítjuk
-    const parseManualAbsentees = (rawString) => {
-        if (!rawString) return [];
-        return rawString.split(',')
-            .map(entry => {
-                const match = entry.trim().match(/^(.*?)\s*\(([GDMFN/A-Z]+)\)$/i); // Támogatja: Név (G), Név (D), Név (M), Név (F), Név (N/A)
-                if (match) {
-                    return { name: match[1].trim(), pos: match[2].toUpperCase() };
-                }
-                // Fallback (ha nincs pozíció megadva)
-                return { name: entry.trim(), pos: 'N/A' }; 
-            })
-            .filter(p => p.name);
-    };
-    
+    // MÓDOSÍTÁS (v72.0): A szöveget {name, pos} objektumokká alakítjuk a segédfüggvénnyel
     const manualAbsentees = {
         home: parseManualAbsentees(Abs_H_raw),
         away: parseManualAbsentees(Abs_A_raw)
@@ -880,7 +883,7 @@ function renderFixturesForMobileList(fixtures) {
                         .forEach((fx) => { 
                             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             
-                            // === MÓDOSÍTÁS (v63.3): Új P1 Gomb ===
+                            // === MÓDOSÍTÁS (v63.3): ÚJ P1 Gomb ===
                             // v68.0: A p1Count számítása már az objektumtömbön (.length) alapul
                             const p1State = appState.p1SelectedAbsentees.get(fx.uniqueId) || { home: [], away: [] };
                             const p1Count = p1State.home.length + p1State.away.length;
