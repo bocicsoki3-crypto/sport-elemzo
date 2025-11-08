@@ -357,18 +357,71 @@ async function viewHistoryDetail(id) {
         (document.getElementById('modal-title')).textContent = `${record.home || 'Ismeretlen'} vs ${record.away || 'Ismeretlen'}`;
         const modalBody = document.getElementById('modal-body');
 
+// ... existing code ...
+async function viewHistoryDetail(id) {
+    const originalId = unescape(id);
+// ... existing code ...
+        
+        (document.getElementById('modal-title')).textContent = `${record.home || 'Ismeretlen'} vs ${record.away || 'Ismeretlen'}`;
+        const modalBody = document.getElementById('modal-body');
+
+        // === CSERÉLD EZT A BLOKKOT (KEZDETE) ===
+        // A v68.0-s, 15 soros `contentToDisplay` blokk helyére
+        
         let contentToDisplay = "";
-        if (record.html.startsWith("JSON_API_MODE")) {
-            // Próbáljuk meg az új (v63.0) módban renderelni
-            if (record.html.includes("v63.0 Lánc") || record.html.includes("v63.1 Lánc")) { // Módosítva
-                 contentToDisplay = `<p class="muted" style="text-align:center; padding: 2rem;">Ez egy "v63.x Bizottsági Lánc" elemzés.<br>A mentett JSON adatok visszatöltése és újrarajzolása jelenleg még nincs implementálva.</p>`;
-            } else {
-                 contentToDisplay = `<p class="muted" style="text-align:center; padding: 2rem;">Ez egy régebbi (v55-v62) JSON API-n keresztül mentett elemzés.<br>A JSON adatok újrafeldolgozása a v63.x nézethez nem lehetséges.<br><br><i>${escapeHTML(record.html)}</i></p>`;
+        
+        // 1. Ellenőrizzük, hogy v71.0+ JSON adat-e (a sheets.ts <pre> taggel menti)
+        if (record.html.startsWith("<pre")) {
+            try {
+                // 2. Bontsuk ki a tiszta JSON stringet a <pre> tagból
+                // (Eltávolítjuk a 'sheets.ts' által hozzáadott formázást)
+                const jsonString = record.html
+                    .replace(/<pre[^>]*>/, '') // Eltávolítja a nyitó <pre ...> taget
+                    .replace(/<\/pre>$/, '')    // Eltávolítja a záró </pre> taget
+                    .replace(/&lt;/g, '<')      // HTML entitások visszaalakítása
+                    .replace(/&gt;/g, '>')
+                    .replace(/&amp;/g, '&');
+
+                // 3. Parse-oljuk vissza a teljes mentett objektumot
+                const storedResponse = JSON.parse(jsonString);
+                
+                // Ellenőrizzük, hogy a mentett struktúra megfelelő-e
+                if (!storedResponse || !storedResponse.analysisData || !storedResponse.analysisData.committee) {
+                    throw new Error("A mentett JSON struktúra hiányos ('analysisData' vagy 'committee' kulcs hiányzik).");
+                }
+                
+                const { analysisData, debugInfo } = storedResponse;
+                const matchId = record.id; // Az elemzés ID-ja
+
+                // 4. Hívjuk meg a MEGLÉVŐ HTML építőt a MENTETT adatokkal
+                // (Ez ugyanaz a függvény, amit az élő elemzés is használ)
+                contentToDisplay = buildAnalysisHtml_CLIENTSIDE(
+                    analysisData.committee,
+                    analysisData.matchData,
+                    analysisData.oddsData,
+                    analysisData.valueBets,
+                    analysisData.modelConfidence,
+                    analysisData.finalConfidenceScore,
+                    analysisData.sim,
+                    analysisData.recommendation,
+                    analysisData.availableRosters,
+                    matchId
+                );
+                
+            } catch (e) {
+                console.error("Hiba az előzmény JSON újrarajzolásakor:", e);
+                // Hiba esetén megmutatjuk a nyers JSON-t a debuggoláshoz
+                contentToDisplay = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a JSON elemzés újrarajzolásakor: ${e.message}</p><div style="text-align:left; margin-top: 1rem; font-size: 0.8rem; opacity: 0.7;">${record.html}</div>`;
             }
-        } else {
+        } 
+        // 5. Fallback a v70.0 előtti, sima HTML mentésekre (ha nem <pre> taggel kezdődik)
+        else {
             contentToDisplay = `<div class="analysis-body">${record.html}</div>`;
-            // Régi HTML-alapú mentések
         }
+        // === CSERÉLD EZT A BLOKKOT (VÉGE) ===
+
+        modalBody.innerHTML = (document.getElementById('common-elements')).innerHTML;
+// ... existing code ...
 
         modalBody.innerHTML = (document.getElementById('common-elements')).innerHTML;
         (modalBody.querySelector('#loading-skeleton')).style.display = 'none'; 
