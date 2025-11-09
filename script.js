@@ -300,7 +300,7 @@ async function openHistoryModal() {
         if (!response.ok) await handleFetchError(response);
         
         const data = await response.json();
-        if (data.error) throw new Error(data.error);
+        if (data.error) throw new Error(data.error); 
         
         (document.getElementById('modal-body')).innerHTML = renderHistory(data.history || []);
     } catch (e) {
@@ -920,7 +920,7 @@ function renderFixturesForMobileList(fixtures) {
                         .forEach((fx) => { 
                             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             
-                            // === MÓDOSÍTÁS (v63.3): ÚJ P1 Gomb ===
+                            // === MÓDOSÍTÁS (v63.3): Új P1 Gomb ===
                             // v68.0: A p1Count számítása már az objektumtömbön (.length) alapul
                             const p1State = appState.p1SelectedAbsentees.get(fx.uniqueId) || { home: [], away: [] };
                             const p1Count = p1State.home.length + p1State.away.length;
@@ -984,7 +984,9 @@ function renderHistory(historyData) {
     Object.keys(groupedByDate)
         .sort((a, b) => parseHungarianDate(b).getTime() - parseHungarianDate(a).getTime()) 
         .forEach(dateKey => {
-         html += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
+         
+         // === JAVÍTÁS (v68.2): Hozzáadtuk az 'open' attribútumot a <details> taghez ===
+         html += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
             const sortedItems = groupedByDate[dateKey].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             sortedItems.forEach((item) => {
                 const analysisTime = new Date(item.date); 
