@@ -986,7 +986,7 @@ function renderHistory(historyData) {
         .forEach(dateKey => {
          
          // === JAVÍTÁS (v68.2): Hozzáadtuk az 'open' attribútumot a <details> taghez ===
-         html += `<details class="date-section" open><summary>${formatDateLabel(dateKey)}</summary>`;
+         html += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
             const sortedItems = groupedByDate[dateKey].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             sortedItems.forEach((item) => {
                 const analysisTime = new Date(item.date); 
