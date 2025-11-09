@@ -188,7 +188,7 @@ background: rgba(var(--card-bg-rgb), 0.7); }
 .modal-body { 
     padding: 1.5rem;
     flex-grow: 1;
-    overflow: hidden; /* Ez kényszeríti a belső elemeket a korlátozásra */
+    overflow-y: auto; /* Ez kényszeríti a belső elemeket a korlátozásra */
     min-height: 0;    /* Ez biztosítja, hogy a flex-grow helyesen zsugorodjon */
     display: flex;      /* ÚJ: Flex tárolóvá alakítva */
     flex-direction: column; /* ÚJ: A belső elemek (pl. #analysis-results) függőlegesen rendeződnek */
