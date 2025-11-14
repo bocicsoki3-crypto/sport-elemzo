@@ -1,8 +1,19 @@
-/* style.css (v68.0 - Kanban Görgetés Javítva + Pozíció Jelvények) */
+/* style.css (v68.2 - Mobil Tipp Eltűnés Javítva) */
 /* MÓDOSÍTÁS:
- * 1. v63.4: Teljes P1 Hiányzó modal átalakítva "Kanban" nézetre.
- * 2. v63.5: JAVÍTVA a Kanban görgetési hiba (.kanban-column min-height: 0).
- * 3. v68.0: HOZZÁADVA a .player-pos-badge stílusok a script.js v68.0-hoz.
+ * 1. HIBA (v68.1): A "Model.ts" (v95.2) javítása után
+ * a "Győztes Piac" (pl. "Hazai győzelem") ajánlás
+ * eltűnt mobilnézetben, mert a CSS layout
+ * konfliktusba került (overflow vs. flex-grow).
+ * 2. JAVÍTÁS (v68.2): A 768px-es törésponton (kb. 1283. sor)
+ * a ".modal-body" "overflow-y: auto" szabálya "overflow-y: hidden"-re
+ * lett cserélve.
+ * 3. EREDMÉNY: Ez arra kényszeríti a belső oszlopokat
+ * (.analysis-layout-main, .analysis-layout-sidebar),
+ * hogy a saját 'overflow-y: auto' szabályukat használják
+ * (a 1195. és 1200. sorokból), egységesítve ezzel
+ * az asztali és mobil görgetési viselkedést.
+ *
+ * KORÁBBI (v68.0): P1 Kanban és Pozíció Jelvények.
  */
 :root {
     --bg-dark: #101010;
@@ -761,7 +772,14 @@ padding-left: 0;
 }
   .modal-content { width: 98vw; max-height: 95vh; max-width: 98vw; &.modal-xl, &.modal-lg { max-width: 98vw;
 } }
-  .modal-body { padding: 1rem; overflow-y: auto; } /* v59.0: Visszaállítva 'auto'-ra mobilon */
+  
+  /* === JAVÍTÁS (v68.2) ===
+   * A '.modal-body' overflow-y: auto szabálya okozta a layout hibát.
+   * 'hidden'-re cserélve, hogy a belső oszlopok (.analysis-layout-main/sidebar)
+   * kaphassák meg a görgetést, ahogy asztali nézetben is.
+   */
+  .modal-body { padding: 1rem; overflow-y: hidden; } /* v68.2 JAVÍTÁS: 'auto' -> 'hidden' */
+
   .modal-header h3 { font-size: 1rem;
 }
   .at-a-glance-grid { grid-template-columns: 1fr 1fr; } 
