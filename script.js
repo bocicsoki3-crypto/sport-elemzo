@@ -1,11 +1,13 @@
-// --- script.js (v68.1 - Előzmény Megjelenítő Javítás) ---
-// MÓDOSÍTÁS (v68.1):
-// 1. JAVÍTVA: A 'viewHistoryDetail' (280. sor környéke) most már helyesen
-//    képes feldolgozni a 'sheets.ts' (v71.0) által küldött <pre>JSON_Data</pre>
-//    formátumot, és a 'buildAnalysisHtml_CLIENTSIDE' segítségével kirajzolja azt.
-// 2. LOGIKA: A régi (HTML-alapú) előzmények és az új (JSON-alapú) előzmények
-//    megjelenítése is támogatott.
-// 3. Az összes korábbi v68.0 (P1 Kanban) funkció érintetlen marad.
+// --- script.js (v68.3 - Intelligens Bizalom Javítás) ---
+// MÓDOSÍTÁS (v68.3):
+// 1. JAVÍTÁS: A 'runAnalysis' (kb. 220. sor) és a 'viewHistoryDetail' (kb. 350. sor)
+//    hívásai most már a 'analysisData.confidenceScores' (objektum)
+//    változót adják át a 'analysisData.modelConfidence' (szám) helyett.
+// 2. JAVÍTÁS: A 'buildAnalysisHtml_CLIENTSIDE' (kb. 1130. sor) függvény
+//    átalakítva, hogy fogadja a 'confidenceScores' objektumot.
+// 3. EREDMÉNY: A "Bizalmi Híd" (kb. 1165. sor) "Quant" oldala most már
+//    a helyes 'confidenceScores.winner' értéket jeleníti meg,
+//    kijavítva ezzel az 1.0-s UI hibát.
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -186,7 +188,7 @@ function runAnalysisFromCard(buttonElement, home, away, utcKickoff, leagueName) 
 }
 
 /**
- * v68.0: Kezeli a P1 Komponens xG-t ÉS a P1 Manuális Hiányzókat (objektumként)
+ * v68.3: MÓDOSÍTVA - 'analysisData.confidenceScores'-t használ
  */
 async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false, manualXg = {}, matchId = null) { // v68.0: matchId paraméter hozzáadva
     home = unescape(home);
@@ -248,18 +250,23 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
             appState.rosterCache.set(matchId, analysisData.availableRosters);
         }
         
+        // === JAVÍTÁS (v68.3): A hívás frissítve ===
+        // A 'analysisData.modelConfidence' (régi) helyett
+        // a 'analysisData.confidenceScores' (új) objektumot adjuk át.
         const finalHtml = buildAnalysisHtml_CLIENTSIDE(
             analysisData.committee,
             analysisData.matchData,
             analysisData.oddsData,
             analysisData.valueBets,
-            analysisData.modelConfidence, // Quant Bizalom
+            analysisData.confidenceScores, // <-- JAVÍTVA
             analysisData.finalConfidenceScore, // Stratéga Bizalom
             analysisData.sim,
             analysisData.recommendation,
             analysisData.availableRosters, 
             matchId 
         );
+        // === JAVÍTÁS VÉGE ===
+
         modalResults.innerHTML = `<div class="analysis-body">${finalHtml}</div>`;
         modalResults.innerHTML += `<p class="muted" style="text-align: center; margin-top: 1rem; font-size: 0.8rem;">xG Forrás: ${analysisData.xgSource || 'Ismeretlen'}</p>`;
         
@@ -333,8 +340,9 @@ async function runFinalCheck(home, away, sport) {
     alert("A 'Végső Ellenőrzés' funkció jelenleg nincs implementálva a szerver oldalon.");
 }
 
-// === JAVÍTOTT FÜGGVÉNY (v68.1) ===
-// Ez a verzió már kezeli a <pre> taggel küldött v71.0+ JSON adatokat.
+// === JAVÍTOTT FÜGGVÉNY (v68.3) ===
+// Ez a verzió már kezeli a <pre> taggel küldött v71.0+ JSON adatokat,
+// ÉS a v105.0+ 'confidenceScores' objektumot.
 async function viewHistoryDetail(id) {
     const originalId = unescape(id);
     openModal('Elemzés Betöltése...', (document.getElementById('loading-skeleton')).outerHTML, 'modal-xl');
@@ -377,19 +385,29 @@ async function viewHistoryDetail(id) {
                 const { analysisData, debugInfo } = storedResponse;
                 const matchId = record.id; // Az elemzés ID-ja
 
-                // 4. Hívjuk meg a MEGLÉVŐ HTML építőt a MENTETT adatokkal
+                // === JAVÍTÁS (v68.3): A hívás frissítve ===
+                // A 'analysisData.modelConfidence' (régi) helyett
+                // a 'analysisData.confidenceScores' (új) objektumot adjuk át.
+                // Ha a 'confidenceScores' hiányzik (régi adat), a 'modelConfidence'-t adjuk át fallback-ként.
+                const quantConfidenceData = analysisData.confidenceScores || { 
+                    winner: analysisData.modelConfidence || 1.0, 
+                    totals: analysisData.modelConfidence || 1.0, 
+                    overall: analysisData.modelConfidence || 1.0 
+                };
+
                 contentToDisplay = buildAnalysisHtml_CLIENTSIDE(
                     analysisData.committee,
                     analysisData.matchData,
                     analysisData.oddsData,
                     analysisData.valueBets,
-                    analysisData.modelConfidence,
+                    quantConfidenceData, // <-- JAVÍTVA
                     analysisData.finalConfidenceScore,
                     analysisData.sim,
                     analysisData.recommendation,
                     analysisData.availableRosters,
                     matchId
                 );
+                // === JAVÍTÁS VÉGE ===
                 
             } catch (e) {
                 console.error("Hiba az előzmény JSON újrarajzolásakor:", e);
@@ -1587,7 +1605,7 @@ function updateMultiSelectButton() {
     btn.disabled = count === 0 || count > 3;
 }
 
-// === KLIENSOLDALI HTML GENERÁTOROK (v62.1) ===
+// === KLIENSOLDALI HTML GENERÁTOROK (v68.3) ===
 
 function escapeHTML(str) {
     if (str == null) return '';
@@ -1758,7 +1776,11 @@ function getMicroAnalysesHtml(microAnalyses, teamNames = []) {
         'BTTS': microAnalyses.btts_analysis, 
         'GÓL O/U': microAnalyses.goals_ou_analysis,
         'SZÖGLET': microAnalyses.corner_analysis,
-        'LAPOK': microAnalyses.card_analysis
+        'LAPOK': microAnalyses.card_analysis,
+        'GYŐZTES (HOKI)': microAnalyses.hockey_winner_analysis,
+        'GÓL O/U (HOKI)': microAnalyses.hockey_goals_ou_analysis,
+        'GYŐZTES (KOSÁR)': microAnalyses.basketball_winner_analysis,
+        'PONTOK O/U (KOSÁR)': microAnalyses.basketball_total_points_analysis
     };
     Object.entries(analyses).forEach(([key, text]) => {
         if (!text || text === 'N/A' || text.includes('N/A')) return; 
@@ -1808,15 +1830,15 @@ function _buildRosterSelectorHtml(availableRosters, matchId, homeName, awayName)
 
 
 /**
- * === FŐ KLIENSOLDALI HTML ÉPÍTŐ (ÁTÍRVA v63.3) ===
- * Most már az elemzési modalon belül is megjeleníti a "Hiányzók Megadása" gombot.
+ * === FŐ KLIENSOLDALI HTML ÉPÍTŐ (JAVÍTVA v68.3) ===
+ * Most már a 'confidenceScores' (objektum) paramétert fogadja.
  */
 function buildAnalysisHtml_CLIENTSIDE(
     fullAnalysisReport, // Ez most már a 'committee' objektum
     matchData, 
     oddsData, 
     valueBets, 
-    quantConfidence,      // 4. Ügynök (Statisztikai) bizalom
+    confidenceScores,      // === JAVÍTVA v68.3: Ez már a { winner, totals, overall } objektum
     finalConfidenceScore, // 6. Ügynök (Végső, Súlyozott) bizalom
     sim, 
     masterRecommendation,
@@ -1836,11 +1858,14 @@ function buildAnalysisHtml_CLIENTSIDE(
     const mainTotalsLine = sim?.mainTotalsLine || 'N/A';
     const topScore = `<strong>${sim?.topScore?.gh ?? 'N/A'} - ${sim?.topScore?.ga ?? 'N/A'}</strong>`;
     
-    // === MÓDOSÍTÁS (v63.1) ===
-    const modelConf = quantConfidence?.toFixed(1) || '1.0';
-    // Quant (Statisztikai)
-    const expertConfScore = finalConfidenceScore?.toFixed(1) || '1.0';
+    // === JAVÍTÁS (v68.3): A 'modelConf' most már a 'confidenceScores.winner'-t használja ===
+    // Ez az a szám, amit a "Bizalmi Híd" [31] "Quant" oldala mutat.
+    // A log [32] alapján a 'winner' [32, line 68] a helyes érték (5.3), nem az 'overall' (6.5).
+    const modelConf = confidenceScores?.winner?.toFixed(1) || '1.0';
+    // === JAVÍTÁS VÉGE ===
+    
     // Stratéga (Végső)
+    const expertConfScore = finalConfidenceScore?.toFixed(1) || '1.0';
     
     // === MÓDOSÍTÁS (6 FŐS BIZOTTSÁG) ===
     // Az új 'committee' objektum feldolgozása
@@ -1955,7 +1980,7 @@ function buildAnalysisHtml_CLIENTSIDE(
         </details>
     </div>`;
 
-    // --- 7. ADAT OSZLOP (SIDEBAR) (MÓDOSÍTVA v63.1) ---
+    // --- 7. ADAT OSZLOP (SIDEBAR) (MÓDOSÍTVA v68.3) ---
     const atAGlanceHtml = `
     <div class="at-a-glance-grid">
         <div class="summary-card">
@@ -1992,8 +2017,9 @@ function buildAnalysisHtml_CLIENTSIDE(
             ${matchData.sport === 'soccer' ? `<div class="details">BTTS Igen: <strong class="glowing-text-white">${sim?.pBTTS?.toFixed(1) ?? 'N/A'}%</strong></div>` : ''}
         </div>
     </div>`;
-    // === VÉGSŐ JAVÍTÁS (v63.1) ===
-    // A 'Bizalmi Híd' most már a helyes 'modelConf' (Quant) és 'expertConfScore' (Stratéga) változókat használja
+    
+    // === VÉGSŐ JAVÍTÁS (v68.3) ===
+    // A 'Bizalmi Híd' [31] most már a helyes 'modelConf' (Quant) és 'expertConfScore' (Stratéga) változókat használja
     const expertConfReasoning = processAiText(expertConfHtml.split(' - ')[1] || 'N/A', teamNames);
     const confidenceBridgeHtml = `
     <div class="confidence-bridge-card">
@@ -2005,6 +2031,8 @@ function buildAnalysisHtml_CLIENTSIDE(
         </div>
         <div class="confidence-bridge-reasoning">${expertConfReasoning}</div>
     </div>`;
+    // === JAVÍTÁS VÉGE ===
+
     let marketCardsHtml = '';
     (valueBets || []).forEach(bet => {
         marketCardsHtml += `
