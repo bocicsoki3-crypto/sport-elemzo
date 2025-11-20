@@ -15,8 +15,8 @@
 
 <div id="login-overlay" class="login-overlay">
     <div class="login-box glass-panel">
-        <div class="login-icon">👑</div>
-        <h1 class="main-title">The King AI</h1>
+        <div class="login-icon glowing-orb-effect">👑</div>
+        <h1 class="main-title glow-text">The King AI</h1>
         <p class="login-subtitle">Prémium Sportelemző Rendszer</p>
         <div class="input-group">
             <input type="password" id="password-input" placeholder="Jelszó">
@@ -30,8 +30,8 @@
     <header class="app-header glass-panel-bottom">
         <div class="header-content">
             <div class="brand">
-                <span class="crown">👑</span>
-                <h1 class="logo-text">KING AI</h1>
+                <span class="crown glowing-orb-effect">👑</span>
+                <h1 class="logo-text glow-text">KING AI</h1>
             </div>
             <div class="header-actions">
                 <div id="userInfo" class="user-status badge">Csatlakozva</div>
@@ -40,6 +40,8 @@
                 </button>
             </div>
         </div>
+        <!-- Header Orbs Container -->
+        <div class="orb-container-header"></div>
     </header>
 
     <div class="controls-bar glass-panel">
@@ -69,9 +71,12 @@
     </div>
 
     <main id="main-content" class="main-content">
+        <!-- Background Orbs Container -->
+        <div class="orb-container"></div>
+
         <div id="placeholder" class="placeholder">
             <div class="placeholder-content">
-                <div class="placeholder-icon">📊</div>
+                <div class="placeholder-icon glowing-orb-effect">📊</div>
                 <h3>Válassz sportágat</h3>
                 <p>Töltsd be a mérkőzéseket az elemzéshez</p>
             </div>
@@ -88,7 +93,7 @@
 <div id="modal-container" class="modal-container">
     <div class="modal-content glass-panel">
         <div class="modal-header">
-            <h3 id="modal-title"></h3>
+            <h3 id="modal-title" class="glow-text"></h3>
             <button class="modal-close-btn" onclick="closeModal()">×</button>
         </div>
         <div id="modal-body" class="modal-body"></div>
@@ -107,7 +112,7 @@
     <div id="analysis-results"></div>
     <div id="chat-container" class="chat-container glass-panel-inner">
         <div class="chat-header">
-            <h4>💬 AI Elemző Asszisztens</h4>
+            <h4 class="glow-text">💬 AI Elemző Asszisztens</h4>
         </div>
         <div id="chat-messages" class="chat-messages"></div>
         <div id="chat-thinking-indicator" style="display: none;">
