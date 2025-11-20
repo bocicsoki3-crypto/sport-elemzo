@@ -1,4 +1,4 @@
-// --- script.js (v69.0 - Glassmorphism UI & P1 Object Update) ---
+// --- script.js (v69.1 - Restored Glow Effects) ---
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -82,7 +82,6 @@ async function handleFetchError(response) {
 async function loadFixtures() {
     const loadBtn = document.getElementById('loadFixturesBtn');
     loadBtn.disabled = true;
-    // loadBtn.textContent = 'Betöltés...'; // Icon miatt nem írjuk át sima szövegre
     appState.selectedMatches.clear(); 
     appState.rosterCache.clear(); 
     appState.p1SelectedAbsentees.clear(); 
@@ -119,7 +118,6 @@ async function loadFixtures() {
         console.error(e);
     } finally {
         loadBtn.disabled = false;
-        // loadBtn.textContent = 'Meccsek Betöltése';
     }
 }
 
@@ -129,7 +127,6 @@ function runAnalysisFromCard(buttonElement, home, away, utcKickoff, leagueName) 
     
     const matchId = card.dataset.matchId;
     
-    // 1. P1 Komponens (4 mező) olvasása
     const H_xG_raw = card.querySelector('.xg-input-h-xg')?.value;
     const H_xGA_raw = card.querySelector('.xg-input-h-xga')?.value;
     const A_xG_raw = card.querySelector('.xg-input-a-xg')?.value;
@@ -154,7 +151,6 @@ function runAnalysisFromCard(buttonElement, home, away, utcKickoff, leagueName) 
         }
     }
 
-    // 2. P1 Manuális Hiányzók (Objektumok) olvasása az appState-ből
     if (matchId && appState.p1SelectedAbsentees.has(matchId)) {
         const manualAbsentees = appState.p1SelectedAbsentees.get(matchId);
         if (manualAbsentees.home.length > 0 || manualAbsentees.away.length > 0) {
