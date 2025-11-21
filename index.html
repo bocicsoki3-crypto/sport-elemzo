@@ -7,91 +7,93 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Modern betűtípusok: Rajdhani a futurisztikus címekhez, Inter az olvasáshoz -->
+    <!-- Modern betűtípusok -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- Login Overlay -->
 <div id="login-overlay" class="login-overlay">
     <div class="login-box glass-panel">
-        <div class="login-icon glowing-orb-effect">👑</div>
+        <div class="login-icon">👑</div>
         <h1 class="main-title glow-text">The King AI</h1>
         <p class="login-subtitle">Prémium Sportelemző Rendszer</p>
         <div class="input-group">
             <input type="password" id="password-input" placeholder="Jelszó">
             <span class="input-border"></span>
         </div>
-        <button id="login-button" class="btn btn-primary btn-full">Belépés</button>
+        <button id="login-button" class="btn btn-analyze">Belépés</button>
     </div>
 </div>
 
 <div class="app-container" style="display: none;">
-    <header class="app-header glass-panel-bottom">
-        <div class="header-content">
-            <div class="brand">
-                <span class="crown glowing-orb-effect">👑</span>
-                <h1 class="logo-text glow-text">KING AI</h1>
-            </div>
-            <div class="header-actions">
-                <div id="userInfo" class="user-status badge">Csatlakozva</div>
-                <button id="theme-switcher" class="icon-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                </button>
-            </div>
+    
+    <!-- Fejléc -->
+    <header class="app-header">
+        <div class="brand">
+            <span class="crown">👑</span>
+            <h1 class="logo-text shiny-gold">KING AI</h1>
         </div>
-        <!-- Header Orbs Container -->
-        <div class="orb-container-header"></div>
+        <div class="header-actions">
+            <div id="userInfo">ONLINE</div>
+        </div>
     </header>
 
-    <div class="controls-bar glass-panel">
-        <div class="main-actions">
-            <div class="control-group sport-select-group">
-                <label for="sportSelector">Sportág</label>
-                <div class="select-wrapper">
-                    <select id="sportSelector" onchange="handleSportChange()">
-                        <option value="soccer" selected>⚽ Labdarúgás</option>
-                        <option value="hockey">🏒 Jégkorong</option>
-                        <option value="basketball">🏀 Kosárlabda</option>
-                    </select>
-                </div>
-            </div>
-            <div class="button-group">
-                <button id="loadFixturesBtn" class="btn btn-primary">
-                    <span class="btn-icon">↻</span> Meccsek
-                </button>
-                <button id="historyBtn" class="btn btn-secondary" onclick="openHistoryModal()">
-                    <span class="btn-icon">📜</span> Előzmény
-                </button>
-                <button id="manualBtn" class="btn btn-outline" onclick="openManualAnalysisModal()">
-                    <span class="btn-icon">✎</span> Kézi
-                </button>
-            </div>
+    <!-- Irányítópult (Controls) -->
+    <div class="controls-bar">
+        
+        <!-- Bal oldal: Sportválasztó -->
+        <div class="sport-select-wrapper">
+            <select id="sportSelector" class="select-styled" onchange="handleSportChange()">
+                <option value="soccer" selected>⚽ Labdarúgás</option>
+                <option value="hockey">🏒 Jégkorong</option>
+                <option value="basketball">🏀 Kosárlabda</option>
+            </select>
         </div>
+
+        <!-- Közép: Fő Navigáció (3 Gomb) -->
+        <div class="central-nav">
+            <button id="historyBtn" class="nav-btn" onclick="openHistoryModal()">
+                <span class="icon">📜</span> <span class="text-label">Előzmény</span>
+            </button>
+            <button id="loadFixturesBtn" class="nav-btn primary-action">
+                <span class="icon">↻</span> <span class="text-label">MECCSEK</span>
+            </button>
+            <button id="manualBtn" class="nav-btn" onclick="openManualAnalysisModal()">
+                <span class="icon">✎</span> <span class="text-label">Kézi</span>
+            </button>
+        </div>
+
+        <!-- Jobb oldal: Üres térkitöltő a szimmetriához (vagy jövőbeli funkciók) -->
+        <div style="width: 180px;"></div> 
     </div>
 
+    <!-- Tartalom -->
     <main id="main-content" class="main-content">
-        <!-- Background Orbs Container -->
-        <div class="orb-container"></div>
-
+        
+        <!-- Üres állapot -->
         <div id="placeholder" class="placeholder">
             <div class="placeholder-content">
-                <div class="placeholder-icon glowing-orb-effect">📊</div>
-                <h3>Válassz sportágat</h3>
-                <p>Töltsd be a mérkőzéseket az elemzéshez</p>
+                <div class="placeholder-icon">📊</div>
+                <h3 class="shiny-white">Válassz sportágat</h3>
+                <p>Töltsd be a mérkőzéseket a "Meccsek" gombbal</p>
             </div>
         </div>
         
+        <!-- Kanban Tábla (Asztali) -->
         <div id="kanban-container" class="kanban-container">
             <div id="kanban-board" class="kanban-board"></div>
         </div>
 
-        <div id="mobile-list-container" class="mobile-list-container"></div>
+        <!-- Mobil Lista -->
+        <div id="mobile-list-container" class="mobile-list-container" style="display: none;"></div>
     </main>
 </div>
 
+<!-- Modális ablakok -->
 <div id="modal-container" class="modal-container">
-    <div class="modal-content glass-panel">
+    <div class="modal-content">
         <div class="modal-header">
             <h3 id="modal-title" class="glow-text"></h3>
             <button class="modal-close-btn" onclick="closeModal()">×</button>
@@ -100,6 +102,7 @@
     </div>
 </div>
 
+<!-- Rejtett sablonok -->
 <div id="common-elements" style="display: none;">
     <div id="loading-skeleton" class="loading-skeleton">
         <div class="skeleton-card">
@@ -108,9 +111,8 @@
             <div class="skeleton-footer"></div>
         </div>
     </div>
-    <!-- A többi elem (chat, analysis results) dinamikusan generálódik -->
     <div id="analysis-results"></div>
-    <div id="chat-container" class="chat-container glass-panel-inner">
+    <div id="chat-container" class="chat-container">
         <div class="chat-header">
             <h4 class="glow-text">💬 AI Elemző Asszisztens</h4>
         </div>
