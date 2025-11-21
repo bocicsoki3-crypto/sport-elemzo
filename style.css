@@ -407,12 +407,12 @@ input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 10px v
 
 .synthesis-card {
     background: linear-gradient(to right, rgba(184, 134, 11, 0.1), rgba(0,0,0,0.3));
-    border-left: 4px solid var(--secondary);
+    border-left: 4px solid var(--primary); /* Másodlagos szín helyett Primary (arany) a konzisztencia miatt */
     padding: 20px;
     border-radius: 0 var(--radius-md) var(--radius-md) 0;
     margin-bottom: 15px;
 }
-.synthesis-card h5 { color: var(--secondary); margin-bottom: 10px; }
+.synthesis-card h5 { color: var(--primary); margin-bottom: 10px; }
 
 .summary-card {
     background: rgba(0,0,0,0.4);
@@ -534,3 +534,114 @@ input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 10px v
 .confidence-bridge-values { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 15px 0; }
 .confidence-bridge-reasoning { font-size: 0.9rem; color: var(--text-secondary); font-style: italic; }
 .arrow { font-size: 1.5rem; color: var(--primary); text-shadow: 0 0 10px var(--primary); }
+
+/* === ÚJ STÍLUSOK: ELŐZMÉNYEK (History) === */
+.history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 10px;
+}
+
+.history-date-group h4 {
+    margin: 20px 0 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--primary);
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 10px var(--primary-glow);
+}
+
+.history-card {
+    background: linear-gradient(145deg, rgba(30, 30, 35, 0.7), rgba(20, 20, 25, 0.7));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    position: relative;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.history-card:hover {
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.05));
+    border-color: var(--primary);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+.history-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 3px; height: 100%;
+    background: var(--text-muted);
+    transition: background 0.3s;
+}
+
+.history-card.result-W::before { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.history-card.result-L::before { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+.history-card.result-P::before { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+.hc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.hc-teams {
+    font-family: var(--font-header);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.hc-tip {
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.hc-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.status-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.status-W { background: rgba(57, 255, 20, 0.2); color: var(--success); border: 1px solid var(--success); }
+.status-L { background: rgba(255, 71, 71, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+.status-P { background: rgba(0, 191, 255, 0.2); color: var(--accent); border: 1px solid var(--accent); }
+.status-NA { background: rgba(255,255,255,0.1); color: var(--text-muted); }
+
+.delete-btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: color 0.3s;
+}
+.delete-btn-icon:hover {
+    color: var(--danger);
+}
