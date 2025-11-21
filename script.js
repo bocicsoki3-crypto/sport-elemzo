@@ -1,4 +1,4 @@
-// --- script.js (v70.0 - Redesigned History & Details Fix) ---
+// --- script.js (v71.0 - Redesigned History & Details Fix) ---
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -1448,60 +1448,50 @@ const processAiList = (list, teamNames = []) => {
     return list.map(item => `<li>${_highlightKeywords(item, teamNames)}</li>`).join('');
 };
 
-function getRadialChartHtml(pHome, pDraw, pAway, sport) {
-    const r = 40;
-    const circumference = 2 * Math.PI * r;
-    const isMoneylineSport = sport === 'hockey' || sport === 'basketball';
-    let pHomeSafe, pDrawSafe, pAwaySafe;
-    if (isMoneylineSport) {
-        const total = (parseFloat(String(pHome)) || 0) + (parseFloat(String(pAway)) || 0);
-        pHomeSafe = (total > 0) ? (parseFloat(String(pHome)) / total) * 100 : 50;
-        pAwaySafe = (total > 0) ? (parseFloat(String(pAway)) / total) * 100 : 50;
-        pDrawSafe = 0;
-    } else {
-        pHomeSafe = parseFloat(String(pHome)) || 0;
-        pDrawSafe = parseFloat(String(pDraw)) || 0;
-        pAwaySafe = parseFloat(String(pAway)) || 0;
+// === ÚJ (v71.0): Modern Lineáris Erőviszony Sáv (Nincs több fekete lyuk) ===
+function getProbabilityBarHtml(pHome, pDraw, pAway, sport) {
+    const isMoneyline = sport === 'hockey' || sport === 'basketball';
+    
+    let h = parseFloat(String(pHome)) || 0;
+    let d = parseFloat(String(pDraw)) || 0;
+    let a = parseFloat(String(pAway)) || 0;
+    
+    // Normalizálás 100%-ra, ha esetleg eltérne
+    const total = h + d + a;
+    if (total > 0) {
+        h = (h / total) * 100;
+        d = (d / total) * 100;
+        a = (a / total) * 100;
     }
-    const homeSegment = (pHomeSafe / 100) * circumference;
-    const drawSegment = (pDrawSafe / 100) * circumference;
-    const awaySegment = (pAwaySafe / 100) * circumference;
-    const homeOffset = 0;
-    const drawOffset = -homeSegment;
-    const awayOffset = -(homeSegment + drawSegment);
-    const drawSvgCircle = `
-        <circle class="progress draw" cx="50" cy="50" r="${r}"
-                stroke-dasharray="${drawSegment} ${circumference}"
-                style="stroke-dashoffset: ${drawOffset};"></circle>
-    `;
-    const drawLegendItem = `
-        <div class="legend-item">
-             <span class="legend-color-box"></span>
-             <span>Döntetlen (<strong class="glowing-text-white">${pDrawSafe.toFixed(1)}%</strong>)</span>
-        </div>
-    `;
+
+    // Színkódok (Neon hatás)
+    const colorHome = 'var(--success)'; // Hazai (Zöldes)
+    const colorDraw = 'var(--text-secondary)'; // Döntetlen (Szürke)
+    const colorAway = 'var(--accent)'; // Vendég (Kék)
+
+    let barsHtml = '';
+    if (isMoneyline) {
+        barsHtml = `
+            <div class="prob-bar-segment" style="width: ${h}%; background: ${colorHome}; box-shadow: 0 0 10px ${colorHome};"></div>
+            <div class="prob-bar-segment" style="width: ${a}%; background: ${colorAway}; box-shadow: 0 0 10px ${colorAway};"></div>
+        `;
+    } else {
+        barsHtml = `
+            <div class="prob-bar-segment" style="width: ${h}%; background: ${colorHome}; box-shadow: 0 0 10px ${colorHome};"></div>
+            <div class="prob-bar-segment" style="width: ${d}%; background: ${colorDraw}; opacity: 0.5;"></div>
+            <div class="prob-bar-segment" style="width: ${a}%; background: ${colorAway}; box-shadow: 0 0 10px ${colorAway};"></div>
+        `;
+    }
+
     return `
-    <div class="radial-chart-container">
-        <svg class="radial-chart" width="100%" height="100%" viewBox="0 0 100 100">
-            <circle class="track" cx="50" cy="50" r="${r}" ></circle>
-            <circle class="progress home" cx="50" cy="50" r="${r}"
-                    stroke-dasharray="${homeSegment} ${circumference}"
-                    style="stroke-dashoffset: ${homeOffset};"></circle>
-            ${!isMoneylineSport ? drawSvgCircle : ''}
-            <circle class="progress away" cx="50" cy="50" r="${r}"
-                     stroke-dasharray="${awaySegment} ${circumference}"
-                     style="stroke-dashoffset: ${awayOffset};"></circle>
-        </svg>
-    </div>
-    <div class="diagram-legend">
-        <div class="legend-item">
-             <span class="legend-color-box"></span>
-            <span>Hazai (<strong class="glowing-text-white">${pHomeSafe.toFixed(1)}%</strong>)</span>
+    <div class="prob-chart-container">
+        <div class="prob-bar-wrapper">
+            ${barsHtml}
         </div>
-        ${!isMoneylineSport ? drawLegendItem : ''}
-        <div class="legend-item">
-             <span class="legend-color-box"></span>
-             <span>Vendég (<strong class="glowing-text-white">${pAwaySafe.toFixed(1)}%</strong>)</span>
+        <div class="prob-legend">
+            <div style="color:${colorHome}">Hazai: <strong>${h.toFixed(1)}%</strong></div>
+            ${!isMoneyline ? `<div style="color:#ccc">Döntetlen: <strong>${d.toFixed(1)}%</strong></div>` : ''}
+            <div style="color:${colorAway}">Vendég: <strong>${a.toFixed(1)}%</strong></div>
         </div>
     </div>`;
 }
@@ -1720,38 +1710,45 @@ function buildAnalysisHtml_CLIENTSIDE(
 
     const atAGlanceHtml = `
     <div class="at-a-glance-grid">
-        <div class="summary-card">
+        <!-- 1. Kártya: Szimuláció (Új Dizájn) -->
+        <div class="summary-card highlight-card">
             <h5>4. Ügynök: Szimuláció</h5>
-            ${getRadialChartHtml(pHome, pDraw, pAway, matchData.sport)}
+            ${getProbabilityBarHtml(pHome, pDraw, pAway, matchData.sport)}
         </div>
+
+        <!-- 2. Kártya: xG (Letisztult) -->
         <div class="summary-card">
             <h5>3. Ügynök: Súlyozott xG</h5>
             <div class="xg-value-container">
                 <div class="xg-team">
                     <div class="value glowing-text-white">${mu_h}</div>
-                    <div class="details">${escapeHTML(matchData.home)}</div>
+                    <div class="details" style="font-size:0.75rem; opacity:0.8;">${escapeHTML(matchData.home)}</div>
                 </div>
-                <div class="xg-separator">-</div>
+                <div class="xg-separator">vs</div>
                 <div class="xg-team">
                     <div class="value glowing-text-white">${mu_a}</div>
-                    <div class="details">${escapeHTML(matchData.away)}</div>
+                    <div class="details" style="font-size:0.75rem; opacity:0.8;">${escapeHTML(matchData.away)}</div>
                 </div>
             </div>
-            <div class="details">Legvalószínűbb: ${topScore}</div>
+            <div class="details" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.1); padding-top:5px;">
+                Várható eredmény: ${topScore}
+            </div>
         </div>
+
+        <!-- 3. Kártya: Piac (Különítve) -->
         <div class="summary-card">
-            <h5>Fő Összesített Vonal (${mainTotalsLine})</h5>
+            <h5>Fő Vonal (${mainTotalsLine})</h5>
             <div class="totals-breakdown">
                 <div class="total-line">
-                    <span class="total-label">Over ${mainTotalsLine}</span>
+                    <span class="total-label">Over</span>
                     <strong class="glowing-text-white">${pOver}%</strong>
                 </div>
                 <div class="total-line">
-                    <span class="total-label">Under ${mainTotalsLine}</span>
+                    <span class="total-label">Under</span>
                     <strong class="glowing-text-white">${pUnder}%</strong>
                 </div>
             </div>
-            ${matchData.sport === 'soccer' ? `<div class="details">BTTS Igen: <strong class="glowing-text-white">${sim?.pBTTS?.toFixed(1) ?? 'N/A'}%</strong></div>` : ''}
+            ${matchData.sport === 'soccer' ? `<div class="details" style="margin-top:8px;">BTTS Igen: <strong class="glowing-text-white">${sim?.pBTTS?.toFixed(1) ?? 'N/A'}%</strong></div>` : ''}
         </div>
     </div>`;
     
