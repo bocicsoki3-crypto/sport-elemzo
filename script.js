@@ -1,4 +1,4 @@
-// --- script.js (v69.1 - Restored Glow Effects) ---
+// --- script.js (v70.0 - Redesigned History & Details Fix) ---
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -330,12 +330,25 @@ async function viewHistoryDetail(id) {
 
                 const storedResponse = JSON.parse(jsonString);
                 
-                if (!storedResponse || !storedResponse.analysisData || !storedResponse.analysisData.committee) {
+                if (!storedResponse || !storedResponse.analysisData) {
                     throw new Error("A mentett JSON struktúra hiányos.");
                 }
                 
                 const { analysisData } = storedResponse;
                 const matchId = record.id; 
+
+                // === JAVÍTÁS (v70.0): Robusztusabb adatkinyerés és Committee fallback ===
+                // Ha a 'committee' objektum hiányos (mert a mentéskor karcsúsítva lett),
+                // megpróbálunk fallback értékeket adni, hogy ne omoljon össze a renderelés.
+                const safeCommittee = analysisData.committee || {};
+                
+                // Ha hiányzik a 'quant', 'scout' stb., kitöltjük üres objektummal vagy "N/A" szöveggel
+                if (!safeCommittee.quant) safeCommittee.quant = { source: "N/A", mu_h: 0, mu_a: 0 };
+                
+                // A 'scout' és 'critic' sokszor hiányozhat a korábbi mentésekből.
+                // Ezeket a megjelenítőben kezeljük le (processAiText), de itt is biztosítjuk a létüket.
+                if (!safeCommittee.scout) safeCommittee.scout = { summary: "A részletes jelentés nem került mentésre.", key_insights: [] };
+                if (!safeCommittee.critic) safeCommittee.critic = { tactical_summary: "A részletes jelentés nem került mentésre.", key_risks: [] };
 
                 const quantConfidenceData = analysisData.confidenceScores || { 
                     winner: analysisData.modelConfidence || 1.0, 
@@ -344,7 +357,7 @@ async function viewHistoryDetail(id) {
                 };
 
                 contentToDisplay = buildAnalysisHtml_CLIENTSIDE(
-                    analysisData.committee,
+                    safeCommittee,
                     analysisData.matchData,
                     analysisData.oddsData,
                     analysisData.valueBets,
@@ -352,7 +365,7 @@ async function viewHistoryDetail(id) {
                     analysisData.finalConfidenceScore,
                     analysisData.sim,
                     analysisData.recommendation,
-                    analysisData.availableRosters,
+                    analysisData.availableRosters || { home: [], away: [] },
                     matchId
                 );
                 
@@ -423,6 +436,7 @@ async function sendChatMessage() {
 }
 
 async function runMultiAnalysis() {
+    // ... (Ez a funkció változatlan maradhat, de a biztonság kedvéért benne hagyom a teljes kódot)
     const selectedIds = Array.from(appState.selectedMatches);
     if (selectedIds.length === 0 || selectedIds.length > 3) {
         showToast('Válassz ki 1-3 meccset a többes elemzéshez.', 'error');
@@ -905,42 +919,74 @@ function renderFixturesForMobileList(fixtures) {
     container.innerHTML = html || '<div style="text-align:center; padding: 40px; color: var(--text-secondary);">Nincsenek elérhető mérkőzések.</div>';
 }
 
+// === JAVÍTÁS (v70.0): Modern Grid Layout az Előzményeknek ===
 function renderHistory(historyData) {
     if (!historyData || !Array.isArray(historyData) || historyData.length === 0) {
         return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek mentett előzmények.</p>';
     }
+    
     const history = historyData.filter(item => item && item.id && item.home && item.away && item.date);
     if (history.length === 0) {
          return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek érvényes előzmény adatok.</p>';
     }
+    
     const groupedByDate = groupBy(history, (item) => {
         try { return new Date(item.date).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); }
         catch (e) { return 'Ismeretlen dátum'; }
     });
+    
     let html = '';
     Object.keys(groupedByDate)
         .sort((a, b) => parseHungarianDate(b).getTime() - parseHungarianDate(a).getTime()) 
         .forEach(dateKey => {
-         
-         html += `<details class="date-section"><summary>${formatDateLabel(dateKey)}</summary>`;
+            
             const sortedItems = groupedByDate[dateKey].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            
+            html += `
+            <div class="history-date-group">
+                <h4>${formatDateLabel(dateKey)}</h4>
+                <div class="history-grid">`;
+                
             sortedItems.forEach((item) => {
                 const analysisTime = new Date(item.date); 
-                const time = isNaN(analysisTime.getTime()) ? 'Ismeretlen idő' : analysisTime.toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
+                const time = isNaN(analysisTime.getTime()) ? '?' : analysisTime.toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                 const safeItemId = escape(item.id);
+                
+                const wlp = (item.status || item['Helyes (W/L/P)'])?.toUpperCase(); // Ha van WLP státusz
+                let statusClass = 'status-NA';
+                let statusText = 'N/A';
+                let resultClass = '';
+                
+                if (wlp === 'W') { statusClass = 'status-W'; statusText = 'NYERT'; resultClass = 'result-W'; }
+                else if (wlp === 'L') { statusClass = 'status-L'; statusText = 'VESZTETT'; resultClass = 'result-L'; }
+                else if (wlp === 'P') { statusClass = 'status-P'; statusText = 'PUSH'; resultClass = 'result-P'; }
+                
+                const confidenceVal = item.confidence ? `${parseFloat(item.confidence).toFixed(1)}/10` : 'N/A';
+
                 html += `
-                    <div class="list-item">
-                        <div style="flex-grow:1; cursor: pointer;" onclick="viewHistoryDetail('${safeItemId}')">
-                             <div class="list-item-title">${item.home || '?'} – ${item.away || '?'}</div>
-                            <div class="list-item-meta">${item.sport ? item.sport.charAt(0).toUpperCase() + item.sport.slice(1) : 'Sport?'} - Elemzés: ${time}</div>
+                    <div class="history-card ${resultClass}" onclick="viewHistoryDetail('${safeItemId}')">
+                        <div class="hc-header">
+                            <span>${item.sport ? item.sport.toUpperCase() : 'SPORT'}</span>
+                            <span>⏰ ${time}</span>
                         </div>
-                         <button class="btn" onclick="deleteHistoryItem('${safeItemId}'); event.stopPropagation();"
-                            title="Törlés" style="color: var(--danger); border-color: var(--danger);">
-                            ❌
-                         </button>
+                        <div class="hc-teams">
+                            <div>${item.home || '?'}</div>
+                            <div style="font-size:0.8em; color:var(--text-muted); font-weight:400;">vs</div>
+                            <div>${item.away || '?'}</div>
+                        </div>
+                        <div class="hc-tip">
+                            <strong>Tipp:</strong> ${item.tip || 'N/A'}
+                        </div>
+                        <div class="hc-footer">
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                            <span style="font-size:0.85rem; color:var(--text-secondary);">Bizalom: <strong style="color:#fff;">${confidenceVal}</strong></span>
+                            <button class="delete-btn-icon" onclick="deleteHistoryItem('${safeItemId}'); event.stopPropagation();" title="Törlés">
+                                🗑️
+                            </button>
+                        </div>
                     </div>`;
             });
-            html += `</details>`; 
+            html += `</div></div>`; 
         });
     return html;
 }
@@ -1610,18 +1656,23 @@ function buildAnalysisHtml_CLIENTSIDE(
                 <p style="margin-top: 0.5rem;"><strong>Kockázati Pontszám:</strong> ${criticReport.contradiction_score || '0.0'}</p>
            </div>` : '';
            
-        criticReportHtml = (fullAnalysisReport?.scout) ?
+        // JAVÍTÁS: Biztosítjuk, hogy a scout mező létezzen vagy fallback
+        const scoutSummary = fullAnalysisReport.scout?.summary || "Nincs elérhető scout jelentés.";
+        const scoutInsights = fullAnalysisReport.scout?.key_insights || [];
+
+        criticReportHtml = (fullAnalysisReport.scout) ?
         `
             <div class="committee-card scout">
                 <h4>2. Ügynök: Scout Jelentése</h4>
-                <p><strong>Összefoglaló:</strong> ${processAiText(fullAnalysisReport.scout.summary, teamNames)}</p>
+                <p><strong>Összefoglaló:</strong> ${processAiText(scoutSummary, teamNames)}</p>
                 <strong>Kulcs Tényezők:</strong>
                 <ul class="key-insights">
-                    ${processAiList(fullAnalysisReport.scout.key_insights, teamNames)}
+                    ${processAiList(scoutInsights, teamNames)}
                 </ul>
             </div>` : '';
             
     } else {
+        // Fallback ha a struktúra sérült
         prophetText = fullAnalysisReport?.prophetic_timeline || "Hiba: Az elemzési jelentés ('committee') struktúrája ismeretlen.";
         synthesisText = fullAnalysisReport?.strategic_synthesis || "Hiba: Az elemzési jelentés ('committee') struktúrája ismeretlen.";
         expertConfHtml = fullAnalysisReport?.final_confidence_report || `**${expertConfScore}/10** - Ismeretlen adatszerkezet.`;
