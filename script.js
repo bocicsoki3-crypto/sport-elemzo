@@ -1,4 +1,9 @@
-// --- script.js (v75.0 - King AI Glowing Edition) ---
+// --- script.js (v76.0 - Dual Tip Edition) ---
+// MÓDOSÍTÁS (v76.0):
+// 1. JAVÍTÁS: A 'buildAnalysisHtml_CLIENTSIDE' függvény most már
+//    felismeri a 'primary' és 'secondary' tipp struktúrát.
+// 2. UI: Ha két tipp érkezik, két külön, egymás melletti dobozban
+//    jeleníti meg őket (Fő Tipp: Zöld, Alternatív: Arany).
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -720,7 +725,7 @@ function renderHistory(historyData) {
                 
             sortedItems.forEach((item) => {
                 const analysisTime = new Date(item.date); 
-                const time = isNaN(analysisTime.getTime()) ? '?' : analysisTime.toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
+                const time = isNaN(analysisTime.getTime()) ? '?' : analysisTime.toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest' });
                 const safeItemId = escape(item.id);
                 
                 const wlp = (item.status || item['Helyes (W/L/P)'])?.toUpperCase(); 
@@ -1112,16 +1117,48 @@ function buildAnalysisHtml_CLIENTSIDE(
     }
 
     const finalRec = masterRecommendation || { recommended_bet: "Hiba", final_confidence: 1.0, brief_reasoning: "Hiba" };
-    const finalReasoningHtml = processAiText(finalRec.brief_reasoning, teamNames);
+    
+    // === ÚJ (v76.0): KÉT TIPP LOGIKA ===
+    let tipsHtml = '';
+
+    if (finalRec.primary && finalRec.secondary) {
+        // KÉT TIPP MEGJELENÍTÉSE (DUAL MODE)
+        tipsHtml = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+            <!-- 1. TIPP (BAL - BANKER) -->
+            <div style="background: rgba(0, 255, 157, 0.05); border: 1px solid var(--success); border-radius: 12px; padding: 15px; text-align: center;">
+                <div style="color: var(--success); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 700;">👑 FŐ TIPP (BANKER)</div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 5px; line-height: 1.2;">${escapeHTML(finalRec.primary.market)}</div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--success);">${(finalRec.primary.confidence || 0).toFixed(1)}/10</div>
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px; line-height: 1.3; font-style: italic;">${escapeHTML(finalRec.primary.reason)}</div>
+            </div>
+
+            <!-- 2. TIPP (JOBB - VALUE) -->
+            <div style="background: rgba(255, 215, 0, 0.05); border: 1px solid var(--primary); border-radius: 12px; padding: 15px; text-align: center;">
+                <div style="color: var(--primary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 700;">⚡ ALTERNATÍV (VALUE)</div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 5px; line-height: 1.2;">${escapeHTML(finalRec.secondary.market)}</div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">${(finalRec.secondary.confidence || 0).toFixed(1)}/10</div>
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px; line-height: 1.3; font-style: italic;">${escapeHTML(finalRec.secondary.reason)}</div>
+            </div>
+        </div>
+        `;
+    } else {
+        // RÉGI (EGY TIPP) MEGJELENÍTÉS (Fallback)
+        const finalReasoningHtml = processAiText(finalRec.brief_reasoning, teamNames);
+        tipsHtml = `
+            <div class="master-bet"><strong>${escapeHTML(finalRec.recommended_bet)}</strong></div>
+            <div class="master-confidence">
+                Végső Bizalom: <strong class="glowing-text-white">${(finalRec.final_confidence || 1.0).toFixed(1)}/10</strong>
+            </div>
+            <div class="master-reasoning">${finalReasoningHtml}</div>
+        `;
+    }
+
     const finalConfInterpretationHtml = getConfidenceInterpretationHtml(finalRec.final_confidence, teamNames);
     const masterRecommendationHtml = `
     <div class="master-recommendation-card">
-        <h5>👑 6. Ügynök: Vezető Stratéga Ajánlása 👑</h5>
-        <div class="master-bet"><strong>${escapeHTML(finalRec.recommended_bet)}</strong></div>
-        <div class="master-confidence">
-            Végső Bizalom: <strong class="glowing-text-white">${(finalRec.final_confidence || 1.0).toFixed(1)}/10</strong>
-        </div>
-        <div class="master-reasoning">${finalReasoningHtml}</div>
+        <h5>👑 6. Ügynök: A Főnök Ajánlása (Dupla Opció) 👑</h5>
+        ${tipsHtml}
         ${finalConfInterpretationHtml}
     </div>`;
     
