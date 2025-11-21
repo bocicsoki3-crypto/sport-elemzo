@@ -1,4 +1,4 @@
-// --- script.js (v74.0 - King AI Premium Edition - Full Uncut) ---
+// --- script.js (v75.0 - King AI Glowing Edition) ---
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -81,7 +81,6 @@ async function loadFixtures() {
     loadBtn.disabled = true;
     appState.selectedMatches.clear(); 
     
-    // UI Frissítése
     const board = document.getElementById('kanban-board');
     const mobileContainer = document.getElementById('mobile-list-container');
     if (board) board.innerHTML = '';
@@ -573,7 +572,8 @@ function renderFixturesForDesktop(fixtures) {
             Object.keys(groupedByDate)
                 .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
                 .forEach(dateKey => {
-                    columnContent += `<div style="padding: 10px 0; color: var(--primary); font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; text-align: center; position:sticky; top:0; background: var(--glass-bg); z-index:5; border-bottom:1px solid var(--glass-border); margin-bottom:10px;">${formatDateLabel(dateKey)}</div>`;
+                    // --- MÓDOSÍTÁS: Dátum fejléc osztály használata a style.css glow effekthez ---
+                    columnContent += `<div class="kanban-date-header">${formatDateLabel(dateKey)}</div>`;
                     
                     groupedByDate[dateKey]
                         .sort((a, b) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
@@ -645,7 +645,8 @@ function renderFixturesForMobileList(fixtures) {
             Object.keys(groupedByDate)
                 .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
                 .forEach(dateKey => {
-                    html += `<div class="mobile-date-header" style="text-align:center; margin: 15px 0; color:var(--primary); font-weight:bold; letter-spacing:1px;">${formatDateLabel(dateKey)}</div>`; 
+                    // --- MÓDOSÍTÁS: Glow effekt a mobil dátumra is ---
+                    html += `<div class="mobile-date-header kanban-date-header" style="background:transparent; position:static; border:none; box-shadow:none;">${formatDateLabel(dateKey)}</div>`; 
                 
                     groupedByDate[dateKey]
                          .sort((a, b) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
@@ -655,14 +656,14 @@ function renderFixturesForMobileList(fixtures) {
                             html += `
                                 <div class="mobile-match-card selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
                                     <div class="mm-header">
-                                        <div class="mm-league">${fx.league || 'Liga'}</div>
-                                        <div class="mm-time">${time}</div>
+                                        <div class="mm-league kanban-glow-text">${fx.league || 'Liga'}</div>
+                                        <div class="mm-time kanban-glow-text" style="color:var(--primary);">${time}</div>
                                     </div>
                                     <div class="mm-body">
                                         <div class="mm-teams">
-                                            <div style="margin-bottom:5px;">${fx.home}</div>
+                                            <div class="kanban-glow-text" style="margin-bottom:5px; font-size:1.2rem;">${fx.home}</div>
                                             <div style="font-size:0.8rem; color:var(--primary); opacity:0.8;">VS</div>
-                                            <div style="margin-top:5px;">${fx.away}</div>
+                                            <div class="kanban-glow-text" style="margin-top:5px; font-size:1.2rem;">${fx.away}</div>
                                         </div>
                                         
                                         <div class="manual-xg-grid" style="margin-top: 15px;">
