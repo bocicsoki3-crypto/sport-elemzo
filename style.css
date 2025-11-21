@@ -231,16 +231,43 @@ p { color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem; margin-b
     transition: transform 0.3s;
 }
 
+/* --- MÓDOSÍTÁS: Világító Oszlop Fejlécek --- */
 .kanban-column-header { 
-    padding: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
-    color: var(--primary); text-transform: uppercase; letter-spacing: 3px; 
-    font-size: 1rem; text-align: center; background: rgba(0, 0, 0, 0.3);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0; text-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+    padding: 20px; 
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2); 
+    color: var(--primary); 
+    text-transform: uppercase; 
+    letter-spacing: 3px; 
+    font-size: 1rem; 
+    text-align: center; 
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0; 
+    text-shadow: 0 0 15px var(--primary), 0 0 30px var(--primary-glow); /* Erős ragyogás */
 }
+
+/* --- ÚJ OSZTÁLY: Világító Dátum Elválasztó (MA, HOLNAP) --- */
+.kanban-date-header {
+    padding: 12px 0;
+    text-align: center;
+    font-family: var(--font-header);
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    color: #fff;
+    text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary); /* Ragyogás */
+    background: var(--glass-bg);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    margin-bottom: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
 .column-content { padding: 20px; overflow-y: auto; flex: 1; scrollbar-width: none; }
 .column-content::-webkit-scrollbar { display: none; }
 
-/* --- MECCS KÁRTYA (PRÉMIUM DIZÁJN) --- */
+/* --- MECCS KÁRTYA (PRÉMIUM DIZÁJN & RAGYOGÁS) --- */
 .match-card {
     background: linear-gradient(160deg, rgba(30, 30, 35, 0.8), rgba(15, 15, 20, 0.95));
     border: 1px solid rgba(212, 175, 55, 0.2); /* Finom arany keret */
@@ -272,19 +299,35 @@ p { color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem; margin-b
     margin-bottom: 15px; font-size: 0.85rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     padding-bottom: 10px;
 }
-.meta-league { color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; }
-.meta-time { color: var(--primary); font-family: var(--font-header); font-weight: 700; text-shadow: 0 0 8px var(--primary-glow); }
+.meta-league { 
+    color: #f0f0f0; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+    font-size: 0.75rem;
+    text-shadow: 0 0 5px rgba(255,255,255,0.5); /* Enyhe ragyogás */
+}
+.meta-time { 
+    color: var(--primary); 
+    font-family: var(--font-header); 
+    font-weight: 700; 
+    text-shadow: 0 0 8px var(--primary), 0 0 15px var(--primary-glow); /* Idő ragyogás */
+}
 
 /* Csapatok */
 .match-card-teams { text-align: center; margin: 20px 0; }
 .team-name { 
-    font-size: 1.4rem; font-weight: 700; display: block; color: #fff; 
-    text-shadow: 0 2px 5px rgba(0,0,0,0.5); letter-spacing: 0.5px;
+    font-size: 1.4rem; 
+    font-weight: 700; 
+    display: block; 
+    color: #fff; 
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px var(--primary-glow); /* Csapatnév ragyogás */
 }
 .vs-badge { 
     font-size: 0.9rem; color: var(--primary); font-family: var(--font-header); 
-    margin: 8px 0; opacity: 0.8; display: inline-block;
+    margin: 8px 0; opacity: 0.9; display: inline-block;
     position: relative;
+    text-shadow: 0 0 5px var(--primary);
 }
 .vs-badge::before, .vs-badge::after {
     content: ''; position: absolute; top: 50%; width: 30px; height: 1px; background: linear-gradient(90deg, transparent, var(--primary)); opacity: 0.5;
@@ -461,6 +504,11 @@ p { color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem; margin-b
 .mm-time { font-size: 0.85rem; color: var(--primary); font-family: var(--font-header); text-shadow: 0 0 5px var(--primary-glow); }
 .mm-body { padding: 20px; }
 .mm-teams { font-size: 1.3rem; font-weight: 700; text-align: center; margin-bottom: 20px; }
+
+/* Utility class for glow on mobile text */
+.kanban-glow-text {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 15px var(--primary);
+}
 
 /* Analysis Layout Styles */
 .analysis-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; padding-bottom: 40px; }
