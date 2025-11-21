@@ -1,4 +1,4 @@
-// --- script.js (v71.0 - Redesigned History & Details Fix) ---
+// --- script.js (v74.0 - King AI Premium Edition - Full Uncut) ---
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -9,10 +9,7 @@ const appState = {
     currentAnalysisContext: '',
     chatHistory: [],
     selectedMatches: new Set(),
-    authToken: null,
-    rosterCache: new Map(),
-    // Map<matchId, { home: { name: string, pos: string }[], away: { name: string, pos: string }[] }>
-    p1SelectedAbsentees: new Map()
+    authToken: null
 };
 
 // --- 2. LIGA KATEGÓRIÁK ---
@@ -83,14 +80,21 @@ async function loadFixtures() {
     const loadBtn = document.getElementById('loadFixturesBtn');
     loadBtn.disabled = true;
     appState.selectedMatches.clear(); 
-    appState.rosterCache.clear(); 
-    appState.p1SelectedAbsentees.clear(); 
+    
+    // UI Frissítése
+    const board = document.getElementById('kanban-board');
+    const mobileContainer = document.getElementById('mobile-list-container');
+    if (board) board.innerHTML = '';
+    if (mobileContainer) mobileContainer.innerHTML = '';
+    
     updateMultiSelectButton();
+
     try {
         const response = await fetchWithAuth(`${appState.gasUrl}/getFixtures?sport=${appState.currentSport}&days=2`);
         if (!response.ok) await handleFetchError(response);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
+        
         appState.fixtures = (data.fixtures || []).map((fx) => ({
              ...fx,
             uniqueId: `${appState.currentSport}_${fx.home.toLowerCase().replace(/\s+/g, '')}_${fx.away.toLowerCase().replace(/\s+/g, '')}`
@@ -104,7 +108,6 @@ async function loadFixtures() {
         }
         
         addCheckboxListeners();
-        addP1ModalButtonListeners();
         
         (document.getElementById('userInfo')).textContent = `Csatlakozva`;
         (document.getElementById('placeholder')).style.display = 'none';
@@ -113,8 +116,6 @@ async function loadFixtures() {
         showToast(`Hiba a meccsek betöltésekor: ${e.message}`, 'error');
         (document.getElementById('userInfo')).textContent = `Hiba`;
         (document.getElementById('placeholder')).style.display = 'flex'; 
-        (document.getElementById('kanban-board')).innerHTML = '';
-        (document.getElementById('mobile-list-container')).innerHTML = '';
         console.error(e);
     } finally {
         loadBtn.disabled = false;
@@ -145,20 +146,11 @@ function runAnalysisFromCard(buttonElement, home, away, utcKickoff, leagueName) 
                 manual_A_xG: A_xG,
                 manual_A_xGA: A_xGA
             };
-            console.log('Manuális (Komponens) xG-t küldök:', manualXgData);
         } else {
-            showToast('Manuális Komponens xG: Érvénytelen számformátum. Az xG felülbírálás kihagyva.', 'error');
+            showToast('Manuális xG: Érvénytelen számformátum. Az xG felülbírálás kihagyva.', 'error');
         }
     }
 
-    if (matchId && appState.p1SelectedAbsentees.has(matchId)) {
-        const manualAbsentees = appState.p1SelectedAbsentees.get(matchId);
-        if (manualAbsentees.home.length > 0 || manualAbsentees.away.length > 0) {
-            (manualXgData).manual_absentees = manualAbsentees;
-            console.log('Manuális (P1) Hiányzókat (objektumokkal) küldök az appState-ből:', manualAbsentees);
-        }
-    }
-    
     runAnalysis(home, away, utcKickoff, leagueName, true, manualXgData, matchId); 
 }
 
@@ -213,11 +205,7 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
 
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-        const { analysisData, debugInfo } = data;
-
-        if (analysisData.availableRosters) {
-            appState.rosterCache.set(matchId, analysisData.availableRosters);
-        }
+        const { analysisData } = data;
         
         const finalHtml = buildAnalysisHtml_CLIENTSIDE(
             analysisData.committee,
@@ -228,7 +216,6 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
             analysisData.finalConfidenceScore, 
             analysisData.sim,
             analysisData.recommendation,
-            analysisData.availableRosters, 
             matchId 
         );
 
@@ -250,8 +237,6 @@ Ajánlás: ${recommendation.recommended_bet} (Bizalom: ${recommendation.final_co
         modalSkeleton.classList.remove('active');
         modalChatContainer.style.display = 'block';
         (modalChatContainer.querySelector('#chat-messages')).innerHTML = '';
-        
-        addP1ModalButtonListeners('#modal-container');
         
     } catch (e) {
         modalResults.innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba történt az elemzés során: ${e.message}</p>`;
@@ -337,16 +322,9 @@ async function viewHistoryDetail(id) {
                 const { analysisData } = storedResponse;
                 const matchId = record.id; 
 
-                // === JAVÍTÁS (v70.0): Robusztusabb adatkinyerés és Committee fallback ===
-                // Ha a 'committee' objektum hiányos (mert a mentéskor karcsúsítva lett),
-                // megpróbálunk fallback értékeket adni, hogy ne omoljon össze a renderelés.
                 const safeCommittee = analysisData.committee || {};
                 
-                // Ha hiányzik a 'quant', 'scout' stb., kitöltjük üres objektummal vagy "N/A" szöveggel
                 if (!safeCommittee.quant) safeCommittee.quant = { source: "N/A", mu_h: 0, mu_a: 0 };
-                
-                // A 'scout' és 'critic' sokszor hiányozhat a korábbi mentésekből.
-                // Ezeket a megjelenítőben kezeljük le (processAiText), de itt is biztosítjuk a létüket.
                 if (!safeCommittee.scout) safeCommittee.scout = { summary: "A részletes jelentés nem került mentésre.", key_insights: [] };
                 if (!safeCommittee.critic) safeCommittee.critic = { tactical_summary: "A részletes jelentés nem került mentésre.", key_risks: [] };
 
@@ -365,7 +343,6 @@ async function viewHistoryDetail(id) {
                     analysisData.finalConfidenceScore,
                     analysisData.sim,
                     analysisData.recommendation,
-                    analysisData.availableRosters || { home: [], away: [] },
                     matchId
                 );
                 
@@ -383,8 +360,6 @@ async function viewHistoryDetail(id) {
         (modalBody.querySelector('#analysis-results')).innerHTML = contentToDisplay;
         const modalChat = modalBody.querySelector('#chat-container');
         modalChat.style.display = 'none';
-
-        addP1ModalButtonListeners('#modal-container');
 
     } catch(e) {
          (document.getElementById('modal-body')).innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a részletek betöltésekor: ${e.message}</p>`;
@@ -435,143 +410,6 @@ async function sendChatMessage() {
     }
 }
 
-async function runMultiAnalysis() {
-    // ... (Ez a funkció változatlan maradhat, de a biztonság kedvéért benne hagyom a teljes kódot)
-    const selectedIds = Array.from(appState.selectedMatches);
-    if (selectedIds.length === 0 || selectedIds.length > 3) {
-        showToast('Válassz ki 1-3 meccset a többes elemzéshez.', 'error');
-        return;
-    }
-    
-    const matchesToAnalyze = appState.fixtures.filter(fx => selectedIds.includes(fx.uniqueId));
-    if (matchesToAnalyze.length !== selectedIds.length) {
-         showToast('Hiba: Nem található minden kiválasztott meccs. Próbáld újra betölteni a meccseket.', 'error');
-        return;
-    }
-
-    openModal(`Többes Elemzés (${matchesToAnalyze.length} meccs)`, '<div id="multi-analysis-results"></div><div id="multi-loading-skeleton" style="padding: 1rem;"></div>', 'modal-xl');
-    
-    const resultsContainer = document.getElementById('multi-analysis-results');
-    const loadingContainer = document.getElementById('multi-loading-skeleton');
-
-    loadingContainer.innerHTML = (document.getElementById('loading-skeleton')).outerHTML;
-    const modalSkeleton = loadingContainer.querySelector('.loading-skeleton');
-    if (modalSkeleton) modalSkeleton.classList.add('active');
-    const analysisPromises = matchesToAnalyze.map(match => {
-        const analysisUrl = `${appState.gasUrl}/runAnalysis`;
-        
-        const card = document.querySelector(`.selectable-card[data-match-id="${match.uniqueId}"], .selectable-item[data-match-id="${match.uniqueId}"], .mobile-match-card[data-match-id="${match.uniqueId}"]`);
-        let manualXgData = {};
-        
-        if (card) {
-            const H_xG_raw = card.querySelector('.xg-input-h-xg')?.value;
-            const H_xGA_raw = card.querySelector('.xg-input-h-xga')?.value;
-            const A_xG_raw = card.querySelector('.xg-input-a-xg')?.value;
-            const A_xGA_raw = card.querySelector('.xg-input-a-xga')?.value;
-            
-            if (H_xG_raw && H_xGA_raw && A_xG_raw && A_xGA_raw) {
-                const H_xG = parseFloat(H_xG_raw.replace(',', '.'));
-                const H_xGA = parseFloat(H_xGA_raw.replace(',', '.'));
-                const A_xG = parseFloat(A_xG_raw.replace(',', '.'));
-                const A_xGA = parseFloat(A_xGA_raw.replace(',', '.'));
-                if (!isNaN(H_xG) && !isNaN(H_xGA) && !isNaN(A_xG) && !isNaN(A_xGA)) {
-                    manualXgData = {
-                        manual_H_xG: H_xG,
-                        manual_H_xGA: H_xGA,
-                        manual_A_xG: A_xG,
-                        manual_A_xGA: A_xGA
-                    };
-                }
-            }
-        }
-            
-        if (appState.p1SelectedAbsentees.has(match.uniqueId)) {
-            const manualAbsentees = appState.p1SelectedAbsentees.get(match.uniqueId);
-            if (manualAbsentees.home.length > 0 || manualAbsentees.away.length > 0) {
-                (manualXgData).manual_absentees = manualAbsentees;
-            }
-        }
-        
-        const payload = {
-            home: match.home,
-            away: match.away,
-             sport: appState.currentSport,
-            force: true, 
-             utcKickoff: match.utcKickoff,
-            leagueName: match.league || '',
-            sheetUrl: appState.sheetUrl,
-            openingOdds: JSON.parse(sessionStorage.getItem('openingOdds') || '{}'),
-            ...manualXg 
-        };
-        return fetchWithAuth(analysisUrl, {
-            method: 'POST',
-            body: JSON.stringify(payload) 
-         })
-         .then(response => { 
-            if (!response.ok) { 
-                return response.json().then(errorData => { 
-                    throw new Error(`Szerver hiba (${response.status}): ${errorData.error || response.statusText}`);
-                }).catch(() => { 
-                    throw new Error(`Hálózati hiba: ${response.status} ${response.statusText}`);
-                });
-            }
-            return response.json();
-       })
-        .then(data => { 
-            if (data.error) throw new Error(`Elemzési hiba (${match.home} vs ${match.away}): ${data.error}`);
-            return { match: `${match.home} vs ${match.away}`, analysisData: data.analysisData };
-        })
-        .catch(error => { 
-             console.error(`Hiba ${match.home} vs ${match.away} elemzésekor:`, error);
-             return { match: `${match.home} vs ${match.away}`, error: error.message };
-        });
-    });
-    try {
-        const results = await Promise.all(analysisPromises);
-        loadingContainer.innerHTML = '';
-        resultsContainer.innerHTML = '';
-        results.forEach(result => {
-             const matchHeader = `<h4>${result.match}</h4>`;
-             let recommendationHtml = '<p style="color:var(--danger);">Ismeretlen hiba történt az elemzés során ennél a meccsnél.</p>'; 
-
-            if (!result.error && result.analysisData) { 
-                const rec = result.analysisData.recommendation;
-                if (rec) {
-                    const highlightedReasoning = _highlightKeywords(rec.brief_reasoning, [result.analysisData.matchData.home, result.analysisData.matchData.away]);
-                    recommendationHtml = `
-                        <div class="master-recommendation-card" style="margin-top:0; padding: 1rem; border: none; box-shadow: none; animation: none; background: transparent;">
-                            <div class="master-bet"><strong>${escapeHTML(rec.recommended_bet)}</strong></div>
-                             <div class="master-confidence">
-                                Végső Bizalom: <strong class="glowing-text-white">${parseFloat(rec.final_confidence || 1.0).toFixed(1)}/10</strong>
-                            </div>
-                             <div class="master-reasoning" style="font-size: 0.9rem;">${highlightedReasoning}</div>
-                        </div>`;
-                } else {
-                     recommendationHtml = '<p class="muted">A fő elemzői ajánlás nem található ebben az elemzésben.</p>';
-                }
-            } else if (result.error) { 
-                 recommendationHtml = `<p style="color:var(--danger);">Hiba: ${result.error}</p>`;
-            }
-
-            resultsContainer.innerHTML += `
-                 <div class="multi-analysis-item">
-                    ${matchHeader}
-                    ${recommendationHtml}
-                </div>
-            `;
-        });
-        
-         appState.selectedMatches.clear();
-         document.querySelectorAll('.selectable-card.selected, .selectable-item.selected').forEach(el => el.classList.remove('selected'));
-         document.querySelectorAll('.match-checkbox:checked').forEach(cb => ((cb)).checked = false);
-         updateMultiSelectButton();
-    } catch (e) { 
-         console.error("Váratlan hiba a többes elemzés során:", e);
-        loadingContainer.innerHTML = ''; 
-         resultsContainer.innerHTML = `<p style="color:var(--danger); text-align:center;">Váratlan hiba történt az elemzések összesítésekor: ${e.message}</p>`;
-    }
-}
-
 // === Dátum és Adatkezelő Segédfüggvények ===
 
 const parseHungarianDate = (huDate) => {
@@ -593,8 +431,6 @@ const parseHungarianDate = (huDate) => {
 function handleSportChange() {
     appState.currentSport = (document.getElementById('sportSelector')).value;
     appState.selectedMatches.clear(); 
-    appState.rosterCache.clear();
-    appState.p1SelectedAbsentees.clear(); 
     (document.getElementById('kanban-board')).innerHTML = '';
     (document.getElementById('mobile-list-container')).innerHTML = '';
     (document.getElementById('placeholder')).style.display = 'flex'; 
@@ -620,7 +456,7 @@ function openManualAnalysisModal() {
             <input id="manual-kickoff" type="datetime-local" placeholder="Válassz időpontot"/>
         </div>
         
-        <h5 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary);">Opcionális P1 xG Felülbírálás (4-Komponensű)</h5>
+        <h5 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary);">Opcionális xG Felülbírálás (4-Komponensű)</h5>
         <div class="manual-xg-grid" style="margin-top: 0.5rem;">
             <input type="text" inputmode="decimal" placeholder="H xG" class="xg-input" id="manual-h-xg" title="Hazai Csapat (Home) xG/90">
             <input type="text" inputmode="decimal" placeholder="H xGA" class="xg-input" id="manual-h-xga" title="Hazai Csapat (Home) xGA/90">
@@ -628,17 +464,7 @@ function openManualAnalysisModal() {
             <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input" id="manual-a-xga" title="Vendég Csapat (Away) xGA/90">
         </div>
 
-        <h5 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--primary);">Opcionális P1 Hiányzó Felülbírálás</h5>
-        <div class="control-group" style="margin-top: 0.5rem;">
-            <label for="manual-abs-home">Hazai kulcshiányzók (Név (Pos), ...)</label>
-            <input id="manual-abs-home" class="xg-input" style="text-align: left;" placeholder="Pl: Neuer (G), Kimmich (D)"/>
-        </div>
-        <div class="control-group" style="margin-top: 0.5rem;">
-            <label for="manual-abs-away">Vendég kulcshiányzók (Név (Pos), ...)</label>
-            <input id="manual-abs-away" class="xg-input" style="text-align: left;" placeholder="Pl: Gavi (M), Lewandowski (F)"/>
-        </div>
-        
-        <button id="run-manual-btn" class="btn btn-primary" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
+        <button id="run-manual-btn" class="btn btn-analyze" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
     `;
     openModal('Kézi Elemzés Indítása', content, 'modal-sm');
     
@@ -656,19 +482,6 @@ function openManualAnalysisModal() {
     kickoffInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-const parseManualAbsentees = (rawString) => {
-    if (!rawString) return [];
-    return rawString.split(',')
-        .map(entry => {
-            const match = entry.trim().match(/^(.*?)\s*\(([GDMFN/A]+)\)$/i); 
-            if (match) {
-                return { name: match[1].trim(), pos: match[2].toUpperCase() };
-            }
-            return { name: entry.trim(), pos: 'N/A' }; 
-        })
-        .filter(p => p.name);
-};
-
 function runManualAnalysis() {
     const home = (document.getElementById('manual-home')).value.trim();
     const away = (document.getElementById('manual-away')).value.trim();
@@ -679,9 +492,6 @@ function runManualAnalysis() {
     const H_xGA_raw = (document.getElementById('manual-h-xga')).value;
     const A_xG_raw = (document.getElementById('manual-a-xg')).value;
     const A_xGA_raw = (document.getElementById('manual-a-xga')).value;
-    
-    const Abs_H_raw = (document.getElementById('manual-abs-home')).value;
-    const Abs_A_raw = (document.getElementById('manual-abs-away')).value;
     
     let manualXgData = {};
     if (!home || !away || !leagueName) { 
@@ -705,20 +515,9 @@ function runManualAnalysis() {
                 manual_A_xG: A_xG,
                 manual_A_xGA: A_xGA
             };
-        } else {
-            showToast('Manuális Komponens xG: Érvénytelen számformátum. Az xG felülbírálás kihagyva.', 'error');
         }
     }
     
-    const manualAbsentees = {
-        home: parseManualAbsentees(Abs_H_raw),
-        away: parseManualAbsentees(Abs_A_raw)
-    };
-
-    if (manualAbsentees.home.length > 0 || manualAbsentees.away.length > 0) {
-        (manualXgData).manual_absentees = manualAbsentees;
-    }
-
     try {
         const kickoffDate = new Date(kickoffLocal);
         if (isNaN(kickoffDate.getTime())) {
@@ -781,32 +580,21 @@ function renderFixturesForDesktop(fixtures) {
                         .forEach((fx) => { 
                             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             
-                            const p1State = appState.p1SelectedAbsentees.get(fx.uniqueId) || { home: [], away: [] };
-                            const p1Count = p1State.home.length + p1State.away.length;
-                            
-                            const rosterButtonHtml = `
-                                <button class="btn-p1-absentees" data-match-id="${fx.uniqueId}" 
-                                    data-home="${escape(fx.home)}" 
-                                    data-away="${escape(fx.away)}" 
-                                    data-league="${escape(fx.league || '')}" 
-                                    data-kickoff="${escape(fx.utcKickoff)}">
-                                    👥 P1 Hiányzók (${p1Count})
-                                </button>`;
-
                             columnContent += `
                                 <div class="match-card selectable-card ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
-                                    <div style="position:absolute; top:10px; right:10px;">
+                                    <div style="position:absolute; top:15px; right:15px;">
                                         <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
                                     </div>
                                     
-                                    <div class="match-card-meta" style="margin-bottom:8px;">
-                                        <span>${fx.league || 'Liga'}</span> • <span style="color:var(--primary)">${time}</span>
+                                    <div class="match-card-meta">
+                                        <span class="meta-league">${fx.league || 'Liga'}</span> 
+                                        <span class="meta-time">${time}</span>
                                     </div>
                                     
-                                    <div class="match-card-teams" style="font-size: 1.1rem; margin-bottom: 15px;">
-                                        <div style="margin-bottom:4px;">${fx.home}</div>
-                                        <div style="color:var(--text-secondary); font-size:0.8em;">vs</div>
-                                        <div style="margin-top:4px;">${fx.away}</div>
+                                    <div class="match-card-teams">
+                                        <div class="team-name">${fx.home}</div>
+                                        <div class="vs-badge">VS</div>
+                                        <div class="team-name">${fx.away}</div>
                                     </div>
                                     
                                     <div class="manual-xg-grid">
@@ -816,12 +604,9 @@ function renderFixturesForDesktop(fixtures) {
                                         <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input xg-input-a-xga">
                                     </div>
                                     
-                                    ${(appState.currentSport === 'soccer') ? rosterButtonHtml : ''}
-                                    
-                                    <button class="btn btn-primary" 
-                                        style="width: 100%; margin-top: 15px;"
+                                    <button class="btn btn-analyze" 
                                         onclick="runAnalysisFromCard(this, '${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league || '')}')">
-                                        ELEMZÉS INDÍTÁSA
+                                        ELEMZÉS INDÍTÁSA ⚡
                                     </button>
                                 </div>`;
                         });
@@ -850,7 +635,7 @@ function renderFixturesForMobileList(fixtures) {
     let html = '';
     groupOrder.forEach(group => { 
         if (groupedByCategory[group]) { 
-            html += `<div style="margin: 20px 0 10px 0; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; padding-left: 5px; border-left: 3px solid var(--primary);">${group}</div>`;
+            html += `<div style="margin: 20px 0 10px 0; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; padding-left: 5px; border-left: 4px solid var(--primary); text-shadow: 0 0 10px rgba(0,0,0,0.5);">${group}</div>`;
             
             const groupedByDate = groupBy(groupedByCategory[group], (fx) => {
                 try { return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); }
@@ -860,25 +645,13 @@ function renderFixturesForMobileList(fixtures) {
             Object.keys(groupedByDate)
                 .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
                 .forEach(dateKey => {
-                    html += `<div class="mobile-date-header"><span>${formatDateLabel(dateKey)}</span></div>`; 
+                    html += `<div class="mobile-date-header" style="text-align:center; margin: 15px 0; color:var(--primary); font-weight:bold; letter-spacing:1px;">${formatDateLabel(dateKey)}</div>`; 
                 
                     groupedByDate[dateKey]
                          .sort((a, b) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
                         .forEach((fx) => { 
                             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             
-                            const p1State = appState.p1SelectedAbsentees.get(fx.uniqueId) || { home: [], away: [] };
-                            const p1Count = p1State.home.length + p1State.away.length;
-                            
-                            const rosterButtonHtml = `
-                                <button class="btn-p1-absentees" data-match-id="${fx.uniqueId}" 
-                                    data-home="${escape(fx.home)}" 
-                                    data-away="${escape(fx.away)}" 
-                                    data-league="${escape(fx.league || '')}" 
-                                    data-kickoff="${escape(fx.utcKickoff)}">
-                                    👥 P1 Hiányzók (${p1Count})
-                                </button>`;
-
                             html += `
                                 <div class="mobile-match-card selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
                                     <div class="mm-header">
@@ -887,26 +660,24 @@ function renderFixturesForMobileList(fixtures) {
                                     </div>
                                     <div class="mm-body">
                                         <div class="mm-teams">
-                                            <span>${fx.home}</span>
-                                            <span style="color:var(--text-secondary); font-size:0.9em;">vs</span>
-                                            <span>${fx.away}</span>
+                                            <div style="margin-bottom:5px;">${fx.home}</div>
+                                            <div style="font-size:0.8rem; color:var(--primary); opacity:0.8;">VS</div>
+                                            <div style="margin-top:5px;">${fx.away}</div>
                                         </div>
                                         
-                                        <div class="manual-xg-grid" style="margin-top: 10px;">
+                                        <div class="manual-xg-grid" style="margin-top: 15px;">
                                            <input type="text" inputmode="decimal" placeholder="H xG" class="xg-input xg-input-h-xg">
                                            <input type="text" inputmode="decimal" placeholder="H xGA" class="xg-input xg-input-h-xga">
                                            <input type="text" inputmode="decimal" placeholder="V xG" class="xg-input xg-input-a-xg">
                                            <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input xg-input-a-xga">
                                         </div>
                                         
-                                        ${(appState.currentSport === 'soccer') ? rosterButtonHtml : ''}
-                                        
-                                        <div class="mm-actions">
-                                            <button class="btn btn-primary" style="width:100%"
+                                        <div class="mm-actions" style="margin-top: 20px; display:flex; gap:10px; align-items:center;">
+                                            <button class="btn btn-analyze" style="flex:1;"
                                                 onclick="runAnalysisFromCard(this, '${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league || '')}')">
                                                 ELEMZÉS ⚡
                                             </button>
-                                            <div class="mm-checkbox-wrapper">
+                                            <div style="display:flex; align-items:center; justify-content:center;">
                                                 <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
                                             </div>
                                         </div>
@@ -919,7 +690,6 @@ function renderFixturesForMobileList(fixtures) {
     container.innerHTML = html || '<div style="text-align:center; padding: 40px; color: var(--text-secondary);">Nincsenek elérhető mérkőzések.</div>';
 }
 
-// === JAVÍTÁS (v70.0): Modern Grid Layout az Előzményeknek ===
 function renderHistory(historyData) {
     if (!historyData || !Array.isArray(historyData) || historyData.length === 0) {
         return '<p class="muted" style="text-align:center; padding: 2rem;">Nincsenek mentett előzmények.</p>';
@@ -952,35 +722,32 @@ function renderHistory(historyData) {
                 const time = isNaN(analysisTime.getTime()) ? '?' : analysisTime.toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                 const safeItemId = escape(item.id);
                 
-                const wlp = (item.status || item['Helyes (W/L/P)'])?.toUpperCase(); // Ha van WLP státusz
-                let statusClass = 'status-NA';
-                let statusText = 'N/A';
+                const wlp = (item.status || item['Helyes (W/L/P)'])?.toUpperCase(); 
                 let resultClass = '';
+                let statusText = 'N/A';
                 
-                if (wlp === 'W') { statusClass = 'status-W'; statusText = 'NYERT'; resultClass = 'result-W'; }
-                else if (wlp === 'L') { statusClass = 'status-L'; statusText = 'VESZTETT'; resultClass = 'result-L'; }
-                else if (wlp === 'P') { statusClass = 'status-P'; statusText = 'PUSH'; resultClass = 'result-P'; }
+                if (wlp === 'W') { resultClass = 'result-W'; statusText = 'NYERT'; }
+                else if (wlp === 'L') { resultClass = 'result-L'; statusText = 'VESZTETT'; }
+                else if (wlp === 'P') { resultClass = 'result-P'; statusText = 'PUSH'; }
                 
                 const confidenceVal = item.confidence ? `${parseFloat(item.confidence).toFixed(1)}/10` : 'N/A';
 
                 html += `
                     <div class="history-card ${resultClass}" onclick="viewHistoryDetail('${safeItemId}')">
-                        <div class="hc-header">
+                        <div style="display:flex; justify-content:space-between; color:var(--text-secondary); font-size:0.8rem; margin-bottom:10px;">
                             <span>${item.sport ? item.sport.toUpperCase() : 'SPORT'}</span>
                             <span>⏰ ${time}</span>
                         </div>
-                        <div class="hc-teams">
-                            <div>${item.home || '?'}</div>
-                            <div style="font-size:0.8em; color:var(--text-muted); font-weight:400;">vs</div>
-                            <div>${item.away || '?'}</div>
+                        <div style="text-align:center; font-size:1.1rem; font-weight:bold; margin-bottom:10px;">
+                            ${item.home} <span style="color:var(--primary); font-size:0.8em;">vs</span> ${item.away}
                         </div>
-                        <div class="hc-tip">
-                            <strong>Tipp:</strong> ${item.tip || 'N/A'}
+                        <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:8px; text-align:center; margin-bottom:10px; border:1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size:0.8rem; color:var(--text-secondary);">Tipp</div>
+                            <div style="color:var(--primary); font-weight:bold;">${item.tip || 'N/A'}</div>
                         </div>
-                        <div class="hc-footer">
-                            <span class="status-badge ${statusClass}">${statusText}</span>
-                            <span style="font-size:0.85rem; color:var(--text-secondary);">Bizalom: <strong style="color:#fff;">${confidenceVal}</strong></span>
-                            <button class="delete-btn-icon" onclick="deleteHistoryItem('${safeItemId}'); event.stopPropagation();" title="Törlés">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;">
+                            <span style="font-size:0.8rem;">Bizalom: <strong>${confidenceVal}</strong></span>
+                            <button class="delete-btn-icon" style="background:none; border:none; color:var(--text-muted); cursor:pointer;" onclick="deleteHistoryItem('${safeItemId}'); event.stopPropagation();">
                                 🗑️
                             </button>
                         </div>
@@ -1025,9 +792,7 @@ function formatDateLabel(dateStr) {
 function openModal(title, content = '', sizeClass = 'modal-xl') {
     const modalContainer = document.getElementById('modal-container');
     const modalContent = modalContainer.querySelector('.modal-content');
-    // Reset classes
-    modalContent.className = 'modal-content glass-panel';
-    // Add specific size class if needed via JS, though CSS handles responsive mainly
+    modalContent.className = 'modal-content'; // Reset
     if (sizeClass) modalContent.classList.add(sizeClass);
 
     (document.getElementById('modal-title')).textContent = title;
@@ -1072,8 +837,6 @@ function showToast(message, type = 'info', duration = 4000) {
 
 function setupThemeSwitcher() {
     // Theme logic preserved but simplifed for new CSS structure
-    const themeSwitcher = document.getElementById('theme-switcher');
-    // Currently only dark theme is fully styled in new CSS, but keeping placeholder
 }
 
 function initMultiSelect() {
@@ -1088,308 +851,7 @@ function addCheckboxListeners() {
     });
 }
 
-function addP1ModalButtonListeners(scopeSelector = '') {
-    const scope = scopeSelector ? document.querySelector(scopeSelector) : document;
-    if (!scope) return;
-    
-    const buttons = scope.querySelectorAll('.btn-p1-absentees');
-    buttons.forEach(btn => {
-        btn.removeEventListener('click', openP1AbsenteesModal);
-        btn.addEventListener('click', openP1AbsenteesModal);
-    });
-}
-
-async function openP1AbsenteesModal(event) {
-    const button = event.currentTarget;
-    const matchId = button.dataset.matchId;
-    
-    if (!matchId) {
-        showToast("Hiba: A meccs azonosítója (matchId) hiányzik a gomb adatattribútumából.", "error");
-        return;
-    }
-
-    const { home, away, league, kickoff } = button.dataset;
-    const homeName = unescape(home);
-    const awayName = unescape(away);
-
-    const title = `P1 Hiányzók: ${homeName} vs ${awayName}`;
-    const loadingHTML = (document.getElementById('loading-skeleton')).outerHTML;
-    openModal(title, loadingHTML, 'modal-lg');
-    (document.querySelector('#modal-container #loading-skeleton')).classList.add('active');
-
-    await _getAndRenderRosterModalHtml(matchId, homeName, awayName, unescape(league), unescape(kickoff));
-}
-
-async function _getAndRenderRosterModalHtml(matchId, homeName, awayName, leagueName, utcKickoff) {
-    const modalBody = document.getElementById('modal-body');
-    if (!modalBody) return;
-
-    try {
-        let rosters = appState.rosterCache.get(matchId);
-        
-        if (!rosters) {
-            const response = await fetchWithAuth(`${appState.gasUrl}/getRosters`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    home: homeName,
-                    away: awayName,
-                    leagueName: leagueName,
-                    utcKickoff: utcKickoff,
-                    sport: appState.currentSport
-                })
-            });
-            if (!response.ok) await handleFetchError(response);
-            
-            rosters = await response.json();
-            
-            if (!rosters || (!rosters.home?.length && !rosters.away?.length)) {
-                throw new Error("Az API nem adott vissza érvényes keretadatot.");
-            }
-            
-            appState.rosterCache.set(matchId, rosters);
-        }
-
-        const modalHtml = _buildRosterModalHtml(matchId, homeName, awayName, rosters);
-        
-        const currentSearch = (modalBody.querySelector('#p1-search-input'))?.value || '';
-        
-        modalBody.innerHTML = modalHtml;
-
-        const searchInput = modalBody.querySelector('#p1-search-input');
-        if (searchInput) {
-            searchInput.value = currentSearch;
-            if (currentSearch) {
-                handleP1Search({ target: searchInput });
-            }
-            searchInput.addEventListener('keyup', handleP1Search);
-        }
-
-        modalBody.querySelectorAll('.player-card').forEach(card => {
-            card.addEventListener('dragstart', handleP1DragStart);
-        });
-        
-        modalBody.querySelectorAll('.kanban-column').forEach(column => {
-            column.addEventListener('dragover', handleP1DragOver);
-            column.addEventListener('dragenter', handleP1DragEnter);
-            column.addEventListener('dragleave', handleP1DragLeave);
-            column.addEventListener('drop', handleP1Drop);
-        });
-
-    } catch (e) {
-        console.error(`Hiba a P1 keret modal felépítésekor (${matchId}):`, e);
-        modalBody.innerHTML = `<p class="muted" style="color:var(--danger); font-size: 0.9rem; text-align: center; padding: 2rem;">A keretek lekérése sikertelen: ${e.message}</p>`;
-    }
-}
-
-function _buildRosterModalHtml(matchId, homeName, awayName, availableRosters) {
-    const p1State = appState.p1SelectedAbsentees.get(matchId) || { home: [], away: [] };
-    const absentHomeNames = new Set(p1State.home.map(p => p.name));
-    const absentAwayNames = new Set(p1State.away.map(p => p.name));
-
-    const allHomePlayers = availableRosters?.home || [];
-    const allAwayPlayers = availableRosters?.away || [];
-
-    const availableHome = allHomePlayers.filter(p => !absentHomeNames.has(p.name));
-    const availableAway = allAwayPlayers.filter(p => !absentAwayNames.has(p.name));
-    
-    const absentHome = p1State.home;
-    const absentAway = p1State.away;
-
-    const buildPlayerCards = (players, columnType) => {
-        if (!players || players.length === 0) {
-            return '<p class="muted" style="font-size: 0.8rem; text-align: center; padding: 1rem;">Nincs játékos ebben a listában.</p>';
-        }
-        
-        const grouped = groupBy(players, p => p.pos || 'N/A');
-        let html = '';
-        
-        ['G', 'D', 'M', 'F', 'N/A'].forEach(pos => {
-            if (grouped[pos]) {
-                const posLabel = { 'G': 'Kapusok', 'D': 'Védők', 'M': 'Középpályások', 'F': 'Támadók', 'N/A': 'Ismeretlen'}[pos];
-                html += `<div class="roster-position-group">`;
-                html += `<strong>${posLabel}</strong>`;
-              
-                html += grouped[pos].map(player => {
-                    const playerName = escapeHTML(player.name);
-                    const playerPos = escapeHTML(player.pos || 'N/A');
-                    return `
-                    <div class="player-card" 
-                         draggable="true"
-                         data-match-id="${matchId}"
-                         data-player-name="${playerName}"
-                         data-player-pos="${playerPos}" 
-                         data-column="${columnType}"
-                         data-team="${columnType.includes('home') ? 'home' : 'away'}">
-                        ${playerName}
-                        <span class="player-pos-badge pos-${playerPos.replace('/', '\\/')}">${playerPos}</span>
-                    </div>`;
-                }).join('');
-                html += `</div>`;
-            }
-        });
-        return html;
-    };
-    
-    const finalHtml = `
-        <div class="p1-kanban-board">
-            <div class="p1-search-bar">
-                <input type="search" id="p1-search-input" class="xg-input" placeholder="Keresés a játékosok között (név vagy pozíció)..." style="width: 100%; text-align: left; padding: 12px; font-size: 1rem;">
-            </div>
-
-            <div class="kanban-column available-list" data-column="available">
-                <h5>Elérhető Keret</h5>
-                <div class="kanban-column-content">
-                    <h6 class="team-subheader">${escapeHTML(homeName)} (Hazai)</h6>
-                    ${buildPlayerCards(availableHome, 'available-home')}
-                    <h6 class="team-subheader" style="margin-top: 1.5rem;">${escapeHTML(awayName)} (Vendég)</h6>
-                    ${buildPlayerCards(availableAway, 'available-away')}
-                </div>
-            </div>
-
-            <div class="kanban-column drop-zone" data-column="absent-home">
-                <h5>${escapeHTML(homeName)} HIÁNYZÓK</h5>
-                <div class="kanban-column-content">
-                    ${buildPlayerCards(absentHome, 'absent-home')}
-                </div>
-            </div>
-
-            <div class="kanban-column drop-zone" data-column="absent-away">
-                <h5>${escapeHTML(awayName)} HIÁNYZÓK</h5>
-                <div class="kanban-column-content">
-                    ${buildPlayerCards(absentAway, 'absent-away')}
-                </div>
-            </div>
-        </div>
-    `;
-    return finalHtml;
-}
-
-function handleP1Search(event) {
-    const searchTerm = event.target.value.toLowerCase();
-    const modalBody = event.target.closest('.modal-body');
-    if (!modalBody) return;
-    
-    modalBody.querySelectorAll('.player-card').forEach(card => {
-        const playerName = card.dataset.playerName.toLowerCase();
-        const playerPos = (card.dataset.playerPos || 'N/A').toLowerCase();
-        
-        if (playerName.includes(searchTerm) || playerPos.includes(searchTerm)) {
-            card.style.display = 'flex';
-        } else {
-            card.style.display = 'none';
-        }
-    });
-}
-
-function handleP1DragStart(event) {
-    const target = event.target.closest('.player-card'); 
-    if (!target) return;
-    
-    target.classList.add('dragging');
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', target.dataset.playerName);
-    event.dataTransfer.setData('source-column', target.dataset.column);
-    event.dataTransfer.setData('match-id', target.dataset.matchId);
-    event.dataTransfer.setData('player-pos', target.dataset.playerPos);
-}
-
-function handleP1DragOver(event) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-}
-
-function handleP1DragEnter(event) {
-    const column = event.target.closest('.kanban-column');
-    if (column) {
-        column.classList.add('drag-over');
-    }
-}
-
-function handleP1DragLeave(event) {
-    const column = event.target.closest('.kanban-column');
-    if (column) {
-        column.classList.remove('drag-over');
-    }
-}
-
-async function handleP1Drop(event) {
-    event.preventDefault();
-    const column = event.target.closest('.kanban-column');
-    if (!column) return;
-    
-    column.classList.remove('drag-over');
-    const draggingCard = document.querySelector('.player-card.dragging');
-    if (draggingCard) {
-        draggingCard.classList.remove('dragging');
-    }
-
-    const playerName = event.dataTransfer.getData('text/plain');
-    const sourceColumn = event.dataTransfer.getData('source-column');
-    const matchId = event.dataTransfer.getData('match-id');
-    const playerPos = event.dataTransfer.getData('player-pos') || 'N/A';
-    const targetColumn = column.dataset.column;
-
-    if (!playerName || !sourceColumn || !matchId || !targetColumn) {
-        console.error("Drag-and-Drop hiba: Hiányzó adatok.");
-        return;
-    }
-    
-    if (sourceColumn === targetColumn) {
-        return;
-    }
-
-    if (!appState.p1SelectedAbsentees.has(matchId)) {
-        appState.p1SelectedAbsentees.set(matchId, { home: [], away: [] });
-    }
-    const p1State = appState.p1SelectedAbsentees.get(matchId);
-    const playerObject = { name: playerName, pos: playerPos };
-
-    if (sourceColumn === 'absent-home') {
-        p1State.home = p1State.home.filter(p => p.name !== playerName);
-    } else if (sourceColumn === 'absent-away') {
-        p1State.away = p1State.away.filter(p => p.name !== playerName);
-    }
-    
-    if (targetColumn === 'absent-home') {
-        if (!p1State.home.find(p => p.name === playerName)) { 
-            p1State.home.push(playerObject);
-        }
-    } else if (targetColumn === 'absent-away') {
-        if (!p1State.away.find(p => p.name === playerName)) { 
-            p1State.away.push(playerObject);
-        }
-    }
-    
-    const modal = document.getElementById('modal-container');
-    const h5Home = modal.querySelector('.kanban-column[data-column="absent-home"] h5');
-    const h5Away = modal.querySelector('.kanban-column[data-column="absent-away"] h5');
-    
-    const homeName = h5Home ? h5Home.textContent.replace(' HIÁNYZÓK', '') : 'Hazai';
-    const awayName = h5Away ? h5Away.textContent.replace(' HIÁNYZÓK', '') : 'Vendég';
-
-    await _getAndRenderRosterModalHtml(
-        matchId, 
-        homeName, 
-        awayName, 
-        "", 
-        ""
-    );
-
-    _updateP1ButtonCount(matchId);
-}
-
-function _updateP1ButtonCount(matchId) {
-    const p1State = appState.p1SelectedAbsentees.get(matchId) || { home: [], away: [] };
-    const p1Count = p1State.home.length + p1State.away.length;
-
-    document.querySelectorAll(`.btn-p1-absentees[data-match-id="${matchId}"]`).forEach(btn => {
-        const originalText = btn.innerText.split('(')[0].trim();
-        btn.innerHTML = `${originalText} (${p1Count})`;
-    });
-}
-
 function handleCheckboxChange(event) {
-    // Logic preserved for potential multi-select use cases
     updateMultiSelectButton();
 }
 
@@ -1565,28 +1027,6 @@ function getMicroAnalysesHtml(microAnalyses, teamNames = []) {
     return html;
 }
 
-function _buildRosterSelectorHtml(availableRosters, matchId, homeName, awayName) {
-    const p1State = appState.p1SelectedAbsentees.get(matchId) || { home: [], away: [] };
-    const p1Count = p1State.home.length + p1State.away.length;
-
-    const rosterButtonHtml = `
-        <button class="btn-p1-absentees" data-match-id="${matchId}" 
-            data-home="${escape(homeName)}" 
-            data-away="${escape(awayName)}" 
-            data-league="" 
-            data-kickoff="">
-            👥 P1 Hiányzók (${p1Count})
-        </button>`;
-
-    return `
-    <div class="sidebar-accordion" style="margin-top: 1.5rem;">
-        <div class="accordion-content">
-            ${rosterButtonHtml}
-            <p class="muted" style="font-size: 0.8rem; text-align: center; margin-top: 0.5rem;">A P1 hiányzók felülbírálják az automatikus (Sofascore/API) adatokat.</p>
-        </div>
-    </div>`;
-}
-
 function buildAnalysisHtml_CLIENTSIDE(
     fullAnalysisReport, 
     matchData, 
@@ -1596,7 +1036,6 @@ function buildAnalysisHtml_CLIENTSIDE(
     finalConfidenceScore, 
     sim, 
     masterRecommendation,
-    availableRosters, 
     matchId 
 ) {
     
@@ -1646,7 +1085,6 @@ function buildAnalysisHtml_CLIENTSIDE(
                 <p style="margin-top: 0.5rem;"><strong>Kockázati Pontszám:</strong> ${criticReport.contradiction_score || '0.0'}</p>
            </div>` : '';
            
-        // JAVÍTÁS: Biztosítjuk, hogy a scout mező létezzen vagy fallback
         const scoutSummary = fullAnalysisReport.scout?.summary || "Nincs elérhető scout jelentés.";
         const scoutInsights = fullAnalysisReport.scout?.key_insights || [];
 
@@ -1698,10 +1136,6 @@ function buildAnalysisHtml_CLIENTSIDE(
         <p>${processAiText(synthesisText, teamNames)}</p>
     </div>`;
     
-    const p1AbsenteesHtml = (matchData.sport === 'soccer' && matchId) ? 
-        _buildRosterSelectorHtml(availableRosters, matchId, matchData.home, matchData.away) 
-        : '';
-        
     const chatHtml = `
     <div class="analysis-accordion" style="margin-top: 1.5rem;">
         <!-- Chat removed from accordion for cleaner layout, it's now below -->
@@ -1807,7 +1241,6 @@ function buildAnalysisHtml_CLIENTSIDE(
                 ${masterRecommendationHtml}
                 ${prophetCardHtml}
                 ${synthesisCardHtml}
-                ${(appState.currentSport === 'soccer') ? p1AbsenteesHtml : ''}
                 ${chatHtml}
             </div>
             
