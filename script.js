@@ -1,4 +1,4 @@
-// --- script.js (v73.0 - Visual Upgrade & Cleaned Logic) ---
+// --- script.js (v71.0 - Redesigned History & Details Fix) ---
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -9,7 +9,10 @@ const appState = {
     currentAnalysisContext: '',
     chatHistory: [],
     selectedMatches: new Set(),
-    authToken: null
+    authToken: null,
+    rosterCache: new Map(),
+    // Map<matchId, { home: { name: string, pos: string }[], away: { name: string, pos: string }[] }>
+    p1SelectedAbsentees: new Map()
 };
 
 // --- 2. LIGA KATEGÓRIÁK ---
@@ -79,10 +82,9 @@ async function handleFetchError(response) {
 async function loadFixtures() {
     const loadBtn = document.getElementById('loadFixturesBtn');
     loadBtn.disabled = true;
-    loadBtn.innerHTML = '<span class="icon">⏳</span> <span class="text-label">Töltés...</span>'; 
-
     appState.selectedMatches.clear(); 
-    // Roster cache törlése kivéve, mert nem használjuk már
+    appState.rosterCache.clear(); 
+    appState.p1SelectedAbsentees.clear(); 
     updateMultiSelectButton();
     try {
         const response = await fetchWithAuth(`${appState.gasUrl}/getFixtures?sport=${appState.currentSport}&days=2`);
@@ -102,20 +104,20 @@ async function loadFixtures() {
         }
         
         addCheckboxListeners();
+        addP1ModalButtonListeners();
         
-        (document.getElementById('userInfo')).textContent = `ONLINE`;
+        (document.getElementById('userInfo')).textContent = `Csatlakozva`;
         (document.getElementById('placeholder')).style.display = 'none';
     
     } catch (e) {
         showToast(`Hiba a meccsek betöltésekor: ${e.message}`, 'error');
-        (document.getElementById('userInfo')).textContent = `HIBA`;
+        (document.getElementById('userInfo')).textContent = `Hiba`;
         (document.getElementById('placeholder')).style.display = 'flex'; 
         (document.getElementById('kanban-board')).innerHTML = '';
         (document.getElementById('mobile-list-container')).innerHTML = '';
         console.error(e);
     } finally {
         loadBtn.disabled = false;
-        loadBtn.innerHTML = '<span class="icon">↻</span> <span class="text-label">MECCSEK</span>';
     }
 }
 
@@ -149,7 +151,13 @@ function runAnalysisFromCard(buttonElement, home, away, utcKickoff, leagueName) 
         }
     }
 
-    // P1 Hiányzók logika törölve - Az AI intézi
+    if (matchId && appState.p1SelectedAbsentees.has(matchId)) {
+        const manualAbsentees = appState.p1SelectedAbsentees.get(matchId);
+        if (manualAbsentees.home.length > 0 || manualAbsentees.away.length > 0) {
+            (manualXgData).manual_absentees = manualAbsentees;
+            console.log('Manuális (P1) Hiányzókat (objektumokkal) küldök az appState-ből:', manualAbsentees);
+        }
+    }
     
     runAnalysis(home, away, utcKickoff, leagueName, true, manualXgData, matchId); 
 }
@@ -207,7 +215,9 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
         if (data.error) throw new Error(data.error);
         const { analysisData, debugInfo } = data;
 
-        // Roster cache törölve
+        if (analysisData.availableRosters) {
+            appState.rosterCache.set(matchId, analysisData.availableRosters);
+        }
         
         const finalHtml = buildAnalysisHtml_CLIENTSIDE(
             analysisData.committee,
@@ -240,6 +250,8 @@ Ajánlás: ${recommendation.recommended_bet} (Bizalom: ${recommendation.final_co
         modalSkeleton.classList.remove('active');
         modalChatContainer.style.display = 'block';
         (modalChatContainer.querySelector('#chat-messages')).innerHTML = '';
+        
+        addP1ModalButtonListeners('#modal-container');
         
     } catch (e) {
         modalResults.innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba történt az elemzés során: ${e.message}</p>`;
@@ -325,9 +337,16 @@ async function viewHistoryDetail(id) {
                 const { analysisData } = storedResponse;
                 const matchId = record.id; 
 
+                // === JAVÍTÁS (v70.0): Robusztusabb adatkinyerés és Committee fallback ===
+                // Ha a 'committee' objektum hiányos (mert a mentéskor karcsúsítva lett),
+                // megpróbálunk fallback értékeket adni, hogy ne omoljon össze a renderelés.
                 const safeCommittee = analysisData.committee || {};
+                
+                // Ha hiányzik a 'quant', 'scout' stb., kitöltjük üres objektummal vagy "N/A" szöveggel
                 if (!safeCommittee.quant) safeCommittee.quant = { source: "N/A", mu_h: 0, mu_a: 0 };
                 
+                // A 'scout' és 'critic' sokszor hiányozhat a korábbi mentésekből.
+                // Ezeket a megjelenítőben kezeljük le (processAiText), de itt is biztosítjuk a létüket.
                 if (!safeCommittee.scout) safeCommittee.scout = { summary: "A részletes jelentés nem került mentésre.", key_insights: [] };
                 if (!safeCommittee.critic) safeCommittee.critic = { tactical_summary: "A részletes jelentés nem került mentésre.", key_risks: [] };
 
@@ -364,6 +383,8 @@ async function viewHistoryDetail(id) {
         (modalBody.querySelector('#analysis-results')).innerHTML = contentToDisplay;
         const modalChat = modalBody.querySelector('#chat-container');
         modalChat.style.display = 'none';
+
+        addP1ModalButtonListeners('#modal-container');
 
     } catch(e) {
          (document.getElementById('modal-body')).innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a részletek betöltésekor: ${e.message}</p>`;
@@ -415,6 +436,7 @@ async function sendChatMessage() {
 }
 
 async function runMultiAnalysis() {
+    // ... (Ez a funkció változatlan maradhat, de a biztonság kedvéért benne hagyom a teljes kódot)
     const selectedIds = Array.from(appState.selectedMatches);
     if (selectedIds.length === 0 || selectedIds.length > 3) {
         showToast('Válassz ki 1-3 meccset a többes elemzéshez.', 'error');
@@ -460,6 +482,13 @@ async function runMultiAnalysis() {
                         manual_A_xGA: A_xGA
                     };
                 }
+            }
+        }
+            
+        if (appState.p1SelectedAbsentees.has(match.uniqueId)) {
+            const manualAbsentees = appState.p1SelectedAbsentees.get(match.uniqueId);
+            if (manualAbsentees.home.length > 0 || manualAbsentees.away.length > 0) {
+                (manualXgData).manual_absentees = manualAbsentees;
             }
         }
         
@@ -564,7 +593,8 @@ const parseHungarianDate = (huDate) => {
 function handleSportChange() {
     appState.currentSport = (document.getElementById('sportSelector')).value;
     appState.selectedMatches.clear(); 
-    appState.rosterCache.clear(); 
+    appState.rosterCache.clear();
+    appState.p1SelectedAbsentees.clear(); 
     (document.getElementById('kanban-board')).innerHTML = '';
     (document.getElementById('mobile-list-container')).innerHTML = '';
     (document.getElementById('placeholder')).style.display = 'flex'; 
@@ -597,8 +627,18 @@ function openManualAnalysisModal() {
             <input type="text" inputmode="decimal" placeholder="V xG" class="xg-input" id="manual-a-xg" title="Vendég Csapat (Away) xG/90">
             <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input" id="manual-a-xga" title="Vendég Csapat (Away) xGA/90">
         </div>
+
+        <h5 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--primary);">Opcionális P1 Hiányzó Felülbírálás</h5>
+        <div class="control-group" style="margin-top: 0.5rem;">
+            <label for="manual-abs-home">Hazai kulcshiányzók (Név (Pos), ...)</label>
+            <input id="manual-abs-home" class="xg-input" style="text-align: left;" placeholder="Pl: Neuer (G), Kimmich (D)"/>
+        </div>
+        <div class="control-group" style="margin-top: 0.5rem;">
+            <label for="manual-abs-away">Vendég kulcshiányzók (Név (Pos), ...)</label>
+            <input id="manual-abs-away" class="xg-input" style="text-align: left;" placeholder="Pl: Gavi (M), Lewandowski (F)"/>
+        </div>
         
-        <button id="run-manual-btn" class="btn btn-analyze" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
+        <button id="run-manual-btn" class="btn btn-primary" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
     `;
     openModal('Kézi Elemzés Indítása', content, 'modal-sm');
     
@@ -616,6 +656,19 @@ function openManualAnalysisModal() {
     kickoffInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+const parseManualAbsentees = (rawString) => {
+    if (!rawString) return [];
+    return rawString.split(',')
+        .map(entry => {
+            const match = entry.trim().match(/^(.*?)\s*\(([GDMFN/A]+)\)$/i); 
+            if (match) {
+                return { name: match[1].trim(), pos: match[2].toUpperCase() };
+            }
+            return { name: entry.trim(), pos: 'N/A' }; 
+        })
+        .filter(p => p.name);
+};
+
 function runManualAnalysis() {
     const home = (document.getElementById('manual-home')).value.trim();
     const away = (document.getElementById('manual-away')).value.trim();
@@ -627,6 +680,8 @@ function runManualAnalysis() {
     const A_xG_raw = (document.getElementById('manual-a-xg')).value;
     const A_xGA_raw = (document.getElementById('manual-a-xga')).value;
     
+    const Abs_H_raw = (document.getElementById('manual-abs-home')).value;
+    const Abs_A_raw = (document.getElementById('manual-abs-away')).value;
     
     let manualXgData = {};
     if (!home || !away || !leagueName) { 
@@ -655,6 +710,15 @@ function runManualAnalysis() {
         }
     }
     
+    const manualAbsentees = {
+        home: parseManualAbsentees(Abs_H_raw),
+        away: parseManualAbsentees(Abs_A_raw)
+    };
+
+    if (manualAbsentees.home.length > 0 || manualAbsentees.away.length > 0) {
+        (manualXgData).manual_absentees = manualAbsentees;
+    }
+
     try {
         const kickoffDate = new Date(kickoffLocal);
         if (isNaN(kickoffDate.getTime())) {
@@ -710,23 +774,39 @@ function renderFixturesForDesktop(fixtures) {
             Object.keys(groupedByDate)
                 .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
                 .forEach(dateKey => {
-                    columnContent += `<div style="padding: 10px 0; color: var(--primary); font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; text-align: center; position:sticky; top:0; background: rgba(20,22,28,0.9); z-index:5; border-bottom:1px solid var(--glass-border); margin-bottom:10px;">${formatDateLabel(dateKey)}</div>`;
+                    columnContent += `<div style="padding: 10px 0; color: var(--primary); font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; text-align: center; position:sticky; top:0; background: var(--glass-bg); z-index:5; border-bottom:1px solid var(--glass-border); margin-bottom:10px;">${formatDateLabel(dateKey)}</div>`;
                     
                     groupedByDate[dateKey]
                         .sort((a, b) => new Date(a.utcKickoff).getTime() - new Date(b.utcKickoff).getTime())
                         .forEach((fx) => { 
                             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             
+                            const p1State = appState.p1SelectedAbsentees.get(fx.uniqueId) || { home: [], away: [] };
+                            const p1Count = p1State.home.length + p1State.away.length;
+                            
+                            const rosterButtonHtml = `
+                                <button class="btn-p1-absentees" data-match-id="${fx.uniqueId}" 
+                                    data-home="${escape(fx.home)}" 
+                                    data-away="${escape(fx.away)}" 
+                                    data-league="${escape(fx.league || '')}" 
+                                    data-kickoff="${escape(fx.utcKickoff)}">
+                                    👥 P1 Hiányzók (${p1Count})
+                                </button>`;
+
                             columnContent += `
                                 <div class="match-card selectable-card ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
+                                    <div style="position:absolute; top:10px; right:10px;">
+                                        <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
+                                    </div>
                                     
-                                    <div class="match-league-label">${escapeHTML(fx.league || 'Liga')}</div>
-                                    <div class="match-time">${time}</div>
+                                    <div class="match-card-meta" style="margin-bottom:8px;">
+                                        <span>${fx.league || 'Liga'}</span> • <span style="color:var(--primary)">${time}</span>
+                                    </div>
                                     
-                                    <div class="match-card-teams">
-                                        <div class="team-name-home shiny-white">${escapeHTML(fx.home)}</div>
-                                        <div class="vs-divider">vs</div>
-                                        <div class="team-name-away shiny-white">${escapeHTML(fx.away)}</div>
+                                    <div class="match-card-teams" style="font-size: 1.1rem; margin-bottom: 15px;">
+                                        <div style="margin-bottom:4px;">${fx.home}</div>
+                                        <div style="color:var(--text-secondary); font-size:0.8em;">vs</div>
+                                        <div style="margin-top:4px;">${fx.away}</div>
                                     </div>
                                     
                                     <div class="manual-xg-grid">
@@ -736,7 +816,10 @@ function renderFixturesForDesktop(fixtures) {
                                         <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input xg-input-a-xga">
                                     </div>
                                     
-                                    <button class="btn-analyze" 
+                                    ${(appState.currentSport === 'soccer') ? rosterButtonHtml : ''}
+                                    
+                                    <button class="btn btn-primary" 
+                                        style="width: 100%; margin-top: 15px;"
                                         onclick="runAnalysisFromCard(this, '${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league || '')}')">
                                         ELEMZÉS INDÍTÁSA
                                     </button>
@@ -747,7 +830,7 @@ function renderFixturesForDesktop(fixtures) {
 
         board.innerHTML += `
             <div class="kanban-column">
-                <h4 class="kanban-column-header shiny-gold">${group}</h4>
+                <h4 class="kanban-column-header">${group}</h4>
                 <div class="column-content">
                     ${columnContent || '<div style="text-align:center; padding:20px; opacity:0.5;">Nincs meccs</div>'}
                 </div>
@@ -767,7 +850,7 @@ function renderFixturesForMobileList(fixtures) {
     let html = '';
     groupOrder.forEach(group => { 
         if (groupedByCategory[group]) { 
-            html += `<div style="margin: 20px 0 10px 0; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; padding-left: 5px; border-left: 3px solid var(--primary);" class="shiny-gold">${group}</div>`;
+            html += `<div style="margin: 20px 0 10px 0; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; padding-left: 5px; border-left: 3px solid var(--primary);">${group}</div>`;
             
             const groupedByDate = groupBy(groupedByCategory[group], (fx) => {
                 try { return new Date(fx.utcKickoff).toLocaleDateString('hu-HU', { timeZone: 'Europe/Budapest' }); }
@@ -784,17 +867,29 @@ function renderFixturesForMobileList(fixtures) {
                         .forEach((fx) => { 
                             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             
+                            const p1State = appState.p1SelectedAbsentees.get(fx.uniqueId) || { home: [], away: [] };
+                            const p1Count = p1State.home.length + p1State.away.length;
+                            
+                            const rosterButtonHtml = `
+                                <button class="btn-p1-absentees" data-match-id="${fx.uniqueId}" 
+                                    data-home="${escape(fx.home)}" 
+                                    data-away="${escape(fx.away)}" 
+                                    data-league="${escape(fx.league || '')}" 
+                                    data-kickoff="${escape(fx.utcKickoff)}">
+                                    👥 P1 Hiányzók (${p1Count})
+                                </button>`;
+
                             html += `
                                 <div class="mobile-match-card selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
                                     <div class="mm-header">
-                                        <div class="mm-league shiny-gold">${escapeHTML(fx.league || 'Liga')}</div>
+                                        <div class="mm-league">${fx.league || 'Liga'}</div>
                                         <div class="mm-time">${time}</div>
                                     </div>
                                     <div class="mm-body">
                                         <div class="mm-teams">
-                                            <span class="shiny-white">${escapeHTML(fx.home)}</span>
-                                            <span style="color:var(--text-secondary); font-size:0.9em; text-align:center;">vs</span>
-                                            <span class="shiny-white">${escapeHTML(fx.away)}</span>
+                                            <span>${fx.home}</span>
+                                            <span style="color:var(--text-secondary); font-size:0.9em;">vs</span>
+                                            <span>${fx.away}</span>
                                         </div>
                                         
                                         <div class="manual-xg-grid" style="margin-top: 10px;">
@@ -804,11 +899,16 @@ function renderFixturesForMobileList(fixtures) {
                                            <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input xg-input-a-xga">
                                         </div>
                                         
+                                        ${(appState.currentSport === 'soccer') ? rosterButtonHtml : ''}
+                                        
                                         <div class="mm-actions">
-                                            <button class="btn-analyze" style="width:100%; grid-column: 1 / -1;"
+                                            <button class="btn btn-primary" style="width:100%"
                                                 onclick="runAnalysisFromCard(this, '${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league || '')}')">
                                                 ELEMZÉS ⚡
                                             </button>
+                                            <div class="mm-checkbox-wrapper">
+                                                <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>`;
@@ -844,7 +944,7 @@ function renderHistory(historyData) {
             
             html += `
             <div class="history-date-group">
-                <h4 class="shiny-gold" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">${formatDateLabel(dateKey)}</h4>
+                <h4>${formatDateLabel(dateKey)}</h4>
                 <div class="history-grid">`;
                 
             sortedItems.forEach((item) => {
@@ -870,9 +970,9 @@ function renderHistory(historyData) {
                             <span>⏰ ${time}</span>
                         </div>
                         <div class="hc-teams">
-                            <div class="shiny-white">${escapeHTML(item.home) || '?'}</div>
-                            <div style="font-size:0.8em; color:var(--text-muted); font-weight:400; text-align:center;">vs</div>
-                            <div class="shiny-white">${escapeHTML(item.away) || '?'}</div>
+                            <div>${item.home || '?'}</div>
+                            <div style="font-size:0.8em; color:var(--text-muted); font-weight:400;">vs</div>
+                            <div>${item.away || '?'}</div>
                         </div>
                         <div class="hc-tip">
                             <strong>Tipp:</strong> ${item.tip || 'N/A'}
@@ -989,11 +1089,502 @@ function addCheckboxListeners() {
 }
 
 function addP1ModalButtonListeners(scopeSelector = '') {
-    // Üres függvény, mert kivettük a P1 gombot, de a hívások ne törjenek el
+    const scope = scopeSelector ? document.querySelector(scopeSelector) : document;
+    if (!scope) return;
+    
+    const buttons = scope.querySelectorAll('.btn-p1-absentees');
+    buttons.forEach(btn => {
+        btn.removeEventListener('click', openP1AbsenteesModal);
+        btn.addEventListener('click', openP1AbsenteesModal);
+    });
+}
+
+async function openP1AbsenteesModal(event) {
+    const button = event.currentTarget;
+    const matchId = button.dataset.matchId;
+    
+    if (!matchId) {
+        showToast("Hiba: A meccs azonosítója (matchId) hiányzik a gomb adatattribútumából.", "error");
+        return;
+    }
+
+    const { home, away, league, kickoff } = button.dataset;
+    const homeName = unescape(home);
+    const awayName = unescape(away);
+
+    const title = `P1 Hiányzók: ${homeName} vs ${awayName}`;
+    const loadingHTML = (document.getElementById('loading-skeleton')).outerHTML;
+    openModal(title, loadingHTML, 'modal-lg');
+    (document.querySelector('#modal-container #loading-skeleton')).classList.add('active');
+
+    await _getAndRenderRosterModalHtml(matchId, homeName, awayName, unescape(league), unescape(kickoff));
+}
+
+async function _getAndRenderRosterModalHtml(matchId, homeName, awayName, leagueName, utcKickoff) {
+    const modalBody = document.getElementById('modal-body');
+    if (!modalBody) return;
+
+    try {
+        let rosters = appState.rosterCache.get(matchId);
+        
+        if (!rosters) {
+            const response = await fetchWithAuth(`${appState.gasUrl}/getRosters`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    home: homeName,
+                    away: awayName,
+                    leagueName: leagueName,
+                    utcKickoff: utcKickoff,
+                    sport: appState.currentSport
+                })
+            });
+            if (!response.ok) await handleFetchError(response);
+            
+            rosters = await response.json();
+            
+            if (!rosters || (!rosters.home?.length && !rosters.away?.length)) {
+                throw new Error("Az API nem adott vissza érvényes keretadatot.");
+            }
+            
+            appState.rosterCache.set(matchId, rosters);
+        }
+
+        const modalHtml = _buildRosterModalHtml(matchId, homeName, awayName, rosters);
+        
+        const currentSearch = (modalBody.querySelector('#p1-search-input'))?.value || '';
+        
+        modalBody.innerHTML = modalHtml;
+
+        const searchInput = modalBody.querySelector('#p1-search-input');
+        if (searchInput) {
+            searchInput.value = currentSearch;
+            if (currentSearch) {
+                handleP1Search({ target: searchInput });
+            }
+            searchInput.addEventListener('keyup', handleP1Search);
+        }
+
+        modalBody.querySelectorAll('.player-card').forEach(card => {
+            card.addEventListener('dragstart', handleP1DragStart);
+        });
+        
+        modalBody.querySelectorAll('.kanban-column').forEach(column => {
+            column.addEventListener('dragover', handleP1DragOver);
+            column.addEventListener('dragenter', handleP1DragEnter);
+            column.addEventListener('dragleave', handleP1DragLeave);
+            column.addEventListener('drop', handleP1Drop);
+        });
+
+    } catch (e) {
+        console.error(`Hiba a P1 keret modal felépítésekor (${matchId}):`, e);
+        modalBody.innerHTML = `<p class="muted" style="color:var(--danger); font-size: 0.9rem; text-align: center; padding: 2rem;">A keretek lekérése sikertelen: ${e.message}</p>`;
+    }
+}
+
+function _buildRosterModalHtml(matchId, homeName, awayName, availableRosters) {
+    const p1State = appState.p1SelectedAbsentees.get(matchId) || { home: [], away: [] };
+    const absentHomeNames = new Set(p1State.home.map(p => p.name));
+    const absentAwayNames = new Set(p1State.away.map(p => p.name));
+
+    const allHomePlayers = availableRosters?.home || [];
+    const allAwayPlayers = availableRosters?.away || [];
+
+    const availableHome = allHomePlayers.filter(p => !absentHomeNames.has(p.name));
+    const availableAway = allAwayPlayers.filter(p => !absentAwayNames.has(p.name));
+    
+    const absentHome = p1State.home;
+    const absentAway = p1State.away;
+
+    const buildPlayerCards = (players, columnType) => {
+        if (!players || players.length === 0) {
+            return '<p class="muted" style="font-size: 0.8rem; text-align: center; padding: 1rem;">Nincs játékos ebben a listában.</p>';
+        }
+        
+        const grouped = groupBy(players, p => p.pos || 'N/A');
+        let html = '';
+        
+        ['G', 'D', 'M', 'F', 'N/A'].forEach(pos => {
+            if (grouped[pos]) {
+                const posLabel = { 'G': 'Kapusok', 'D': 'Védők', 'M': 'Középpályások', 'F': 'Támadók', 'N/A': 'Ismeretlen'}[pos];
+                html += `<div class="roster-position-group">`;
+                html += `<strong>${posLabel}</strong>`;
+              
+                html += grouped[pos].map(player => {
+                    const playerName = escapeHTML(player.name);
+                    const playerPos = escapeHTML(player.pos || 'N/A');
+                    return `
+                    <div class="player-card" 
+                         draggable="true"
+                         data-match-id="${matchId}"
+                         data-player-name="${playerName}"
+                         data-player-pos="${playerPos}" 
+                         data-column="${columnType}"
+                         data-team="${columnType.includes('home') ? 'home' : 'away'}">
+                        ${playerName}
+                        <span class="player-pos-badge pos-${playerPos.replace('/', '\\/')}">${playerPos}</span>
+                    </div>`;
+                }).join('');
+                html += `</div>`;
+            }
+        });
+        return html;
+    };
+    
+    const finalHtml = `
+        <div class="p1-kanban-board">
+            <div class="p1-search-bar">
+                <input type="search" id="p1-search-input" class="xg-input" placeholder="Keresés a játékosok között (név vagy pozíció)..." style="width: 100%; text-align: left; padding: 12px; font-size: 1rem;">
+            </div>
+
+            <div class="kanban-column available-list" data-column="available">
+                <h5>Elérhető Keret</h5>
+                <div class="kanban-column-content">
+                    <h6 class="team-subheader">${escapeHTML(homeName)} (Hazai)</h6>
+                    ${buildPlayerCards(availableHome, 'available-home')}
+                    <h6 class="team-subheader" style="margin-top: 1.5rem;">${escapeHTML(awayName)} (Vendég)</h6>
+                    ${buildPlayerCards(availableAway, 'available-away')}
+                </div>
+            </div>
+
+            <div class="kanban-column drop-zone" data-column="absent-home">
+                <h5>${escapeHTML(homeName)} HIÁNYZÓK</h5>
+                <div class="kanban-column-content">
+                    ${buildPlayerCards(absentHome, 'absent-home')}
+                </div>
+            </div>
+
+            <div class="kanban-column drop-zone" data-column="absent-away">
+                <h5>${escapeHTML(awayName)} HIÁNYZÓK</h5>
+                <div class="kanban-column-content">
+                    ${buildPlayerCards(absentAway, 'absent-away')}
+                </div>
+            </div>
+        </div>
+    `;
+    return finalHtml;
+}
+
+function handleP1Search(event) {
+    const searchTerm = event.target.value.toLowerCase();
+    const modalBody = event.target.closest('.modal-body');
+    if (!modalBody) return;
+    
+    modalBody.querySelectorAll('.player-card').forEach(card => {
+        const playerName = card.dataset.playerName.toLowerCase();
+        const playerPos = (card.dataset.playerPos || 'N/A').toLowerCase();
+        
+        if (playerName.includes(searchTerm) || playerPos.includes(searchTerm)) {
+            card.style.display = 'flex';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function handleP1DragStart(event) {
+    const target = event.target.closest('.player-card'); 
+    if (!target) return;
+    
+    target.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', target.dataset.playerName);
+    event.dataTransfer.setData('source-column', target.dataset.column);
+    event.dataTransfer.setData('match-id', target.dataset.matchId);
+    event.dataTransfer.setData('player-pos', target.dataset.playerPos);
+}
+
+function handleP1DragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+}
+
+function handleP1DragEnter(event) {
+    const column = event.target.closest('.kanban-column');
+    if (column) {
+        column.classList.add('drag-over');
+    }
+}
+
+function handleP1DragLeave(event) {
+    const column = event.target.closest('.kanban-column');
+    if (column) {
+        column.classList.remove('drag-over');
+    }
+}
+
+async function handleP1Drop(event) {
+    event.preventDefault();
+    const column = event.target.closest('.kanban-column');
+    if (!column) return;
+    
+    column.classList.remove('drag-over');
+    const draggingCard = document.querySelector('.player-card.dragging');
+    if (draggingCard) {
+        draggingCard.classList.remove('dragging');
+    }
+
+    const playerName = event.dataTransfer.getData('text/plain');
+    const sourceColumn = event.dataTransfer.getData('source-column');
+    const matchId = event.dataTransfer.getData('match-id');
+    const playerPos = event.dataTransfer.getData('player-pos') || 'N/A';
+    const targetColumn = column.dataset.column;
+
+    if (!playerName || !sourceColumn || !matchId || !targetColumn) {
+        console.error("Drag-and-Drop hiba: Hiányzó adatok.");
+        return;
+    }
+    
+    if (sourceColumn === targetColumn) {
+        return;
+    }
+
+    if (!appState.p1SelectedAbsentees.has(matchId)) {
+        appState.p1SelectedAbsentees.set(matchId, { home: [], away: [] });
+    }
+    const p1State = appState.p1SelectedAbsentees.get(matchId);
+    const playerObject = { name: playerName, pos: playerPos };
+
+    if (sourceColumn === 'absent-home') {
+        p1State.home = p1State.home.filter(p => p.name !== playerName);
+    } else if (sourceColumn === 'absent-away') {
+        p1State.away = p1State.away.filter(p => p.name !== playerName);
+    }
+    
+    if (targetColumn === 'absent-home') {
+        if (!p1State.home.find(p => p.name === playerName)) { 
+            p1State.home.push(playerObject);
+        }
+    } else if (targetColumn === 'absent-away') {
+        if (!p1State.away.find(p => p.name === playerName)) { 
+            p1State.away.push(playerObject);
+        }
+    }
+    
+    const modal = document.getElementById('modal-container');
+    const h5Home = modal.querySelector('.kanban-column[data-column="absent-home"] h5');
+    const h5Away = modal.querySelector('.kanban-column[data-column="absent-away"] h5');
+    
+    const homeName = h5Home ? h5Home.textContent.replace(' HIÁNYZÓK', '') : 'Hazai';
+    const awayName = h5Away ? h5Away.textContent.replace(' HIÁNYZÓK', '') : 'Vendég';
+
+    await _getAndRenderRosterModalHtml(
+        matchId, 
+        homeName, 
+        awayName, 
+        "", 
+        ""
+    );
+
+    _updateP1ButtonCount(matchId);
+}
+
+function _updateP1ButtonCount(matchId) {
+    const p1State = appState.p1SelectedAbsentees.get(matchId) || { home: [], away: [] };
+    const p1Count = p1State.home.length + p1State.away.length;
+
+    document.querySelectorAll(`.btn-p1-absentees[data-match-id="${matchId}"]`).forEach(btn => {
+        const originalText = btn.innerText.split('(')[0].trim();
+        btn.innerHTML = `${originalText} (${p1Count})`;
+    });
+}
+
+function handleCheckboxChange(event) {
+    // Logic preserved for potential multi-select use cases
+    updateMultiSelectButton();
+}
+
+function updateMultiSelectButton() {
+    // Placeholder
+}
+
+// === HTML Generátorok ===
+
+function escapeHTML(str) {
+    if (str == null) return '';
+    let tempStr = String(str);
+    const escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    tempStr = tempStr.replace(/[&<>"']/g, (match) => escapeMap[match]);
+    tempStr = tempStr.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    return tempStr;
+}
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function _highlightKeywords(text, teamNames = []) {
+    if (!text || typeof text !== 'string') return text;
+    let highlightedText = escapeHTML(text);
+    const keywords = ['gól', 'gólpassz', 'gólok', 'gólszerző', 'lap', 'szöglet', 'xG', 'várható gól', 'hazai', 'vendég', 'sérülés', 'hiányzó', 'eltiltott', 'bíró', 'edző'];
+    const allNames = [...teamNames].filter(name => name && name.length > 2).sort((a, b) => b.length - a.length);
+    try {
+        allNames.forEach(name => {
+            const regex = new RegExp(`\\b(${escapeRegExp(name)})\\b`, 'gi');
+            highlightedText = highlightedText.replace(regex, `<span class="highlight-keyword">$1</span>`);
+        });
+        keywords.forEach(keyword => {
+            const regex = new RegExp(`\\b(${escapeRegExp(keyword)})\\b`, 'gi');
+            highlightedText = highlightedText.replace(regex, `<span class="highlight-keyword">$1</span>`);
+        });
+    } catch (e) {
+        console.error("Hiba a kulcsszavak kiemelésekor:", e.message);
+        return escapeHTML(text);
+    }
+    return highlightedText.replace(/\n/g, '<br>');
+}
+
+const processAiText = (text, teamNames = []) => {
+    const safeText = String(text || '');
+    if (safeText.includes("Hiba") || safeText.trim() === 'N/A') {
+        return `<p>${escapeHTML(safeText || "N/A.")}</p>`;
+    }
+    return _highlightKeywords(safeText, teamNames);
+};
+
+const processAiList = (list, teamNames = []) => {
+    if (!list || !Array.isArray(list) || list.length === 0) {
+        return '<li>Nincs adat.</li>';
+    }
+    return list.map(item => `<li>${_highlightKeywords(item, teamNames)}</li>`).join('');
+};
+
+// === ÚJ (v71.0): Modern Lineáris Erőviszony Sáv (Nincs több fekete lyuk) ===
+function getProbabilityBarHtml(pHome, pDraw, pAway, sport) {
+    const isMoneyline = sport === 'hockey' || sport === 'basketball';
+    
+    let h = parseFloat(String(pHome)) || 0;
+    let d = parseFloat(String(pDraw)) || 0;
+    let a = parseFloat(String(pAway)) || 0;
+    
+    // Normalizálás 100%-ra, ha esetleg eltérne
+    const total = h + d + a;
+    if (total > 0) {
+        h = (h / total) * 100;
+        d = (d / total) * 100;
+        a = (a / total) * 100;
+    }
+
+    // Színkódok (Neon hatás)
+    const colorHome = 'var(--success)'; // Hazai (Zöldes)
+    const colorDraw = 'var(--text-secondary)'; // Döntetlen (Szürke)
+    const colorAway = 'var(--accent)'; // Vendég (Kék)
+
+    let barsHtml = '';
+    if (isMoneyline) {
+        barsHtml = `
+            <div class="prob-bar-segment" style="width: ${h}%; background: ${colorHome}; box-shadow: 0 0 10px ${colorHome};"></div>
+            <div class="prob-bar-segment" style="width: ${a}%; background: ${colorAway}; box-shadow: 0 0 10px ${colorAway};"></div>
+        `;
+    } else {
+        barsHtml = `
+            <div class="prob-bar-segment" style="width: ${h}%; background: ${colorHome}; box-shadow: 0 0 10px ${colorHome};"></div>
+            <div class="prob-bar-segment" style="width: ${d}%; background: ${colorDraw}; opacity: 0.5;"></div>
+            <div class="prob-bar-segment" style="width: ${a}%; background: ${colorAway}; box-shadow: 0 0 10px ${colorAway};"></div>
+        `;
+    }
+
+    return `
+    <div class="prob-chart-container">
+        <div class="prob-bar-wrapper">
+            ${barsHtml}
+        </div>
+        <div class="prob-legend">
+            <div style="color:${colorHome}">Hazai: <strong>${h.toFixed(1)}%</strong></div>
+            ${!isMoneyline ? `<div style="color:#ccc">Döntetlen: <strong>${d.toFixed(1)}%</strong></div>` : ''}
+            <div style="color:${colorAway}">Vendég: <strong>${a.toFixed(1)}%</strong></div>
+        </div>
+    </div>`;
+}
+
+function getGaugeHtml(confidence, label = "") {
+    const safeConf = Math.max(0, Math.min(10, parseFloat(String(confidence)) || 0));
+    const percentage = safeConf * 10;
+    const circumference = 235.6;
+    return `
+    <div class="gauge-container">
+        <svg class="gauge-svg" viewBox="0 0 100 85">
+             <path class="gauge-track" d="M 12.5 50 A 37.5 37.5 0 1 1 87.5 50"></path>
+             <path class="gauge-value" d="M 12.5 50 A 37.5 37.5 0 1 1 87.5 50"
+                  style="stroke-dasharray: ${circumference}; stroke-dashoffset: ${circumference}; --value: ${percentage}; animation: fillGauge 1s ease-out forwards 0.5s;"></path>
+        </svg>
+        <div class="gauge-text glowing-text-white">
+            ${safeConf.toFixed(1)}<span class="gauge-label-inline">/10</span>
+        </div>
+        ${label ? `<div class="gauge-label">${escapeHTML(label)}</div>` : ''}
+    </div>
+    `;
+}
+
+function getConfidenceInterpretationHtml(confidenceScore, teamNames = []) {
+    let text = "";
+    let className = "";
+    const score = parseFloat(String(confidenceScore)) || 0;
+    if (score >= 8.5) { text = "**Nagyon Magas Bizalom:** Az elemzés rendkívül erős egybeesést mutat a statisztikák, a kontextus és a kockázati tényezők között. A jelzett kimenetel kiemelkedően valószínű."; className = "very-high"; }
+    else if (score >= 7.0) { text = "**Magas Bizalom:** Több kulcstényező (statisztika, hiányzók, forma) egyértelműen alátámasztja az ajánlást. Kisebb kérdőjelek lehetnek, de az irány egyértelműnek tűnik."; className = "high"; }
+    else if (score >= 5.0) { text = "**Közepes Bizalom:** Az elemzés a jelzett kimenetel felé hajlik, de vannak ellentmondó tényezők (pl. piaci mozgás, szoros H2H, kulcs hiányzó) vagy a modell bizonytalansága magasabb."; className = "medium"; }
+    else if (score >= 3.0) { text = "**Alacsony Bizalom:** Jelentős ellentmondások vannak az adatok között (pl. statisztika vs. kontextus), vagy a meccs kimenetele rendkívül bizonytalan (pl. 50-50% esélyek). Ez inkább egy spekulatív tipp."; className = "low"; }
+    else { text = "**Nagyon Alacsony Bizalom:** Kritikus ellentmondások (pl. kulcsjátékosok hiánya a favorizált oldalon, erős piaci mozgás a tipp ellen) vagy teljes kiszámíthatatlanság jellemzi a meccset."; className = "very-low"; }
+    
+    return `
+    <div class="confidence-interpretation-container">
+        <p class="confidence-interpretation ${className}">${processAiText(text, teamNames)}</p>
+    </div>`;
+}
+
+function getMicroAnalysesHtml(microAnalyses, teamNames = []) {
+    if (!microAnalyses || Object.keys(microAnalyses).length === 0) {
+        return "<p>Nem futottak speciális modellek ehhez a sporthoz.</p>";
+    }
+    let html = '';
+    const analyses = { 
+        'BTTS': microAnalyses.btts_analysis, 
+        'GÓL O/U': microAnalyses.goals_ou_analysis,
+        'SZÖGLET': microAnalyses.corner_analysis,
+        'LAPOK': microAnalyses.card_analysis,
+        'GYŐZTES (HOKI)': microAnalyses.hockey_winner_analysis,
+        'GÓL O/U (HOKI)': microAnalyses.hockey_goals_ou_analysis,
+        'GYŐZTES (KOSÁR)': microAnalyses.basketball_winner_analysis,
+        'PONTOK O/U (KOSÁR)': microAnalyses.basketball_total_points_analysis
+    };
+    Object.entries(analyses).forEach(([key, text]) => {
+        if (!text || text === 'N/A' || text.includes('N/A')) return; 
+        
+        const title = key.toUpperCase().replace(/_/g, ' ');
+        const parts = (text || "Hiba.").split('Bizalom:');
+        const analysisText = processAiText(parts[0] || "Elemzés nem elérhető.", teamNames);
+        const confidenceText = parts[1] ? `**Bizalom: ${parts[1].trim()}**` : "**Bizalom: N/A**";
+        
+        html += `
+        <div class="micromodel-card">
+            <h5><strong>${escapeHTML(title)} Specialista</strong></h5>
+            <p>${analysisText}</p>
+            <p class="confidence"><em>${processAiText(confidenceText, teamNames)}</em></p>
+        </div>`;
+    });
+    if (html === '') { return "<p>Nem futottak speciális modellek ehhez a sporthoz.</p>"; }
+    return html;
 }
 
 function _buildRosterSelectorHtml(availableRosters, matchId, homeName, awayName) {
-    return ''; // Már nem generálunk gombot
+    const p1State = appState.p1SelectedAbsentees.get(matchId) || { home: [], away: [] };
+    const p1Count = p1State.home.length + p1State.away.length;
+
+    const rosterButtonHtml = `
+        <button class="btn-p1-absentees" data-match-id="${matchId}" 
+            data-home="${escape(homeName)}" 
+            data-away="${escape(awayName)}" 
+            data-league="" 
+            data-kickoff="">
+            👥 P1 Hiányzók (${p1Count})
+        </button>`;
+
+    return `
+    <div class="sidebar-accordion" style="margin-top: 1.5rem;">
+        <div class="accordion-content">
+            ${rosterButtonHtml}
+            <p class="muted" style="font-size: 0.8rem; text-align: center; margin-top: 0.5rem;">A P1 hiányzók felülbírálják az automatikus (Sofascore/API) adatokat.</p>
+        </div>
+    </div>`;
 }
 
 function buildAnalysisHtml_CLIENTSIDE(
@@ -1055,6 +1646,7 @@ function buildAnalysisHtml_CLIENTSIDE(
                 <p style="margin-top: 0.5rem;"><strong>Kockázati Pontszám:</strong> ${criticReport.contradiction_score || '0.0'}</p>
            </div>` : '';
            
+        // JAVÍTÁS: Biztosítjuk, hogy a scout mező létezzen vagy fallback
         const scoutSummary = fullAnalysisReport.scout?.summary || "Nincs elérhető scout jelentés.";
         const scoutInsights = fullAnalysisReport.scout?.key_insights || [];
 
@@ -1112,6 +1704,7 @@ function buildAnalysisHtml_CLIENTSIDE(
         
     const chatHtml = `
     <div class="analysis-accordion" style="margin-top: 1.5rem;">
+        <!-- Chat removed from accordion for cleaner layout, it's now below -->
         <div id="chat-content-wrapper"></div>
     </div>`;
 
@@ -1236,12 +1829,13 @@ function initializeApp() {
     document.getElementById('manualBtn')?.addEventListener('click', openManualAnalysisModal);
     initMultiSelect();
     
+    // Use a shorter status text
     const userInfo = document.getElementById('userInfo');
-    if (userInfo) userInfo.textContent = `ONLINE`;
+    if (userInfo) userInfo.textContent = `Online`;
     
     appState.sheetUrl = localStorage.getItem('sheetUrl') || ''; 
-    // appState.rosterCache.clear(); - Kivéve, mert már nem használjuk
-    // appState.p1SelectedAbsentees.clear(); - Kivéve
+    appState.rosterCache.clear();
+    appState.p1SelectedAbsentees.clear(); 
 
     const toastContainer = document.createElement('div');
     toastContainer.id = 'toast-notification-container';
