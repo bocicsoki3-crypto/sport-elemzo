@@ -4,23 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>The King AI - Sportelemző Irányítópult</title>
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>">
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Modern betűtípusok -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Háttér Fénygömbök (Ambient Orbs) -->
+<!-- Háttér Fénygömbök (Ambient Orbs) - Prémium effekt -->
 <div class="ambient-orbs">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
 </div>
 
-<!-- Login Overlay -->
+<!-- Login Overlay (Belépés) -->
 <div id="login-overlay" class="login-overlay">
     <div class="login-box glass-panel">
         <div class="login-icon">👑</div>
@@ -34,6 +38,7 @@
     </div>
 </div>
 
+<!-- Fő Alkalmazás Konténer (Rejtett, amíg nincs login) -->
 <div class="app-container" style="display: none;">
     
     <!-- Fejléc -->
@@ -72,14 +77,14 @@
             </button>
         </div>
 
-        <!-- Jobb oldal: Üres térkitöltő a szimmetriához (vagy jövőbeli funkciók) -->
+        <!-- Jobb oldal: Üres térkitöltő a szimmetriához -->
         <div style="width: 180px;"></div> 
     </div>
 
     <!-- Tartalom -->
     <main id="main-content" class="main-content">
         
-        <!-- Üres állapot -->
+        <!-- Üres állapot / Placeholder -->
         <div id="placeholder" class="placeholder">
             <div class="placeholder-content">
                 <div class="placeholder-icon">📊</div>
@@ -88,17 +93,17 @@
             </div>
         </div>
         
-        <!-- Kanban Tábla (Asztali) -->
+        <!-- Kanban Tábla (Asztali nézethez) -->
         <div id="kanban-container" class="kanban-container">
             <div id="kanban-board" class="kanban-board"></div>
         </div>
 
-        <!-- Mobil Lista -->
+        <!-- Mobil Lista (Mobil nézethez) -->
         <div id="mobile-list-container" class="mobile-list-container" style="display: none;"></div>
     </main>
 </div>
 
-<!-- Modális ablakok -->
+<!-- Modális ablakok (Overlay) -->
 <div id="modal-container" class="modal-container">
     <div class="modal-content">
         <div class="modal-header">
@@ -109,8 +114,10 @@
     </div>
 </div>
 
-<!-- Rejtett sablonok -->
+<!-- Rejtett sablonok (Templates) -->
 <div id="common-elements" style="display: none;">
+    
+    <!-- Betöltő animáció (Skeleton) -->
     <div id="loading-skeleton" class="loading-skeleton">
         <div class="skeleton-card">
             <div class="skeleton-header"></div>
@@ -118,7 +125,11 @@
             <div class="skeleton-footer"></div>
         </div>
     </div>
+    
+    <!-- Elemzési eredmények helye -->
     <div id="analysis-results"></div>
+    
+    <!-- Chat Konténer -->
     <div id="chat-container" class="chat-container">
         <div class="chat-header">
             <h4 class="glow-text">💬 AI Elemző Asszisztens</h4>
@@ -134,6 +145,7 @@
     </div>
 </div>
 
+<!-- JavaScript betöltése -->
 <script src="script.js"></script>
 </body>
 </html>
