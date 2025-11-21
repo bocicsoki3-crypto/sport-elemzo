@@ -501,7 +501,7 @@ async function runMultiAnalysis() {
             leagueName: match.league || '',
             sheetUrl: appState.sheetUrl,
             openingOdds: JSON.parse(sessionStorage.getItem('openingOdds') || '{}'),
-            ...manualXgData 
+            ...manualXg 
         };
         return fetchWithAuth(analysisUrl, {
             method: 'POST',
