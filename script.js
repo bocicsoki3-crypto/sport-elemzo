@@ -1340,17 +1340,19 @@ function buildAnalysisHtml_CLIENTSIDE(
         <h4>Érték Elemzés (Value Betting)</h4>
          <div class="market-card-grid">${marketCardsHtml}</div>
     </div>`;
+    
+    // MÓDOSÍTÁS: A "Piaci Mikromodellek" átnevezése "Egyéb Piacok"-ra, hogy egyértelműbb legyen
     const sidebarAccordionHtml = `
     <div class="sidebar-accordion">
         <details>
-            <summary>Piaci Mikromodellek</summary>
+            <summary>Egyéb Piacok (Szöglet, Lap, Gólok)</summary>
             <div class="accordion-content micromodel-grid">
                 ${microModelsHtml}
             </div>
         </details>
         ${(quantReportHtml || scoutReportHtml || criticReportHtml) ? `
         <details open>
-            <summary>Bizottsági Jelentések</summary>
+            <summary>Részletes Bizottsági Jelentések</summary>
             <div class="accordion-content committee-reports">
                 ${quantReportHtml}
                 ${criticReportHtml} 
