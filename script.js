@@ -220,7 +220,8 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
             analysisData.finalConfidenceScore, 
             analysisData.sim,
             analysisData.recommendation,
-            matchId 
+            matchId,
+            analysisData.dataQualityWarning // Add dataQualityWarning here
         );
 
         modalResults.innerHTML = `<div class="analysis-body">${finalHtml}</div>`;
@@ -347,7 +348,8 @@ async function viewHistoryDetail(id) {
                     analysisData.finalConfidenceScore,
                     analysisData.sim,
                     analysisData.recommendation,
-                    matchId
+                    matchId,
+                    analysisData.dataQualityWarning // Add dataQualityWarning here
                 );
                 
             } catch (e) {
@@ -1042,7 +1044,8 @@ function buildAnalysisHtml_CLIENTSIDE(
     finalConfidenceScore, 
     sim, 
     masterRecommendation,
-    matchId 
+    matchId,
+    dataQualityWarning // Add dataQualityWarning here
 ) {
     
     const teamNames = [matchData.home, matchData.away];
@@ -1155,8 +1158,19 @@ function buildAnalysisHtml_CLIENTSIDE(
     }
 
     const finalConfInterpretationHtml = getConfidenceInterpretationHtml(finalRec.final_confidence, teamNames);
+    
+    // === Display Data Quality Warning ===
+    let warningHtml = '';
+    if (dataQualityWarning) {
+        warningHtml = `
+        <div style="background-color: rgba(255, 165, 0, 0.2); border: 1px solid orange; color: orange; padding: 10px; margin-bottom: 15px; border-radius: 8px; text-align: center;">
+            <strong>⚠️ Figyelem:</strong> ${escapeHTML(dataQualityWarning)}
+        </div>`;
+    }
+
     const masterRecommendationHtml = `
     <div class="master-recommendation-card">
+        ${warningHtml}
         <h5>👑 6. Ügynök: A Főnök Ajánlása (Dupla Opció) 👑</h5>
         ${tipsHtml}
         ${finalConfInterpretationHtml}
