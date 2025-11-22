@@ -1,9 +1,8 @@
-// --- script.js (v76.0 - Dual Tip Edition) ---
-// MÓDOSÍTÁS (v76.0):
-// 1. JAVÍTÁS: A 'buildAnalysisHtml_CLIENTSIDE' függvény most már
-//    felismeri a 'primary' és 'secondary' tipp struktúrát.
-// 2. UI: Ha két tipp érkezik, két külön, egymás melletti dobozban
-//    jeleníti meg őket (Fő Tipp: Zöld, Alternatív: Arany).
+// --- script.js (v77.0 - Smart Scout Edition) ---
+// MÓDOSÍTÁS (v77.0):
+// 1. ÚJ: 'ELITE_TEAMS' lista a világ legjobb csapataival.
+// 2. ÚJ: 'getMatchPotentialHTML' függvény, ami ikonokkal jelöli a meccs típusát.
+// 3. UI: A meccs kártyák renderelésekor (Desktop és Mobil) ezek a jelvények megjelennek.
 
 // --- 1. ALKALMAZÁS ÁLLAPOT ---
 const appState = {
@@ -36,6 +35,66 @@ const LEAGUE_CATEGORIES = {
         'Egyéb Meccsek': [ 'FIBA World Cup', 'Olimpiai Játékok', 'EuroBasket', 'FIBA Champions League', 'EuroCup', 'LNB Pro A' ]
     }
 };
+
+// === ÚJ (v77.0): ELIT CSAPAT ADATBÁZIS (SMART SCOUT) ===
+// Ezek azok a csapatok, ahol az AI a legpontosabb adatokkal rendelkezik.
+const ELITE_TEAMS = new Set([
+    // Soccer
+    'manchester city', 'liverpool', 'arsenal', 'real madrid', 'barcelona', 'bayern munich', 
+    'inter', 'ac milan', 'juventus', 'psg', 'bayer leverkusen', 'atletico madrid', 
+    'tottenham', 'chelsea', 'borussia dortmund', 'napoli', 'benfica', 'porto', 'sporting cp',
+    // NBA
+    'boston celtics', 'denver nuggets', 'milwaukee bucks', 'los angeles lakers', 'golden state warriors', 
+    'phoenix suns', 'dallas mavericks', 'philadelphia 76ers',
+    // NHL
+    'edmonton oilers', 'colorado avalanche', 'florida panthers', 'new york rangers', 'boston bruins',
+    'toronto maple leafs', 'vegas golden knights', 'dallas stars'
+]);
+
+function isElite(teamName) {
+    if (!teamName) return false;
+    const lower = teamName.toLowerCase();
+    // Részleges egyezést is keresünk (pl. "Inter Milan" -> "inter")
+    for (const elite of ELITE_TEAMS) {
+        if (lower.includes(elite)) return true;
+    }
+    return false;
+}
+
+/**
+ * Kiszámolja a meccs potenciálját és visszaadja a megfelelő HTML jelvényeket.
+ */
+function getMatchPotentialHTML(home, away, league) {
+    const homeElite = isElite(home);
+    const awayElite = isElite(away);
+    
+    let badges = '';
+    let frameClass = ''; // CSS osztály a kártya keretéhez
+
+    if (homeElite && awayElite) {
+        // Két elit csapat: RANGADÓ
+        badges += `<span class="scout-badge badge-fire">🔥 RANGADÓ</span>`;
+        badges += `<span class="scout-badge badge-diamond">💎 PRÉMIUM ADAT</span>`;
+        frameClass = 'card-highlight-elite';
+    } else if (homeElite || awayElite) {
+        // Egy elit csapat: DÁVID vs GÓLIÁT vagy Sima ügy
+        badges += `<span class="scout-badge badge-diamond">💎 PRÉMIUM ADAT</span>`;
+        // Ha a liga is Top Liga, akkor ez egy nagyon megbízható meccs lehet
+        if (LEAGUE_CATEGORIES.soccer['Top Ligák'].includes(league) || 
+            LEAGUE_CATEGORIES.basketball['Top Ligák'].includes(league) ||
+            LEAGUE_CATEGORIES.hockey['Top Ligák'].includes(league)) {
+             badges += `<span class="scout-badge badge-star">⭐ KIEMELT</span>`;
+             frameClass = 'card-highlight-strong';
+        }
+    } else {
+        // Egyéb meccsek: Itt lehet Value, de nagyobb a szórás
+        // Nem adunk jelvényt, hogy ne legyen zajos a felület
+    }
+
+    return { html: badges, frameClass: frameClass };
+}
+// === VÉGE (v77.0) ===
+
 
 // --- 3. SEGÉDFÜGGVÉNY DEFINÍCIÓK ---
 
@@ -221,7 +280,7 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
             analysisData.sim,
             analysisData.recommendation,
             matchId,
-            analysisData.dataQualityWarning // Add dataQualityWarning here
+            analysisData.dataQualityWarning 
         );
 
         modalResults.innerHTML = `<div class="analysis-body">${finalHtml}</div>`;
@@ -349,7 +408,7 @@ async function viewHistoryDetail(id) {
                     analysisData.sim,
                     analysisData.recommendation,
                     matchId,
-                    analysisData.dataQualityWarning // Add dataQualityWarning here
+                    analysisData.dataQualityWarning 
                 );
                 
             } catch (e) {
@@ -579,7 +638,6 @@ function renderFixturesForDesktop(fixtures) {
             Object.keys(groupedByDate)
                 .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
                 .forEach(dateKey => {
-                    // --- MÓDOSÍTÁS: Dátum fejléc osztály használata a style.css glow effekthez ---
                     columnContent += `<div class="kanban-date-header">${formatDateLabel(dateKey)}</div>`;
                     
                     groupedByDate[dateKey]
@@ -587,8 +645,12 @@ function renderFixturesForDesktop(fixtures) {
                         .forEach((fx) => { 
                             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             
+                            // === ÚJ (v77.0): Potenciál Ellenőrzés ===
+                            const scoutInfo = getMatchPotentialHTML(fx.home, fx.away, fx.league);
+                            // ========================================
+
                             columnContent += `
-                                <div class="match-card selectable-card ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
+                                <div class="match-card selectable-card ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''} ${scoutInfo.frameClass}" data-match-id="${fx.uniqueId}">
                                     <div style="position:absolute; top:15px; right:15px;">
                                         <input type="checkbox" class="match-checkbox" data-match-id="${fx.uniqueId}" ${appState.selectedMatches.has(fx.uniqueId) ? 'checked' : ''}>
                                     </div>
@@ -602,6 +664,10 @@ function renderFixturesForDesktop(fixtures) {
                                         <div class="team-name">${fx.home}</div>
                                         <div class="vs-badge">VS</div>
                                         <div class="team-name">${fx.away}</div>
+                                    </div>
+                                    
+                                    <div style="text-align:center; margin-bottom:10px;">
+                                        ${scoutInfo.html}
                                     </div>
                                     
                                     <div class="manual-xg-grid">
@@ -652,7 +718,6 @@ function renderFixturesForMobileList(fixtures) {
             Object.keys(groupedByDate)
                 .sort((a, b) => parseHungarianDate(a).getTime() - parseHungarianDate(b).getTime()) 
                 .forEach(dateKey => {
-                    // --- MÓDOSÍTÁS: Glow effekt a mobil dátumra is ---
                     html += `<div class="mobile-date-header kanban-date-header" style="background:transparent; position:static; border:none; box-shadow:none;">${formatDateLabel(dateKey)}</div>`; 
                 
                     groupedByDate[dateKey]
@@ -660,8 +725,12 @@ function renderFixturesForMobileList(fixtures) {
                         .forEach((fx) => { 
                             const time = new Date(fx.utcKickoff).toLocaleTimeString('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit' });
                             
+                            // === ÚJ (v77.0): Potenciál Ellenőrzés Mobilra ===
+                            const scoutInfo = getMatchPotentialHTML(fx.home, fx.away, fx.league);
+                            // ===============================================
+
                             html += `
-                                <div class="mobile-match-card selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''}" data-match-id="${fx.uniqueId}">
+                                <div class="mobile-match-card selectable-item ${appState.selectedMatches.has(fx.uniqueId) ? 'selected' : ''} ${scoutInfo.frameClass}" data-match-id="${fx.uniqueId}">
                                     <div class="mm-header">
                                         <div class="mm-league kanban-glow-text">${fx.league || 'Liga'}</div>
                                         <div class="mm-time kanban-glow-text" style="color:var(--primary);">${time}</div>
@@ -673,6 +742,10 @@ function renderFixturesForMobileList(fixtures) {
                                             <div class="kanban-glow-text" style="margin-top:5px; font-size:1.2rem;">${fx.away}</div>
                                         </div>
                                         
+                                        <div style="text-align:center; margin-bottom:15px;">
+                                            ${scoutInfo.html}
+                                        </div>
+
                                         <div class="manual-xg-grid" style="margin-top: 15px;">
                                            <input type="text" inputmode="decimal" placeholder="H xG" class="xg-input xg-input-h-xg">
                                            <input type="text" inputmode="decimal" placeholder="H xGA" class="xg-input xg-input-h-xga">
@@ -1045,7 +1118,7 @@ function buildAnalysisHtml_CLIENTSIDE(
     sim, 
     masterRecommendation,
     matchId,
-    dataQualityWarning // Add dataQualityWarning here
+    dataQualityWarning 
 ) {
     
     const teamNames = [matchData.home, matchData.away];
