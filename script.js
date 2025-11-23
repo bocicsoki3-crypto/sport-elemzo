@@ -1341,13 +1341,21 @@ function buildAnalysisHtml_CLIENTSIDE(
 
     let marketCardsHtml = '';
     (valueBets || []).forEach(bet => {
+        // Pozitív érték ellenőrzése a zöld kerethez
+        const isPositive = bet.value && bet.value.includes('+');
+        const valueClass = isPositive ? 'positive-value' : '';
+        
         marketCardsHtml += `
-        <div class="market-card">
-            <div class="market-card-title"><strong>${escapeHTML(bet.market)}</strong></div>
-            <div class="market-card-value"><strong>${bet.odds}</strong></div>
-            <div class="details">Becsült: ${bet.probability} (<strong>${bet.value}</strong>)</div>
+        <div class="market-card ${valueClass}">
+            <div class="mc-header">${escapeHTML(bet.market)}</div>
+            <div class="mc-odds">${bet.odds}</div>
+            <div class="mc-footer">
+                <div class="mc-probability">Becsült: ${bet.probability}</div>
+                <div class="mc-value-badge">${bet.value}</div>
+            </div>
         </div>`;
     });
+    
     if (!marketCardsHtml) {
         marketCardsHtml = '<p class="muted" style="text-align: center; grid-column: 1 / -1;">Jelenleg nincsenek kiemelt értékű fogadások a piacon (min. 5% value).</p>';
     }
