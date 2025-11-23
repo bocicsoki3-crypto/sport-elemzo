@@ -351,8 +351,10 @@ async function deleteHistoryItem(id) {
 
 async function viewHistoryDetail(id) {
     const originalId = unescape(id);
-    openModal('Elemzés Betöltése...', (document.getElementById('loading-skeleton')).outerHTML, 'modal-xl');
-    (document.querySelector('#modal-container #loading-skeleton')).classList.add('active');
+    
+    // Betöltő képernyő
+    openModal('Elemzés Betöltése...', document.getElementById('loading-skeleton').outerHTML, 'modal-xl');
+    document.querySelector('#modal-container #loading-skeleton').classList.add('active');
     
     try {
         const response = await fetchWithAuth(`${appState.gasUrl}/getAnalysisDetail?id=${encodeURIComponent(originalId)}`);
@@ -363,7 +365,7 @@ async function viewHistoryDetail(id) {
         const { record } = data;
         if (!record || !record.html) throw new Error("A szerver nem találta a kért elemzést, vagy az hiányos.");
         
-        (document.getElementById('modal-title')).textContent = `${record.home || 'Ismeretlen'} vs ${record.away || 'Ismeretlen'}`;
+        document.getElementById('modal-title').textContent = `${record.home || 'Ismeretlen'} vs ${record.away || 'Ismeretlen'}`;
         const modalBody = document.getElementById('modal-body');
 
         let contentToDisplay = "";
@@ -420,14 +422,28 @@ async function viewHistoryDetail(id) {
             contentToDisplay = `<div class="analysis-body">${record.html}</div>`;
         }
 
-        modalBody.innerHTML = (document.getElementById('common-elements')).innerHTML;
-        (modalBody.querySelector('#loading-skeleton')).style.display = 'none'; 
-        (modalBody.querySelector('#analysis-results')).innerHTML = contentToDisplay;
+        // --- VISSZA GOMB BEILLESZTÉSE ---
+        const backButtonHtml = `
+            <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center;">
+                <button onclick="openHistoryModal()" class="nav-btn" style="padding: 10px 20px; font-size: 0.9rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                    <span style="margin-right: 8px;">⬅</span> Vissza a listához
+                </button>
+            </div>
+        `;
+
+        modalBody.innerHTML = backButtonHtml + document.getElementById('common-elements').innerHTML;
+        modalBody.querySelector('#loading-skeleton').style.display = 'none'; 
+        modalBody.querySelector('#analysis-results').innerHTML = contentToDisplay;
         const modalChat = modalBody.querySelector('#chat-container');
         modalChat.style.display = 'none';
 
     } catch(e) {
-         (document.getElementById('modal-body')).innerHTML = `<p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a részletek betöltésekor: ${e.message}</p>`;
+         // Hiba esetén is megjelenítjük a vissza gombot
+         document.getElementById('modal-body').innerHTML = `
+            <div style="margin-bottom: 20px;">
+                <button onclick="openHistoryModal()" class="nav-btn">⬅ Vissza</button>
+            </div>
+            <p style="color:var(--danger); text-align:center; padding: 2rem;">Hiba a részletek betöltésekor: ${e.message}</p>`;
         console.error("Hiba a részletek megtekintésekor:", e);
     }
 }
