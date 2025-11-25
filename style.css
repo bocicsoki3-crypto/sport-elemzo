@@ -742,10 +742,346 @@ p { color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem; margin-b
     border: 1px solid var(--primary) !important;
 }
 
+/* === ÚJ STÍLUSOK (v124.0) - RÉSZLETES TIPPEK === */
+
+/* VERDICT Kiemelés (A Lényeg) */
+.verdict-highlight {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+    border: 2px solid var(--primary);
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 25px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.15), inset 0 0 20px rgba(255, 215, 0, 0.03);
+    position: relative;
+    overflow: hidden;
+}
+
+.verdict-highlight::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.08) 0%, transparent 60%);
+    animation: rotateBridgeBg 20s linear infinite;
+    pointer-events: none;
+}
+
+.verdict-icon {
+    font-size: 3rem;
+    line-height: 1;
+    filter: drop-shadow(0 0 10px var(--primary));
+    animation: pulse-crown 4s infinite ease-in-out;
+    flex-shrink: 0;
+    z-index: 1;
+}
+
+.verdict-content {
+    flex: 1;
+    z-index: 1;
+}
+
+.verdict-content h6 {
+    margin: 0 0 10px 0;
+    color: var(--primary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.verdict-content p {
+    margin: 0;
+    color: #fff;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    font-weight: 500;
+}
+
+/* Tips Container (Két tipp megjelenítés) */
+.tips-container-v124 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 25px 0;
+}
+
+.tip-card {
+    background: linear-gradient(145deg, rgba(30, 32, 38, 0.8), rgba(15, 17, 21, 0.95));
+    border-radius: 16px;
+    padding: 25px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid transparent;
+}
+
+.tip-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, currentColor, transparent);
+    opacity: 0.5;
+}
+
+.tip-card.primary-tip {
+    border-color: rgba(0, 255, 157, 0.3);
+}
+
+.tip-card.primary-tip::before {
+    background: linear-gradient(90deg, transparent, var(--success), transparent);
+}
+
+.tip-card.secondary-tip {
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.tip-card.secondary-tip::before {
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+}
+
+.tip-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+}
+
+.tip-card.primary-tip:hover {
+    border-color: var(--success);
+    box-shadow: 0 15px 40px rgba(0, 255, 157, 0.2);
+}
+
+.tip-card.secondary-tip:hover {
+    border-color: var(--primary);
+    box-shadow: 0 15px 40px rgba(255, 215, 0, 0.2);
+}
+
+.tip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tip-badge {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+.tip-badge.primary {
+    background: rgba(0, 255, 157, 0.15);
+    color: var(--success);
+    border: 1px solid var(--success);
+    box-shadow: 0 0 10px rgba(0, 255, 157, 0.2);
+}
+
+.tip-badge.secondary {
+    background: rgba(255, 215, 0, 0.15);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.tip-confidence {
+    font-size: 1.3rem;
+    font-weight: 800;
+    font-family: var(--font-header);
+}
+
+.tip-confidence.primary-conf {
+    color: var(--success);
+    text-shadow: 0 0 10px var(--success);
+}
+
+.tip-confidence.secondary-conf {
+    color: var(--primary);
+    text-shadow: 0 0 10px var(--primary);
+}
+
+.tip-market {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 20px;
+    line-height: 1.3;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.tip-reasoning {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.tip-reasoning p {
+    margin-bottom: 12px;
+    color: #ddd;
+}
+
+.tip-reasoning p:last-child {
+    margin-bottom: 0;
+}
+
+.tip-reasoning ol.reasoning-list {
+    margin: 15px 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.tip-reasoning ol.reasoning-list li {
+    margin-bottom: 12px;
+    padding-left: 25px;
+    position: relative;
+    line-height: 1.6;
+}
+
+.tip-reasoning ol.reasoning-list li strong {
+    color: var(--primary);
+    margin-right: 8px;
+}
+
+.tip-reasoning .highlight-keyword {
+    color: var(--primary);
+    font-weight: 600;
+    text-shadow: none;
+    background: rgba(255, 215, 0, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Additional Insights (Stratégia, Kockázatok, Alternatívák) */
+.additional-insights {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 25px;
+}
+
+.betting-strategy-panel,
+.key-risks-panel,
+.alternatives-panel {
+    background: rgba(20, 22, 28, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.betting-strategy-panel h6,
+.key-risks-panel h6,
+.alternatives-panel h6 {
+    margin: 0 0 15px 0;
+    color: var(--primary);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.strategy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+}
+
+.strategy-item {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.strategy-item .label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.strategy-item .value {
+    font-size: 1rem;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.risks-list {
+    margin: 0;
+    padding-left: 20px;
+    list-style: none;
+}
+
+.risks-list li {
+    margin-bottom: 10px;
+    padding-left: 25px;
+    position: relative;
+    line-height: 1.6;
+    color: #ddd;
+}
+
+.risks-list li::before {
+    content: '⚠️';
+    position: absolute;
+    left: 0;
+    font-size: 1rem;
+}
+
+.alternatives-panel p {
+    margin: 0;
+    color: #ddd;
+    line-height: 1.7;
+}
+
 /* Responsive Tweaks */
 @media (max-width: 1024px) {
     .analysis-layout { grid-template-columns: 1fr; gap: 20px; }
     .analysis-layout-sidebar { border-top: 1px solid var(--glass-border); padding-top: 20px; }
+    
+    .tips-container-v124 {
+        grid-template-columns: 1fr;
+    }
+    
+    .verdict-highlight {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .verdict-icon {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .tip-market {
+        font-size: 1.2rem;
+    }
+    
+    .tip-reasoning {
+        font-size: 0.9rem;
+    }
+    
+    .strategy-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* --- ACCORDION / LENYÍLÓ ELEMEK JAVÍTÁSA (Részletes Jelentések) --- */
