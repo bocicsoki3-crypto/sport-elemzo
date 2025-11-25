@@ -1000,6 +1000,56 @@ const processAiText = (text, teamNames = []) => {
     return _highlightKeywords(safeText, teamNames);
 };
 
+/**
+ * Formázza a részletes indoklásokat olvashatóbbá (v124.0)
+ * - Felsorolásokat listává alakít (1., 2., stb.)
+ * - Vastag szövegeket (**text**) <strong>-gá alakít
+ * - Bekezdéseket <p>-be csomagol
+ * - Emotikon karaktereket megtart
+ */
+function formatDetailedReasoning(text, teamNames = []) {
+    if (!text || typeof text !== 'string') return '';
+    
+    let formatted = String(text);
+    
+    // Először kulcsszavak kiemelése (ez escape-eli a HTML-t is)
+    formatted = _highlightKeywords(formatted, teamNames);
+    
+    // Számozott listák felismerése (pl: "1. ", "2. ", "3. ")
+    // Egysoros számozott elemek
+    formatted = formatted.replace(/(\d+\.)\s+\*\*([^:]+):\*\*/g, '<li><strong>$1 $2:</strong> ');
+    formatted = formatted.replace(/(\d+\.)\s+([^<\n]+)/g, '<li><strong>$1</strong> $2</li>');
+    
+    // Ha van <li>, csomagoljuk <ol>-ba
+    if (formatted.includes('<li>')) {
+        // Összefüggő <li> elemeket egy <ol>-ba
+        formatted = formatted.replace(/((?:<li>.*?<\/li>\s*)+)/gs, '<ol class="reasoning-list">$1</ol>');
+    }
+    
+    // Bekezdések (dupla soremelés) -> <p>
+    // De előbb csináljunk egysoros sortöréseket <br>-ré
+    formatted = formatted.replace(/\n(?!\n)/g, '<br>');
+    
+    // Dupla soremelések bekezdéssé
+    const paragraphs = formatted.split(/\n\n+/);
+    if (paragraphs.length > 1 && !formatted.includes('<ol')) {
+        formatted = paragraphs.map(p => {
+            const trimmed = p.trim();
+            if (!trimmed) return '';
+            if (trimmed.startsWith('<ol')) return trimmed;
+            return `<p>${trimmed}</p>`;
+        }).filter(p => p).join('');
+    } else if (!formatted.includes('<p>') && !formatted.includes('<ol>')) {
+        formatted = `<p>${formatted}</p>`;
+    }
+    
+    // Tisztítás: dupla <p> tagek eltávolítása
+    formatted = formatted.replace(/<p>\s*<p>/g, '<p>');
+    formatted = formatted.replace(/<\/p>\s*<\/p>/g, '</p>');
+    
+    return formatted;
+}
+
 const processAiList = (list, teamNames = []) => {
     if (!list || !Array.isArray(list) || list.length === 0) {
         return '<li>Nincs adat.</li>';
@@ -1210,28 +1260,92 @@ function buildAnalysisHtml_CLIENTSIDE(
 
     const finalRec = masterRecommendation || { recommended_bet: "Hiba", final_confidence: 1.0, brief_reasoning: "Hiba" };
     
-    // === ÚJ (v76.0): KÉT TIPP LOGIKA ===
+    // === ÚJ (v124.0): RÉSZLETES TIPP MEGJELENÍTÉS ===
     let tipsHtml = '';
 
     if (finalRec.primary && finalRec.secondary) {
-        // KÉT TIPP MEGJELENÍTÉSE (DUAL MODE)
+        // RÉSZLETES DUAL MODE (v124.0)
+        const primaryReasonFormatted = formatDetailedReasoning(finalRec.primary.reason || '', teamNames);
+        const secondaryReasonFormatted = formatDetailedReasoning(finalRec.secondary.reason || '', teamNames);
+        const verdictFormatted = formatDetailedReasoning(finalRec.verdict || '', teamNames);
+        
+        // Betting Strategy feldolgozása
+        let bettingStrategyHtml = '';
+        if (finalRec.betting_strategy) {
+            const bs = finalRec.betting_strategy;
+            bettingStrategyHtml = `
+            <div class="betting-strategy-panel">
+                <h6>📊 Fogadási Stratégia</h6>
+                <div class="strategy-grid">
+                    ${bs.stake_recommendation ? `<div class="strategy-item"><span class="label">Tét:</span><span class="value">${escapeHTML(bs.stake_recommendation)}</span></div>` : ''}
+                    ${bs.market_timing ? `<div class="strategy-item"><span class="label">Időzítés:</span><span class="value">${escapeHTML(bs.market_timing)}</span></div>` : ''}
+                    ${bs.hedge_suggestion && bs.hedge_suggestion !== 'Nincs' ? `<div class="strategy-item"><span class="label">Fedezés:</span><span class="value">${escapeHTML(bs.hedge_suggestion)}</span></div>` : ''}
+                </div>
+            </div>`;
+        }
+        
+        // Key Risks feldolgozása
+        let keyRisksHtml = '';
+        if (finalRec.key_risks && Array.isArray(finalRec.key_risks) && finalRec.key_risks.length > 0) {
+            keyRisksHtml = `
+            <div class="key-risks-panel">
+                <h6>⚠️ Fő Kockázatok</h6>
+                <ul class="risks-list">
+                    ${finalRec.key_risks.map(risk => `<li>${processAiText(risk, teamNames)}</li>`).join('')}
+                </ul>
+            </div>`;
+        }
+        
+        // Why Not Alternatives feldolgozása
+        let alternativesHtml = '';
+        if (finalRec.why_not_alternatives && finalRec.why_not_alternatives !== 'Nincs adat') {
+            alternativesHtml = `
+            <div class="alternatives-panel">
+                <h6>🤔 Miért nem más opció?</h6>
+                <p>${processAiText(finalRec.why_not_alternatives, teamNames)}</p>
+            </div>`;
+        }
+        
         tipsHtml = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
-            <!-- 1. TIPP (BAL - BANKER) -->
-            <div style="background: rgba(0, 255, 157, 0.05); border: 1px solid var(--success); border-radius: 12px; padding: 15px; text-align: center;">
-                <div style="color: var(--success); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 700;">👑 FŐ TIPP (BANKER)</div>
-                <div style="font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 5px; line-height: 1.2;">${escapeHTML(finalRec.primary.market)}</div>
-                <div style="font-size: 1.1rem; font-weight: 700; color: var(--success);">${(finalRec.primary.confidence || 0).toFixed(1)}/10</div>
-                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px; line-height: 1.3; font-style: italic;">${escapeHTML(finalRec.primary.reason)}</div>
+        <!-- VERDICT - A LÉNYEG (Központi kiemelés) -->
+        ${verdictFormatted ? `
+        <div class="verdict-highlight">
+            <div class="verdict-icon">💡</div>
+            <div class="verdict-content">
+                <h6>A LÉNYEG</h6>
+                <p>${verdictFormatted}</p>
             </div>
-
-            <!-- 2. TIPP (JOBB - VALUE) -->
-            <div style="background: rgba(255, 215, 0, 0.05); border: 1px solid var(--primary); border-radius: 12px; padding: 15px; text-align: center;">
-                <div style="color: var(--primary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 700;">⚡ ALTERNATÍV (VALUE)</div>
-                <div style="font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 5px; line-height: 1.2;">${escapeHTML(finalRec.secondary.market)}</div>
-                <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">${(finalRec.secondary.confidence || 0).toFixed(1)}/10</div>
-                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px; line-height: 1.3; font-style: italic;">${escapeHTML(finalRec.secondary.reason)}</div>
+        </div>` : ''}
+        
+        <!-- KÉT TIPP MEGJELENÍTÉS (Modernizált v124.0) -->
+        <div class="tips-container-v124">
+            
+            <!-- 1. TIPP (BANKER) - Részletes -->
+            <div class="tip-card primary-tip">
+                <div class="tip-header">
+                    <span class="tip-badge primary">👑 FŐ TIPP (BANKER)</span>
+                    <span class="tip-confidence primary-conf">${(finalRec.primary.confidence || 0).toFixed(1)}/10</span>
+                </div>
+                <div class="tip-market">${escapeHTML(finalRec.primary.market)}</div>
+                <div class="tip-reasoning">${primaryReasonFormatted}</div>
             </div>
+            
+            <!-- 2. TIPP (ALTERNATÍV) - Részletes -->
+            <div class="tip-card secondary-tip">
+                <div class="tip-header">
+                    <span class="tip-badge secondary">⚡ ALTERNATÍV OPCIÓ</span>
+                    <span class="tip-confidence secondary-conf">${(finalRec.secondary.confidence || 0).toFixed(1)}/10</span>
+                </div>
+                <div class="tip-market">${escapeHTML(finalRec.secondary.market)}</div>
+                <div class="tip-reasoning">${secondaryReasonFormatted}</div>
+            </div>
+        </div>
+        
+        <!-- STRATÉGIA, KOCKÁZATOK, ALTERNATÍVÁK -->
+        <div class="additional-insights">
+            ${bettingStrategyHtml}
+            ${keyRisksHtml}
+            ${alternativesHtml}
         </div>
         `;
     } else {
@@ -1260,7 +1374,7 @@ function buildAnalysisHtml_CLIENTSIDE(
     const masterRecommendationHtml = `
     <div class="master-recommendation-card">
         ${warningHtml}
-        <h5>👑 6. Ügynök: A Főnök Ajánlása (Dupla Opció) 👑</h5>
+        <h5 style="margin-bottom: 20px; text-align: center; font-size: 1.3rem; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);">👑 6. Ügynök: A Főnök Részletes Ajánlása 👑</h5>
         ${tipsHtml}
         ${finalConfInterpretationHtml}
     </div>`;
