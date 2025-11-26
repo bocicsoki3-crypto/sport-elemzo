@@ -286,8 +286,11 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
         modalResults.innerHTML = `<div class="analysis-body">${finalHtml}</div>`;
         modalResults.innerHTML += `<p class="muted" style="text-align: center; margin-top: 1rem; font-size: 0.8rem;">xG Forrás: ${analysisData.xgSource || 'Ismeretlen'}</p>`;
         
+        // Chat konténer a 4. tab-ba illesztése
         const chatWrapper = modalResults.querySelector('#chat-content-wrapper');
-        if (chatWrapper) {
+        if (chatWrapper && modalChatContainer) {
+            modalChatContainer.style.display = 'flex';
+            modalChatContainer.style.height = '500px';
             chatWrapper.appendChild(modalChatContainer);
         }
 
@@ -1188,6 +1191,17 @@ function buildAnalysisHtml_CLIENTSIDE(
 ) {
     
     const teamNames = [matchData.home, matchData.away];
+    
+    // === ÚJ: TAB VÁLTÁS FUNKCIÓ (globálisan definiálva) ===
+    window.switchAnalysisTab = function(tabName) {
+        const modal = document.getElementById('modal-container');
+        modal.querySelectorAll('.analysis-tab-btn').forEach(b => b.classList.remove('active'));
+        modal.querySelectorAll('.analysis-tab-content').forEach(c => c.classList.remove('active'));
+        
+        const clickedBtn = event?.target || modal.querySelector(`[data-tab="${tabName}"]`);
+        if (clickedBtn) clickedBtn.classList.add('active');
+        modal.querySelector(`#analysis-tab-${tabName}`).classList.add('active');
+    };
     const pHome = sim?.pHome?.toFixed(1) || '0.0';
     const pDraw = sim?.pDraw?.toFixed(1) || '0.0';
     const pAway = sim?.pAway?.toFixed(1) || '0.0';
@@ -1370,6 +1384,35 @@ function buildAnalysisHtml_CLIENTSIDE(
             <strong>⚠️ Figyelem:</strong> ${escapeHTML(dataQualityWarning)}
         </div>`;
     }
+    
+    // === ÚJ: HERO SECTION (A LÉNYEG FELÜLRE!) ===
+    const heroCardHtml = `
+    <div class="hero-decision-card">
+        <div class="hero-badge">👑 BANKER TIPP</div>
+        <div class="hero-market">${escapeHTML(finalRec.primary?.market || finalRec.recommended_bet || 'Hiba')}</div>
+        <div class="hero-confidence-bar">
+            <div class="conf-fill" style="width: ${(finalRec.primary?.confidence || finalRec.final_confidence || 1) * 10}%"></div>
+            <span class="conf-label">${(finalRec.primary?.confidence || finalRec.final_confidence || 1).toFixed(1)}/10 BIZALOM</span>
+        </div>
+        <div class="hero-stats-grid">
+            <div class="hero-stat">
+                <span class="label">Várható Eredmény</span>
+                <span class="value">${topScore}</span>
+            </div>
+            <div class="hero-stat">
+                <span class="label">Valószínűség</span>
+                <span class="value">${Math.max(parseFloat(pHome), parseFloat(pAway)).toFixed(1)}%</span>
+            </div>
+            <div class="hero-stat">
+                <span class="label">Statisztikai xG</span>
+                <span class="value">${mu_h} - ${mu_a}</span>
+            </div>
+        </div>
+        <div class="hero-verdict">
+            ${finalRec.verdict ? `<strong>💡 A Lényeg:</strong> ${processAiText(finalRec.verdict, teamNames)}` : ''}
+        </div>
+    </div>
+    `;
 
     const masterRecommendationHtml = `
     <div class="master-recommendation-card">
@@ -1392,9 +1435,8 @@ function buildAnalysisHtml_CLIENTSIDE(
     </div>`;
     
     const chatHtml = `
-    <div class="analysis-accordion" style="margin-top: 1.5rem;">
-        <!-- Chat removed from accordion for cleaner layout, it's now below -->
-        <div id="chat-content-wrapper"></div>
+    <div id="chat-content-wrapper" style="height: 100%; display: flex; flex-direction: column;">
+        <!-- Chat konténer a 4. tabhoz -->
     </div>`;
 
     const atAGlanceHtml = `
@@ -1499,21 +1541,61 @@ function buildAnalysisHtml_CLIENTSIDE(
         </details>` : ''}
     </div>`;
     
+    // === ÚJ: TAB RENDSZER STRUKTÚRA ===
     return `
-        <div class="analysis-layout">
+        ${warningHtml}
+        
+        <!-- Tab Header (Navigáció) -->
+        <div class="analysis-tab-header">
+            <button class="analysis-tab-btn active" data-tab="overview" onclick="switchAnalysisTab('overview')">
+                <span class="tab-icon">📊</span><span class="tab-label">Áttekintés</span>
+            </button>
+            <button class="analysis-tab-btn" data-tab="details" onclick="switchAnalysisTab('details')">
+                <span class="tab-icon">🔮</span><span class="tab-label">AI Elemzés</span>
+            </button>
+            <button class="analysis-tab-btn" data-tab="stats" onclick="switchAnalysisTab('stats')">
+                <span class="tab-icon">📈</span><span class="tab-label">Statisztika</span>
+            </button>
+            <button class="analysis-tab-btn" data-tab="chat" onclick="switchAnalysisTab('chat')">
+                <span class="tab-icon">💬</span><span class="tab-label">Chat</span>
+            </button>
+        </div>
+        
+        <!-- Tab Content Wrapper -->
+        <div class="analysis-tabs-wrapper">
             
-            <div class="analysis-layout-main">
-                ${masterRecommendationHtml}
-                ${prophetCardHtml}
-                ${synthesisCardHtml}
-                ${chatHtml}
+            <!-- TAB 1: ÁTTEKINTÉS (Hero + Gyors összefoglaló) -->
+            <div class="analysis-tab-content active" id="analysis-tab-overview">
+                ${heroCardHtml}
+                <div class="quick-summary-section">
+                    <h4 style="color:var(--primary); margin-bottom:15px;">⚡ Gyors Összefoglaló</h4>
+                    ${tipsHtml}
+                </div>
             </div>
             
-            <div class="analysis-layout-sidebar">
-                ${atAGlanceHtml}
-                ${confidenceBridgeHtml}
-                ${marketSectionHtml}
+            <!-- TAB 2: AI ELEMZÉS (Részletes jelentések) -->
+            <div class="analysis-tab-content" id="analysis-tab-details">
+                ${prophetCardHtml}
+                ${synthesisCardHtml}
                 ${sidebarAccordionHtml}
+            </div>
+            
+            <!-- TAB 3: STATISZTIKA (Számok, grafikonok) -->
+            <div class="analysis-tab-content" id="analysis-tab-stats">
+                <div class="stats-grid-layout">
+                    <div class="stats-main">
+                        ${atAGlanceHtml}
+                        ${confidenceBridgeHtml}
+                    </div>
+                    <div class="stats-sidebar">
+                        ${marketSectionHtml}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TAB 4: CHAT -->
+            <div class="analysis-tab-content" id="analysis-tab-chat">
+                ${chatHtml}
             </div>
             
         </div>
