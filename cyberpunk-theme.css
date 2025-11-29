@@ -1,0 +1,480 @@
+/* ========================================
+   🎨 CYBERPUNK BLUE THEME v2.0
+   Modern Blue-Pink-Purple Color Palette
+   ======================================== */
+
+:root {
+    /* === CYBERPUNK SZÍNPALETTA === */
+    --bg-dark: #0a0e27; 
+    --bg-gradient: radial-gradient(circle at 50% 0%, #1a1f3a 0%, #0a0e27 100%);
+    
+    --glass-bg: rgba(15, 20, 40, 0.85); 
+    --glass-border: rgba(0, 191, 255, 0.3);
+    --glass-shine: rgba(0, 191, 255, 0.05);
+    
+    /* Új primer színek */
+    --primary: #00d4ff; /* Neon kék */
+    --primary-glow: rgba(0, 212, 255, 0.6);
+    --primary-dark: #0088cc;
+    
+    /* Akcentus színek */
+    --secondary: #ff00ff; /* Neon pink */
+    --secondary-glow: rgba(255, 0, 255, 0.5);
+    
+    --accent: #9d00ff; /* Neon lila */
+    --accent-glow: rgba(157, 0, 255, 0.5);
+    
+    --success: #00ff9d; /* Neon zöld */
+    --danger: #ff0055; /* Neon piros */
+    --warning: #ffaa00; /* Neon narancs */
+    
+    /* Szöveg színek */
+    --text-primary: #e0e7ff;
+    --text-secondary: #a0b0d0;
+    --text-muted: #6070a0;
+    
+    /* Effektek */
+    --shadow-card: 0 15px 40px -10px rgba(0, 0, 0, 0.9);
+    --shadow-glow-blue: 0 0 20px rgba(0, 212, 255, 0.3);
+    --shadow-glow-pink: 0 0 20px rgba(255, 0, 255, 0.3);
+    --shadow-glow-purple: 0 0 20px rgba(157, 0, 255, 0.3);
+}
+
+/* === HÁTTÉR ÚJRATERVEZÉS === */
+body {
+    background-color: var(--bg-dark);
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(157, 0, 255, 0.06) 0%, transparent 50%),
+        var(--bg-gradient);
+}
+
+/* === ORB-OK ÚJRASZÍNEZÉS === */
+.orb-1 {
+    background: radial-gradient(circle, rgba(0, 212, 255, 0.4) 0%, transparent 70%);
+}
+
+.orb-2 {
+    background: radial-gradient(circle, rgba(255, 0, 255, 0.3) 0%, transparent 70%);
+}
+
+.orb-3 {
+    background: radial-gradient(circle, rgba(157, 0, 255, 0.25) 0%, transparent 70%);
+}
+
+/* === TAB NAVIGATION === */
+.tab-buttons {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.8), rgba(25, 30, 50, 0.6));
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 212, 255, 0.1);
+}
+
+.tab-btn {
+    background: linear-gradient(135deg, rgba(20, 25, 45, 0.9), rgba(15, 20, 40, 0.95));
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    color: var(--text-secondary);
+}
+
+.tab-btn::before {
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.15), transparent);
+}
+
+.tab-btn:hover {
+    background: linear-gradient(135deg, rgba(30, 35, 55, 0.95), rgba(25, 30, 50, 0.98));
+    border-color: rgba(0, 212, 255, 0.4);
+    color: var(--text-primary);
+    box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #00d4ff, #0088cc);
+    border-color: var(--primary);
+    color: #000;
+    box-shadow: 0 8px 24px rgba(0, 212, 255, 0.5), 0 0 40px rgba(0, 212, 255, 0.3);
+}
+
+/* === SUMMARY CARDS === */
+.summary-card {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.95), rgba(10, 15, 30, 0.98));
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(0, 212, 255, 0.1);
+}
+
+.summary-card::before {
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+}
+
+.summary-card:hover {
+    border-color: rgba(0, 212, 255, 0.5);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 212, 255, 0.2);
+}
+
+.summary-card.highlight-card {
+    border: 2px solid rgba(0, 212, 255, 0.4);
+    box-shadow: 0 12px 40px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(0, 212, 255, 0.15);
+}
+
+.summary-card h5 {
+    color: var(--primary);
+}
+
+.xg-team .value {
+    background: linear-gradient(135deg, var(--primary), #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.6));
+}
+
+/* === CONFIDENCE BRIDGE === */
+.confidence-bridge-card {
+    background: linear-gradient(135deg, rgba(15, 20, 45, 0.6), rgba(10, 15, 35, 0.8));
+    border: 1px solid rgba(157, 0, 255, 0.4);
+    box-shadow: 0 12px 40px rgba(157, 0, 255, 0.15), inset 0 1px 0 rgba(157, 0, 255, 0.1);
+}
+
+.confidence-bridge-card::after {
+    background: radial-gradient(circle, rgba(157, 0, 255, 0.15) 0%, transparent 70%);
+}
+
+.confidence-bridge-card h5 {
+    color: var(--accent);
+}
+
+.gauge-value {
+    background: linear-gradient(135deg, var(--accent), #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 16px rgba(157, 0, 255, 0.8));
+}
+
+.arrow {
+    color: var(--primary);
+}
+
+.confidence-bridge-reasoning {
+    border-left: 3px solid var(--accent);
+}
+
+/* === MASTER RECOMMENDATION === */
+.master-recommendation-card {
+    background: linear-gradient(135deg, rgba(20, 25, 50, 0.8), rgba(15, 20, 40, 0.9));
+    border: 2px solid rgba(0, 212, 255, 0.5);
+    box-shadow: 0 16px 48px rgba(0, 212, 255, 0.25), inset 0 2px 0 rgba(0, 212, 255, 0.15);
+}
+
+.master-recommendation-card::before {
+    background: radial-gradient(circle, rgba(0, 212, 255, 0.12) 0%, transparent 70%);
+}
+
+/* === VERDICT HIGHLIGHT === */
+.verdict-highlight {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 136, 204, 0.15));
+    border: 2px solid rgba(0, 212, 255, 0.6);
+    box-shadow: 0 8px 32px rgba(0, 212, 255, 0.3), inset 0 1px 0 rgba(0, 212, 255, 0.2);
+}
+
+.verdict-highlight::after {
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.15), transparent);
+}
+
+.verdict-content h6 {
+    color: var(--primary);
+}
+
+/* === TIP CARDS === */
+.tip-card {
+    background: linear-gradient(135deg, rgba(20, 25, 45, 0.95), rgba(15, 20, 40, 0.98));
+    border: 1px solid rgba(0, 212, 255, 0.15);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(0, 212, 255, 0.08);
+}
+
+.tip-card::before {
+    background: linear-gradient(180deg, var(--primary), transparent);
+}
+
+.tip-card:hover {
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 212, 255, 0.2);
+    border-color: rgba(0, 212, 255, 0.4);
+}
+
+.tip-card.primary-tip {
+    border: 2px solid rgba(0, 212, 255, 0.5);
+    box-shadow: 0 12px 40px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(0, 212, 255, 0.15);
+}
+
+.tip-card.secondary-tip {
+    border: 2px solid rgba(255, 0, 255, 0.4);
+    box-shadow: 0 12px 40px rgba(255, 0, 255, 0.15);
+}
+
+.tip-badge.primary {
+    background: linear-gradient(135deg, var(--primary), #0088cc);
+    color: #000;
+    box-shadow: 0 4px 16px rgba(0, 212, 255, 0.5);
+}
+
+.tip-badge.secondary {
+    background: linear-gradient(135deg, var(--secondary), #cc00cc);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(255, 0, 255, 0.5);
+}
+
+.tip-confidence.primary-conf {
+    color: var(--primary);
+    text-shadow: 0 0 12px rgba(0, 212, 255, 0.9);
+}
+
+.tip-confidence.secondary-conf {
+    color: var(--secondary);
+    text-shadow: 0 0 12px rgba(255, 0, 255, 0.9);
+}
+
+.tip-market {
+    background: rgba(0, 212, 255, 0.08);
+    border: 1px solid rgba(0, 212, 255, 0.25);
+}
+
+/* === ADDITIONAL INSIGHTS === */
+.betting-strategy-panel,
+.key-risks-panel,
+.alternatives-panel {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.9), rgba(10, 15, 30, 0.95));
+    border: 1px solid rgba(0, 212, 255, 0.12);
+}
+
+.betting-strategy-panel h6,
+.key-risks-panel h6,
+.alternatives-panel h6 {
+    color: var(--primary);
+    border-bottom: 1px solid rgba(0, 212, 255, 0.25);
+}
+
+.strategy-item {
+    background: rgba(0, 0, 0, 0.4);
+    border-left: 3px solid var(--primary);
+}
+
+.risks-list li {
+    background: rgba(255, 0, 85, 0.12);
+    border-left: 3px solid var(--danger);
+}
+
+/* === PROPHET & SYNTHESIS === */
+.prophet-card {
+    background: linear-gradient(135deg, rgba(20, 15, 40, 0.9), rgba(15, 10, 30, 0.95));
+    border: 1px solid rgba(157, 0, 255, 0.4);
+    box-shadow: 0 12px 40px rgba(157, 0, 255, 0.15), inset 0 1px 0 rgba(157, 0, 255, 0.1);
+}
+
+.prophet-card::before {
+    background: radial-gradient(circle, rgba(157, 0, 255, 0.15) 0%, transparent 70%);
+}
+
+.prophet-card h5 {
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(157, 0, 255, 0.6);
+}
+
+.synthesis-card {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.9), rgba(10, 15, 35, 0.95));
+    border: 1px solid rgba(255, 0, 255, 0.4);
+    box-shadow: 0 12px 40px rgba(255, 0, 255, 0.15);
+}
+
+.synthesis-card h5 {
+    color: var(--secondary);
+    text-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
+}
+
+/* === PROBABILITY BARS === */
+.prob-home {
+    background: linear-gradient(90deg, #00d4ff, #66e0ff);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+.prob-draw {
+    background: linear-gradient(90deg, #9d00ff, #cc66ff);
+    box-shadow: 0 0 20px rgba(157, 0, 255, 0.5);
+}
+
+.prob-away {
+    background: linear-gradient(90deg, #ff00ff, #ff66ff);
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+}
+
+.prob-dot.home { background: #00d4ff; }
+.prob-dot.draw { background: #9d00ff; }
+.prob-dot.away { background: #ff00ff; }
+
+/* === TOTALS === */
+.total-line {
+    background: rgba(0, 0, 0, 0.4);
+    border-left: 4px solid var(--primary);
+}
+
+.total-line:hover {
+    background: rgba(0, 212, 255, 0.12);
+}
+
+/* === MARKET CARDS === */
+.market-data-section h4 {
+    color: var(--primary);
+}
+
+.market-card {
+    background: linear-gradient(135deg, rgba(20, 25, 45, 0.9), rgba(15, 20, 40, 0.95));
+    border: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.market-card::before {
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.25), transparent);
+}
+
+.market-card:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 212, 255, 0.15);
+    border-color: rgba(0, 212, 255, 0.4);
+}
+
+.market-card.positive-value {
+    border: 2px solid rgba(0, 255, 157, 0.5);
+    box-shadow: 0 8px 32px rgba(0, 255, 157, 0.2);
+}
+
+.market-card.positive-value:hover {
+    box-shadow: 0 12px 40px rgba(0, 255, 157, 0.3), 0 0 60px rgba(0, 255, 157, 0.25);
+}
+
+.mc-odds {
+    background: linear-gradient(135deg, var(--primary), #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.6));
+}
+
+.mc-value-badge {
+    background: linear-gradient(135deg, var(--success), #00cc7e);
+    box-shadow: 0 4px 12px rgba(0, 255, 157, 0.5);
+}
+
+/* === COMMITTEE CARDS === */
+.committee-card {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.9), rgba(10, 15, 30, 0.95));
+    border: 1px solid rgba(0, 212, 255, 0.12);
+}
+
+.committee-card:hover {
+    border-color: rgba(0, 212, 255, 0.3);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 212, 255, 0.12);
+}
+
+.committee-card h4 {
+    color: var(--primary);
+    border-bottom: 2px solid rgba(0, 212, 255, 0.25);
+}
+
+.committee-card.quant {
+    border-left: 4px solid #00d4ff;
+}
+
+.committee-card.scout {
+    border-left: 4px solid #00ff9d;
+}
+
+.committee-card.critic {
+    border-left: 4px solid #ff0055;
+}
+
+.key-insights li {
+    background: rgba(0, 0, 0, 0.4);
+    border-left: 3px solid var(--primary);
+}
+
+.key-insights li:hover {
+    background: rgba(0, 212, 255, 0.12);
+}
+
+/* === MICROMODEL CARDS === */
+.micromodel-card {
+    background: linear-gradient(135deg, rgba(20, 25, 45, 0.8), rgba(15, 20, 40, 0.9));
+    border: 1px solid rgba(0, 212, 255, 0.12);
+}
+
+.micromodel-card:hover {
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
+    border-color: rgba(0, 212, 255, 0.3);
+}
+
+.micromodel-card h5 {
+    color: var(--primary);
+}
+
+/* === SIDEBAR ACCORDION === */
+.sidebar-accordion details {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.9), rgba(10, 15, 30, 0.95));
+    border: 1px solid rgba(0, 212, 255, 0.12);
+}
+
+.sidebar-accordion summary {
+    color: var(--primary);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-accordion summary:hover {
+    background: rgba(0, 212, 255, 0.12);
+    color: #fff;
+}
+
+.sidebar-accordion details[open] summary {
+    border-bottom: 1px solid rgba(0, 212, 255, 0.25);
+    background: rgba(0, 212, 255, 0.08);
+}
+
+/* === CONFIDENCE INTERPRETATION === */
+.confidence-interpretation {
+    background: linear-gradient(135deg, rgba(20, 15, 40, 0.8), rgba(15, 10, 30, 0.9));
+    border: 1px solid rgba(157, 0, 255, 0.4);
+    box-shadow: 0 8px 32px rgba(157, 0, 255, 0.15);
+}
+
+.confidence-interpretation h6 {
+    color: var(--accent);
+}
+
+/* === GLOW TEXT === */
+.glowing-text-white {
+    color: var(--text-primary) !important;
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.8), 0 0 16px rgba(0, 212, 255, 0.5);
+}
+
+/* === NEON EFFEKTEK === */
+@keyframes neonPulse {
+    0%, 100% {
+        text-shadow: 0 0 8px rgba(0, 212, 255, 0.8), 0 0 16px rgba(0, 212, 255, 0.5);
+    }
+    50% {
+        text-shadow: 0 0 12px rgba(0, 212, 255, 1), 0 0 24px rgba(0, 212, 255, 0.7), 0 0 36px rgba(0, 212, 255, 0.4);
+    }
+}
+
+.neon-text {
+    animation: neonPulse 2s infinite;
+}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #00d4ff, #0088cc);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #66e0ff, #00d4ff);
+}
+
+/* === EXTRA HIGHLIGHT COLORS === */
+.highlight-keyword {
+    color: var(--primary) !important;
+    font-weight: 600;
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+}
+
