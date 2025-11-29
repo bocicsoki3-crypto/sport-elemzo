@@ -414,14 +414,9 @@ p { color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem; margin-b
 .modal-close-btn:hover { color: var(--danger); transform: rotate(90deg); }
 .modal-body { padding: 30px; overflow-y: auto; flex: 1; }
 
-/* Mobil Nézet */
-@media (max-width: 1024px) {
-    .controls-bar { grid-template-columns: 1fr; justify-items: center; gap: 20px; height: auto; padding: 25px; }
-    .kanban-container { display: none; }
-    .mobile-list-container { display: block !important; padding: 20px; padding-bottom: 100px; visibility: visible !important; } /* v133.0: !important hozzáadva */
-}
-
+/* Mobil Nézet - v133.1 FIX: CSAK VALÓDI MOBILOK (<=768px)! */
 @media (max-width: 768px) {
+    /* ALAPVETŐ UI VÁLTOZÁSOK */
     .app-header { padding: 15px; flex-direction: column; gap: 10px; }
     .logo-text { font-size: 1.6rem; }
     .central-nav { width: 100%; justify-content: space-between; }
@@ -429,13 +424,36 @@ p { color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem; margin-b
     .nav-btn .text-label { display: none; }
     .nav-btn .icon { font-size: 1.4rem; margin: 0; }
     .modal-content { height: 100%; max-height: 100%; border-radius: 0; border: none; }
+    .controls-bar { grid-template-columns: 1fr; justify-items: center; gap: 20px; height: auto; padding: 25px; }
     
-    /* v133.0: MOBIL LISTA EXPLICIT LÁTHATÓVÁ TÉTELE */
+    /* v133.1 FIX: KANBAN ELREJTÉSE, MOBIL LISTA MEGJELENÍTÉSE (CSAK MOBILON!) */
+    .kanban-container { 
+        display: none !important; 
+    }
+    .mobile-list-container { 
+        display: block !important; 
+        padding: 20px; 
+        padding-bottom: 100px; 
+        visibility: visible !important; 
+    }
     #mobile-list-container {
         display: block !important;
         visibility: visible !important;
     }
     #kanban-board {
+        display: none !important;
+    }
+}
+
+/* Desktop/Laptop nézet (>768px) - KANBAN LÁTHATÓ */
+@media (min-width: 769px) {
+    .kanban-container {
+        display: flex !important;
+    }
+    .mobile-list-container {
+        display: none !important;
+    }
+    #mobile-list-container {
         display: none !important;
     }
 }
