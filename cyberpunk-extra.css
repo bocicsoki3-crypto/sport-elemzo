@@ -1,0 +1,346 @@
+/* ========================================
+   🎨 CYBERPUNK EXTRA - MATCH CARDS & UI
+   Neon effektek a főoldalra és kártyákra
+   ======================================== */
+
+/* === KANBAN MATCH CARDS === */
+.match-card {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.95), rgba(10, 15, 30, 0.98)) !important;
+    border: 1px solid rgba(0, 212, 255, 0.25) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 212, 255, 0.1) !important;
+}
+
+.match-card:hover {
+    border-color: rgba(0, 212, 255, 0.5) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 212, 255, 0.2) !important;
+    transform: translateY(-4px) scale(1.02) !important;
+}
+
+.match-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.match-card:hover::before {
+    opacity: 1;
+}
+
+/* === MATCH METADATA === */
+.meta-time,
+.mm-time {
+    color: var(--primary) !important;
+    text-shadow: 0 0 12px rgba(0, 212, 255, 0.8) !important;
+}
+
+.meta-league,
+.mm-league {
+    color: var(--text-secondary) !important;
+}
+
+/* === TEAM NAMES === */
+.meta-teams,
+.mm-teams {
+    color: var(--text-primary) !important;
+    text-shadow: 0 0 8px rgba(224, 231, 255, 0.3);
+}
+
+/* === ACTION BUTTONS === */
+.action-btn,
+.btn-analyze {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 136, 204, 0.3)) !important;
+    border: 1px solid rgba(0, 212, 255, 0.4) !important;
+    color: var(--primary) !important;
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+    box-shadow: 0 4px 16px rgba(0, 212, 255, 0.2);
+}
+
+.action-btn:hover,
+.btn-analyze:hover {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.35), rgba(0, 136, 204, 0.45)) !important;
+    border-color: rgba(0, 212, 255, 0.7) !important;
+    box-shadow: 0 6px 24px rgba(0, 212, 255, 0.4), 0 0 30px rgba(0, 212, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, rgba(255, 0, 85, 0.2), rgba(204, 0, 68, 0.3)) !important;
+    border: 1px solid rgba(255, 0, 85, 0.4) !important;
+    color: var(--danger) !important;
+}
+
+.btn-delete:hover {
+    background: linear-gradient(135deg, rgba(255, 0, 85, 0.35), rgba(204, 0, 68, 0.45)) !important;
+    box-shadow: 0 6px 24px rgba(255, 0, 85, 0.4);
+}
+
+/* === NAVBAR === */
+.navbar {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.95), rgba(10, 15, 30, 0.98)) !important;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.3) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 212, 255, 0.1) !important;
+}
+
+.navbar-brand {
+    color: var(--primary) !important;
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.8), 0 0 40px rgba(0, 212, 255, 0.4);
+}
+
+.nav-btn {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(0, 136, 204, 0.2)) !important;
+    border: 1px solid rgba(0, 212, 255, 0.3) !important;
+    color: var(--text-primary) !important;
+}
+
+.nav-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(0, 136, 204, 0.4)) !important;
+    border-color: rgba(0, 212, 255, 0.5) !important;
+    box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+}
+
+.nav-btn.primary-action {
+    background: linear-gradient(135deg, var(--primary), #0088cc) !important;
+    border-color: var(--primary) !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 6px 24px rgba(0, 212, 255, 0.4), 0 0 30px rgba(0, 212, 255, 0.3);
+}
+
+.nav-btn.primary-action:hover {
+    box-shadow: 0 8px 32px rgba(0, 212, 255, 0.6), 0 0 50px rgba(0, 212, 255, 0.4);
+    transform: translateY(-2px) scale(1.02);
+}
+
+/* === SPORT SELECTOR === */
+.sport-tab {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(0, 212, 255, 0.2) !important;
+    color: var(--text-secondary) !important;
+}
+
+.sport-tab:hover {
+    background: rgba(0, 212, 255, 0.1) !important;
+    border-color: rgba(0, 212, 255, 0.4) !important;
+    color: var(--text-primary) !important;
+}
+
+.sport-tab.active {
+    background: linear-gradient(135deg, var(--primary), #0088cc) !important;
+    border-color: var(--primary) !important;
+    color: #000 !important;
+    box-shadow: 0 4px 16px rgba(0, 212, 255, 0.4), 0 0 30px rgba(0, 212, 255, 0.2);
+}
+
+/* === KANBAN COLUMNS === */
+.kanban-column h3 {
+    color: var(--primary) !important;
+    text-shadow: 0 0 16px rgba(0, 212, 255, 0.6);
+    border-bottom: 2px solid rgba(0, 212, 255, 0.3) !important;
+}
+
+/* === MOBILE LIST VIEW === */
+.mobile-match-item {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.95), rgba(10, 15, 30, 0.98)) !important;
+    border: 1px solid rgba(0, 212, 255, 0.25) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 212, 255, 0.08) !important;
+}
+
+.mobile-match-item:hover {
+    border-color: rgba(0, 212, 255, 0.5) !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 212, 255, 0.15) !important;
+}
+
+/* === MODAL === */
+.modal-content {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.98), rgba(10, 15, 30, 0.99)) !important;
+    border: 2px solid rgba(0, 212, 255, 0.4) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 60px rgba(0, 212, 255, 0.2) !important;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(0, 212, 255, 0.3) !important;
+}
+
+#modal-title {
+    color: var(--primary) !important;
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.8), 0 0 40px rgba(0, 212, 255, 0.4);
+}
+
+.modal-close-btn {
+    color: var(--text-primary) !important;
+    background: rgba(255, 0, 85, 0.2) !important;
+    border: 1px solid rgba(255, 0, 85, 0.4) !important;
+}
+
+.modal-close-btn:hover {
+    background: rgba(255, 0, 85, 0.4) !important;
+    box-shadow: 0 0 20px rgba(255, 0, 85, 0.5);
+}
+
+/* === LOADING SKELETON === */
+.loading-skeleton {
+    background: linear-gradient(
+        90deg,
+        rgba(15, 20, 40, 0.8) 25%,
+        rgba(0, 212, 255, 0.15) 50%,
+        rgba(15, 20, 40, 0.8) 75%
+    ) !important;
+    background-size: 200% 100%;
+}
+
+.skeleton-line {
+    background: linear-gradient(
+        90deg,
+        rgba(20, 25, 45, 0.9) 25%,
+        rgba(0, 212, 255, 0.2) 50%,
+        rgba(20, 25, 45, 0.9) 75%
+    ) !important;
+}
+
+/* === TOAST NOTIFICATIONS === */
+.toast-notification {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.98), rgba(10, 15, 30, 0.99)) !important;
+    border: 1px solid rgba(0, 212, 255, 0.4) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 212, 255, 0.2) !important;
+    color: var(--text-primary) !important;
+}
+
+.toast-notification.success {
+    border-color: rgba(0, 255, 157, 0.5) !important;
+    box-shadow: 0 8px 32px rgba(0, 255, 157, 0.2) !important;
+}
+
+.toast-notification.error {
+    border-color: rgba(255, 0, 85, 0.5) !important;
+    box-shadow: 0 8px 32px rgba(255, 0, 85, 0.2) !important;
+}
+
+.toast-notification.info {
+    border-color: rgba(0, 212, 255, 0.5) !important;
+    box-shadow: 0 8px 32px rgba(0, 212, 255, 0.2) !important;
+}
+
+/* === CHAT === */
+.chat-container {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.95), rgba(10, 15, 30, 0.98)) !important;
+    border: 1px solid rgba(0, 212, 255, 0.3) !important;
+}
+
+#chat-input {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(0, 212, 255, 0.3) !important;
+    color: var(--text-primary) !important;
+}
+
+#chat-input:focus {
+    border-color: rgba(0, 212, 255, 0.6) !important;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2) !important;
+}
+
+#chat-send-btn {
+    background: linear-gradient(135deg, var(--primary), #0088cc) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+}
+
+#chat-send-btn:hover {
+    box-shadow: 0 6px 24px rgba(0, 212, 255, 0.5), 0 0 30px rgba(0, 212, 255, 0.3);
+}
+
+.chat-message.user {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 136, 204, 0.15)) !important;
+    border-left: 3px solid var(--primary) !important;
+}
+
+.chat-message.ai {
+    background: linear-gradient(135deg, rgba(157, 0, 255, 0.15), rgba(138, 0, 230, 0.1)) !important;
+    border-left: 3px solid var(--accent) !important;
+}
+
+/* === FORM INPUTS === */
+input[type="text"],
+input[type="number"],
+input[type="datetime-local"],
+select,
+textarea {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(0, 212, 255, 0.3) !important;
+    color: var(--text-primary) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: rgba(0, 212, 255, 0.6) !important;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2) !important;
+}
+
+/* === LOGIN OVERLAY === */
+.login-box {
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.98), rgba(10, 15, 30, 0.99)) !important;
+    border: 2px solid rgba(0, 212, 255, 0.5) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 80px rgba(0, 212, 255, 0.3) !important;
+}
+
+.login-icon {
+    text-shadow: 0 0 40px rgba(0, 212, 255, 0.8), 0 0 80px rgba(0, 212, 255, 0.5);
+}
+
+/* === NEON PULZÁLÓ EFFEKT === */
+@keyframes neonBorderPulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.3), inset 0 0 20px rgba(0, 212, 255, 0.1);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(0, 212, 255, 0.6), inset 0 0 30px rgba(0, 212, 255, 0.2);
+    }
+}
+
+.neon-border {
+    animation: neonBorderPulse 3s infinite;
+}
+
+/* === GRID LINES (CYBERPUNK) === */
+.analysis-body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.3;
+}
+
+/* === SCAN LINE EFFECT === */
+@keyframes scanLine {
+    0% {
+        top: 0%;
+    }
+    100% {
+        top: 100%;
+    }
+}
+
+.scan-line-effect {
+    position: fixed;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.6), transparent);
+    animation: scanLine 8s linear infinite;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.3;
+}
+
