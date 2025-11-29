@@ -639,11 +639,13 @@ function renderFixturesForDesktop(fixtures) {
     
     (document.getElementById('placeholder')).style.display = 'none';
     
-    // === ÚJ v131.0: DESKTOP NÉZET LÁTHATÓVÁ TÉTELE ===
-    board.style.display = 'grid'; // Desktop Kanban látható
+    // === v133.1 FIX: DESKTOP NÉZET HELYES DISPLAY ===
+    const kanbanContainer = document.getElementById('kanban-container');
+    if (kanbanContainer) kanbanContainer.style.display = 'flex'; // Kanban CONTAINER látható
+    board.style.display = 'flex'; // v133.1 FIX: FLEX, nem grid!
     const mobileContainer = document.getElementById('mobile-list-container');
     if (mobileContainer) mobileContainer.style.display = 'none'; // Mobil lista elrejtése
-    // === VÉGE v131.0 ===
+    // === VÉGE v133.1 ===
     
     board.innerHTML = '';
     const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
@@ -724,10 +726,13 @@ function renderFixturesForMobileList(fixtures) {
     if (!container) return;
     (document.getElementById('placeholder')).style.display = 'none';
     
-    // === ÚJ v131.0: MOBIL LISTA LÁTHATÓVÁ TÉTELE ===
-    container.style.display = 'block'; // Enélkül a lista rejtve marad mobilon!
-    document.getElementById('kanban-board').style.display = 'none'; // Desktop nézet elrejtése
-    // === VÉGE v131.0 ===
+    // === v133.1: MOBIL LISTA LÁTHATÓVÁ TÉTELE ===
+    container.style.display = 'block'; // Mobil lista látható
+    const kanbanContainer = document.getElementById('kanban-container');
+    if (kanbanContainer) kanbanContainer.style.display = 'none'; // Kanban container elrejtése
+    const kanbanBoard = document.getElementById('kanban-board');
+    if (kanbanBoard) kanbanBoard.style.display = 'none'; // Desktop nézet elrejtése
+    // === VÉGE v133.1 ===
     
     container.innerHTML = '';
     
