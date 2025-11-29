@@ -1,0 +1,140 @@
+/* ========================================
+   🎯 NAVBAR & CONTROLS CENTER FIX
+   KING AI középre igazítása, korona eltávolítása
+   ======================================== */
+
+/* === APP HEADER === */
+.app-header {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    position: relative !important;
+}
+
+.brand {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.logo-text {
+    font-size: 2.5rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 8px !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+}
+
+.header-actions {
+    position: absolute !important;
+    right: 30px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+/* === KORONA ELTÁVOLÍTÁSA === */
+.crown,
+.brand .crown,
+span.crown {
+    display: none !important;
+}
+
+/* Login icon korona helyett robot */
+.login-icon {
+    font-size: 4rem !important;
+}
+
+/* === CONTROLS BAR LAYOUT === */
+.controls-bar {
+    display: grid !important;
+    grid-template-columns: 200px 1fr 200px !important;
+    align-items: center !important;
+    padding: 15px 20px !important;
+}
+
+/* Sport selector balra */
+.sport-select-wrapper {
+    grid-column: 1 !important;
+    justify-self: start !important;
+}
+
+/* Central nav középre */
+.central-nav {
+    grid-column: 2 !important;
+    justify-self: center !important;
+    display: flex !important;
+    gap: 12px !important;
+}
+
+/* Jobb oldal üres (vagy jövőbeli használatra) */
+.controls-bar > *:nth-child(3) {
+    grid-column: 3 !important;
+    justify-self: end !important;
+}
+
+/* === EMPTY STATE IKON ELREJTÉSE === */
+.empty-state > img,
+.empty-state > svg,
+.no-matches > img,
+.no-matches > svg,
+[class*="chart-icon"],
+[class*="analytics-icon"],
+[class*="empty-icon"] {
+    display: none !important;
+}
+
+/* Empty state szépítése */
+.empty-state,
+.no-matches {
+    padding: 80px 20px !important;
+    text-align: center !important;
+    background: linear-gradient(135deg, rgba(15, 20, 40, 0.4), rgba(10, 15, 30, 0.5)) !important;
+    border: 1px solid rgba(0, 212, 255, 0.15) !important;
+    border-radius: 24px !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.empty-state h3,
+.no-matches h3 {
+    color: var(--primary) !important;
+    font-size: 1.8rem !important;
+    margin-bottom: 16px !important;
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+.empty-state p,
+.no-matches p {
+    color: var(--text-secondary) !important;
+    font-size: 1.1rem !important;
+}
+
+/* === MOBILE RESPONSIVE === */
+@media (max-width: 768px) {
+    .controls-bar {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: auto auto !important;
+        gap: 12px !important;
+    }
+    
+    .sport-select-wrapper {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+        justify-self: center !important;
+    }
+    
+    .central-nav {
+        grid-column: 1 !important;
+        grid-row: 2 !important;
+        justify-self: center !important;
+    }
+    
+    .logo-text {
+        font-size: 1.8rem !important;
+        letter-spacing: 4px !important;
+    }
+}
