@@ -286,11 +286,8 @@ async function runAnalysis(home, away, utcKickoff, leagueName, forceNew = false,
         modalResults.innerHTML = `<div class="analysis-body">${finalHtml}</div>`;
         modalResults.innerHTML += `<p class="muted" style="text-align: center; margin-top: 1rem; font-size: 0.8rem;">xG Forrás: ${analysisData.xgSource || 'Ismeretlen'}</p>`;
         
-        // Chat konténer a 4. tab-ba illesztése
         const chatWrapper = modalResults.querySelector('#chat-content-wrapper');
-        if (chatWrapper && modalChatContainer) {
-            modalChatContainer.style.display = 'flex';
-            modalChatContainer.style.height = '500px';
+        if (chatWrapper) {
             chatWrapper.appendChild(modalChatContainer);
         }
 
@@ -641,6 +638,13 @@ function renderFixturesForDesktop(fixtures) {
     if (!board) return;
     
     (document.getElementById('placeholder')).style.display = 'none';
+    
+    // === ÚJ v131.0: DESKTOP NÉZET LÁTHATÓVÁ TÉTELE ===
+    board.style.display = 'grid'; // Desktop Kanban látható
+    const mobileContainer = document.getElementById('mobile-list-container');
+    if (mobileContainer) mobileContainer.style.display = 'none'; // Mobil lista elrejtése
+    // === VÉGE v131.0 ===
+    
     board.innerHTML = '';
     const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
     const groupedByCategory = groupBy(fixtures, (fx) => getLeagueGroup(fx.league));
@@ -718,7 +722,13 @@ function renderFixturesForDesktop(fixtures) {
 function renderFixturesForMobileList(fixtures) {
     const container = document.getElementById('mobile-list-container');
     if (!container) return;
-    (document.getElementById('placeholder')).style.display = 'none'; 
+    (document.getElementById('placeholder')).style.display = 'none';
+    
+    // === ÚJ v131.0: MOBIL LISTA LÁTHATÓVÁ TÉTELE ===
+    container.style.display = 'block'; // Enélkül a lista rejtve marad mobilon!
+    document.getElementById('kanban-board').style.display = 'none'; // Desktop nézet elrejtése
+    // === VÉGE v131.0 ===
+    
     container.innerHTML = '';
     
     const groupOrder = ['Top Ligák', 'Kiemelt Bajnokságok', 'Figyelmet Érdemlő', 'Egyéb Meccsek'];
@@ -1191,17 +1201,6 @@ function buildAnalysisHtml_CLIENTSIDE(
 ) {
     
     const teamNames = [matchData.home, matchData.away];
-    
-    // === ÚJ: TAB VÁLTÁS FUNKCIÓ (globálisan definiálva) ===
-    window.switchAnalysisTab = function(tabName) {
-        const modal = document.getElementById('modal-container');
-        modal.querySelectorAll('.analysis-tab-btn').forEach(b => b.classList.remove('active'));
-        modal.querySelectorAll('.analysis-tab-content').forEach(c => c.classList.remove('active'));
-        
-        const clickedBtn = event?.target || modal.querySelector(`[data-tab="${tabName}"]`);
-        if (clickedBtn) clickedBtn.classList.add('active');
-        modal.querySelector(`#analysis-tab-${tabName}`).classList.add('active');
-    };
     const pHome = sim?.pHome?.toFixed(1) || '0.0';
     const pDraw = sim?.pDraw?.toFixed(1) || '0.0';
     const pAway = sim?.pAway?.toFixed(1) || '0.0';
@@ -1305,7 +1304,15 @@ function buildAnalysisHtml_CLIENTSIDE(
             <div class="key-risks-panel">
                 <h6>⚠️ Fő Kockázatok</h6>
                 <ul class="risks-list">
-                    ${finalRec.key_risks.map(risk => `<li>${processAiText(risk, teamNames)}</li>`).join('')}
+                    ${finalRec.key_risks.map(risk => {
+                        // v133.0: Támogatás az új {risk, probability} formátumhoz
+                        if (typeof risk === 'object' && risk.risk) {
+                            return `<li>${processAiText(risk.risk, teamNames)} <span style="color:var(--danger); font-weight:700; margin-left:5px;">(${risk.probability || 15}% esély)</span></li>`;
+                        } else {
+                            // Fallback a régi formátumhoz (sima string)
+                            return `<li>${processAiText(risk, teamNames)} <span style="color:var(--danger); font-weight:700; margin-left:5px;">(~15% esély)</span></li>`;
+                        }
+                    }).join('')}
                 </ul>
             </div>`;
         }
@@ -1330,7 +1337,7 @@ function buildAnalysisHtml_CLIENTSIDE(
                 <p>${verdictFormatted}</p>
             </div>
         </div>` : ''}
-        
+
         <!-- KÉT TIPP MEGJELENÍTÉS (Modernizált v124.0) -->
         <div class="tips-container-v124">
             
@@ -1339,7 +1346,7 @@ function buildAnalysisHtml_CLIENTSIDE(
                 <div class="tip-header">
                     <span class="tip-badge primary">👑 FŐ TIPP (BANKER)</span>
                     <span class="tip-confidence primary-conf">${(finalRec.primary.confidence || 0).toFixed(1)}/10</span>
-                </div>
+            </div>
                 <div class="tip-market">${escapeHTML(finalRec.primary.market)}</div>
                 <div class="tip-reasoning">${primaryReasonFormatted}</div>
             </div>
@@ -1384,35 +1391,6 @@ function buildAnalysisHtml_CLIENTSIDE(
             <strong>⚠️ Figyelem:</strong> ${escapeHTML(dataQualityWarning)}
         </div>`;
     }
-    
-    // === ÚJ: HERO SECTION (A LÉNYEG FELÜLRE!) ===
-    const heroCardHtml = `
-    <div class="hero-decision-card">
-        <div class="hero-badge">👑 BANKER TIPP</div>
-        <div class="hero-market">${escapeHTML(finalRec.primary?.market || finalRec.recommended_bet || 'Hiba')}</div>
-        <div class="hero-confidence-bar">
-            <div class="conf-fill" style="width: ${(finalRec.primary?.confidence || finalRec.final_confidence || 1) * 10}%"></div>
-            <span class="conf-label">${(finalRec.primary?.confidence || finalRec.final_confidence || 1).toFixed(1)}/10 BIZALOM</span>
-        </div>
-        <div class="hero-stats-grid">
-            <div class="hero-stat">
-                <span class="label">Várható Eredmény</span>
-                <span class="value">${topScore}</span>
-            </div>
-            <div class="hero-stat">
-                <span class="label">Valószínűség</span>
-                <span class="value">${Math.max(parseFloat(pHome), parseFloat(pAway)).toFixed(1)}%</span>
-            </div>
-            <div class="hero-stat">
-                <span class="label">Statisztikai xG</span>
-                <span class="value">${mu_h} - ${mu_a}</span>
-            </div>
-        </div>
-        <div class="hero-verdict">
-            ${finalRec.verdict ? `<strong>💡 A Lényeg:</strong> ${processAiText(finalRec.verdict, teamNames)}` : ''}
-        </div>
-    </div>
-    `;
 
     const masterRecommendationHtml = `
     <div class="master-recommendation-card">
@@ -1422,21 +1400,33 @@ function buildAnalysisHtml_CLIENTSIDE(
         ${finalConfInterpretationHtml}
     </div>`;
     
-    const prophetCardHtml = `
+    // v133.0: BANKER TIP DETEKTÁLÁS - Ha bizalom >= 8.0, akkor nincs szöveges elemzés
+    const isBankerTip = (finalConfidenceScore >= 8.0);
+    
+    const bankerBadgeHtml = isBankerTip 
+        ? `<div style="text-align:center; margin:20px 0;">
+            <span style="background:linear-gradient(135deg, #FFD700, #FFA500); color:#000; padding:15px 30px; border-radius:25px; font-weight:800; font-size:1.3rem; box-shadow:0 0 25px rgba(255,215,0,0.6); display:inline-block; text-transform:uppercase; letter-spacing:1px;">
+                🏆 BANKER TIP - MAXIMÁLIS BIZALOM 🏆
+            </span>
+           </div>`
+        : '';
+    
+    const prophetCardHtml = isBankerTip ? '' : `
     <div class="prophet-card">
         <h5><strong>🔮 A Próféta Látomása (Várható Meccskép)</strong></h5>
         <p>${processAiText(prophetText, teamNames)}</p>
     </div>`;
     
-    const synthesisCardHtml = `
+    const synthesisCardHtml = isBankerTip ? '' : `
     <div class="synthesis-card">
         <h5><strong>🧠 Stratégiai Szintézis (A Fő Elemzés)</strong></h5>
         <p>${processAiText(synthesisText, teamNames)}</p>
     </div>`;
     
     const chatHtml = `
-    <div id="chat-content-wrapper" style="height: 100%; display: flex; flex-direction: column;">
-        <!-- Chat konténer a 4. tabhoz -->
+    <div class="analysis-accordion" style="margin-top: 1.5rem;">
+        <!-- Chat removed from accordion for cleaner layout, it's now below -->
+        <div id="chat-content-wrapper"></div>
     </div>`;
 
     const atAGlanceHtml = `
@@ -1483,16 +1473,26 @@ function buildAnalysisHtml_CLIENTSIDE(
         </div>
     </div>`;
     
-    const expertConfReasoning = processAiText(expertConfHtml.split(' - ')[1] || 'N/A', teamNames);
+    // v133.0: Bizalmi Híd - új formátum a backendről
+    const bridgeData = (masterRecommendation || {}).confidence_bridge || null;
+    
+    const expertConfReasoning = bridgeData 
+        ? bridgeData.explanation 
+        : processAiText(expertConfHtml.split(' - ')[1] || 'Nincs részletes adat.', teamNames);
+    
+    const quantConf = bridgeData ? bridgeData.quant_confidence : parseFloat(modelConf);
+    const specialistConf = bridgeData ? bridgeData.specialist_confidence : parseFloat(expertConfScore);
+    
     const confidenceBridgeHtml = `
     <div class="confidence-bridge-card">
-        <h5>Bizalmi Híd (Quant vs. Stratéga)</h5>
+        <h5>🌉 Bizalmi Híd (Quant vs. Specialist)</h5>
         <div class="confidence-bridge-values">
-            ${getGaugeHtml(modelConf, "Quant")}
+            ${getGaugeHtml(quantConf, "Quant")}
             <div class="arrow">→</div>
-            ${getGaugeHtml(expertConfScore,"Stratéga")}
+            ${getGaugeHtml(specialistConf,"Specialist")}
         </div>
         <div class="confidence-bridge-reasoning">${expertConfReasoning}</div>
+        ${bridgeData ? `<div style="text-align:center; margin-top:10px; font-size:0.85rem; color:var(--text-muted);">Gap: ${bridgeData.gap.toFixed(1)} pont</div>` : ''}
     </div>`;
 
     let marketCardsHtml = '';
@@ -1541,61 +1541,22 @@ function buildAnalysisHtml_CLIENTSIDE(
         </details>` : ''}
     </div>`;
     
-    // === ÚJ: TAB RENDSZER STRUKTÚRA ===
     return `
-        ${warningHtml}
-        
-        <!-- Tab Header (Navigáció) -->
-        <div class="analysis-tab-header">
-            <button class="analysis-tab-btn active" data-tab="overview" onclick="switchAnalysisTab('overview')">
-                <span class="tab-icon">📊</span><span class="tab-label">Áttekintés</span>
-            </button>
-            <button class="analysis-tab-btn" data-tab="details" onclick="switchAnalysisTab('details')">
-                <span class="tab-icon">🔮</span><span class="tab-label">AI Elemzés</span>
-            </button>
-            <button class="analysis-tab-btn" data-tab="stats" onclick="switchAnalysisTab('stats')">
-                <span class="tab-icon">📈</span><span class="tab-label">Statisztika</span>
-            </button>
-            <button class="analysis-tab-btn" data-tab="chat" onclick="switchAnalysisTab('chat')">
-                <span class="tab-icon">💬</span><span class="tab-label">Chat</span>
-            </button>
-        </div>
-        
-        <!-- Tab Content Wrapper -->
-        <div class="analysis-tabs-wrapper">
+        <div class="analysis-layout">
             
-            <!-- TAB 1: ÁTTEKINTÉS (Hero + Gyors összefoglaló) -->
-            <div class="analysis-tab-content active" id="analysis-tab-overview">
-                ${heroCardHtml}
-                <div class="quick-summary-section">
-                    <h4 style="color:var(--primary); margin-bottom:15px;">⚡ Gyors Összefoglaló</h4>
-                    ${tipsHtml}
-                </div>
-            </div>
-            
-            <!-- TAB 2: AI ELEMZÉS (Részletes jelentések) -->
-            <div class="analysis-tab-content" id="analysis-tab-details">
+            <div class="analysis-layout-main">
+                ${masterRecommendationHtml}
+                ${bankerBadgeHtml}
                 ${prophetCardHtml}
                 ${synthesisCardHtml}
+                ${isBankerTip ? '' : chatHtml}
+            </div>
+            
+            <div class="analysis-layout-sidebar">
+                ${atAGlanceHtml}
+                ${confidenceBridgeHtml}
+                ${marketSectionHtml}
                 ${sidebarAccordionHtml}
-            </div>
-            
-            <!-- TAB 3: STATISZTIKA (Számok, grafikonok) -->
-            <div class="analysis-tab-content" id="analysis-tab-stats">
-                <div class="stats-grid-layout">
-                    <div class="stats-main">
-                        ${atAGlanceHtml}
-                        ${confidenceBridgeHtml}
-                    </div>
-                    <div class="stats-sidebar">
-                        ${marketSectionHtml}
-                    </div>
-                </div>
-            </div>
-            
-            <!-- TAB 4: CHAT -->
-            <div class="analysis-tab-content" id="analysis-tab-chat">
-                ${chatHtml}
             </div>
             
         </div>
