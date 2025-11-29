@@ -1535,25 +1535,44 @@ function buildAnalysisHtml_CLIENTSIDE(
         </details>` : ''}
     </div>`;
     
-    return `
-        <div class="analysis-layout">
-            
-            <div class="analysis-layout-main">
-                ${masterRecommendationHtml}
-                ${prophetCardHtml}
-                ${synthesisCardHtml}
-                ${chatHtml}
-            </div>
-            
-            <div class="analysis-layout-sidebar">
+    // === v133.2: TAB NAVIGÁCIÓ (4 FÜL) ===
+    const tabNavigationHtml = `
+    <div class="analysis-tabs">
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="tab-1">📊 Összefoglaló</button>
+            <button class="tab-btn" data-tab="tab-2">🔮 Próféta & Szintézis</button>
+            <button class="tab-btn" data-tab="tab-3">📋 Részletes Elemzés</button>
+            <button class="tab-btn" data-tab="tab-4">💬 AI Chat</button>
+        </div>
+        
+        <div class="tab-content">
+            <!-- 1. FÜL: BANKER/ÖSSZEFOGLALÓ -->
+            <div class="tab-pane active" id="tab-1">
                 ${atAGlanceHtml}
                 ${confidenceBridgeHtml}
+                ${masterRecommendationHtml}
+            </div>
+            
+            <!-- 2. FÜL: PRÓFÉTA & SZINTÉZIS -->
+            <div class="tab-pane" id="tab-2">
+                ${prophetCardHtml}
+                ${synthesisCardHtml}
+            </div>
+            
+            <!-- 3. FÜL: RÉSZLETES ELEMZÉS -->
+            <div class="tab-pane" id="tab-3">
                 ${marketSectionHtml}
                 ${sidebarAccordionHtml}
             </div>
             
+            <!-- 4. FÜL: AI CHAT -->
+            <div class="tab-pane" id="tab-4">
+                ${chatHtml}
+            </div>
         </div>
-    `;
+    </div>`;
+    
+    return tabNavigationHtml;
 }
 
 function initializeApp() {
