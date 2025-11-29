@@ -1405,24 +1405,13 @@ function buildAnalysisHtml_CLIENTSIDE(
         ${finalConfInterpretationHtml}
     </div>`;
     
-    // v133.0: BANKER TIP DETEKTÁLÁS - Ha bizalom >= 8.0, akkor nincs szöveges elemzés
-    const isBankerTip = (finalConfidenceScore >= 8.0);
-    
-    const bankerBadgeHtml = isBankerTip 
-        ? `<div style="text-align:center; margin:20px 0;">
-            <span style="background:linear-gradient(135deg, #FFD700, #FFA500); color:#000; padding:15px 30px; border-radius:25px; font-weight:800; font-size:1.3rem; box-shadow:0 0 25px rgba(255,215,0,0.6); display:inline-block; text-transform:uppercase; letter-spacing:1px;">
-                🏆 BANKER TIP - MAXIMÁLIS BIZALOM 🏆
-            </span>
-           </div>`
-        : '';
-    
-    const prophetCardHtml = isBankerTip ? '' : `
+    const prophetCardHtml = `
     <div class="prophet-card">
         <h5><strong>🔮 A Próféta Látomása (Várható Meccskép)</strong></h5>
         <p>${processAiText(prophetText, teamNames)}</p>
     </div>`;
     
-    const synthesisCardHtml = isBankerTip ? '' : `
+    const synthesisCardHtml = `
     <div class="synthesis-card">
         <h5><strong>🧠 Stratégiai Szintézis (A Fő Elemzés)</strong></h5>
         <p>${processAiText(synthesisText, teamNames)}</p>
@@ -1551,10 +1540,9 @@ function buildAnalysisHtml_CLIENTSIDE(
             
             <div class="analysis-layout-main">
                 ${masterRecommendationHtml}
-                ${bankerBadgeHtml}
                 ${prophetCardHtml}
                 ${synthesisCardHtml}
-                ${isBankerTip ? '' : chatHtml}
+                ${chatHtml}
             </div>
             
             <div class="analysis-layout-sidebar">
