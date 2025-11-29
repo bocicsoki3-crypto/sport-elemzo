@@ -85,11 +85,25 @@
     background: linear-gradient(135deg, rgba(15, 20, 40, 0.95), rgba(10, 15, 30, 0.98)) !important;
     border-bottom: 1px solid rgba(0, 212, 255, 0.3) !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 212, 255, 0.1) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
 }
 
 .navbar-brand {
     color: var(--primary) !important;
     text-shadow: 0 0 20px rgba(0, 212, 255, 0.8), 0 0 40px rgba(0, 212, 255, 0.4);
+    margin: 0 auto !important;
+    text-align: center !important;
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 4px !important;
+}
+
+/* Korona elrejtése */
+.navbar-brand::before {
+    content: '' !important;
+    display: none !important;
 }
 
 .nav-btn {
@@ -115,6 +129,19 @@
 .nav-btn.primary-action:hover {
     box-shadow: 0 8px 32px rgba(0, 212, 255, 0.6), 0 0 50px rgba(0, 212, 255, 0.4);
     transform: translateY(-2px) scale(1.02);
+}
+
+/* Empty state elrejtése */
+.empty-state-icon,
+[class*="empty"] img,
+.empty-state svg {
+    display: none !important;
+}
+
+.empty-state,
+.no-matches {
+    background: transparent !important;
+    border: none !important;
 }
 
 /* === SPORT SELECTOR === */
