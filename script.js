@@ -196,6 +196,10 @@ function runAnalysisFromCard(buttonElement, home, away, utcKickoff, leagueName) 
     const A_xG_raw = card.querySelector('.xg-input-a-xg')?.value;
     const A_xGA_raw = card.querySelector('.xg-input-a-xga')?.value;
     
+    // === ÚJ v144.0: PPG értékek beolvasása ===
+    const H_PPG_raw = card.querySelector('.xg-input-h-ppg')?.value;
+    const A_PPG_raw = card.querySelector('.xg-input-a-ppg')?.value;
+    
     let manualXgData = {};
     if (H_xG_raw && H_xGA_raw && A_xG_raw && A_xGA_raw) {
         const H_xG = parseFloat(H_xG_raw.replace(',', '.'));
@@ -211,6 +215,16 @@ function runAnalysisFromCard(buttonElement, home, away, utcKickoff, leagueName) 
             };
         } else {
             showToast('Manuális xG: Érvénytelen számformátum. Az xG felülbírálás kihagyva.', 'error');
+        }
+    }
+    
+    // === ÚJ v144.0: PPG értékek hozzáadása ===
+    if (H_PPG_raw && A_PPG_raw) {
+        const H_PPG = parseFloat(H_PPG_raw.replace(',', '.'));
+        const A_PPG = parseFloat(A_PPG_raw.replace(',', '.'));
+        if (!isNaN(H_PPG) && !isNaN(A_PPG)) {
+            manualXgData.manual_H_PPG = H_PPG;
+            manualXgData.manual_A_PPG = A_PPG;
         }
     }
 
@@ -544,6 +558,12 @@ function openManualAnalysisModal() {
             <input type="text" inputmode="decimal" placeholder="V xG" class="xg-input" id="manual-a-xg" title="Vendég Csapat (Away) xG/90">
             <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input" id="manual-a-xga" title="Vendég Csapat (Away) xGA/90">
         </div>
+        
+        <h5 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--primary);">Opcionális PPG (Points Per Game)</h5>
+        <div class="manual-xg-grid" style="margin-top: 0.5rem;">
+            <input type="text" inputmode="decimal" placeholder="H PPG" class="xg-input" id="manual-h-ppg" title="Hazai Csapat (Home) Points Per Game">
+            <input type="text" inputmode="decimal" placeholder="V PPG" class="xg-input" id="manual-a-ppg" title="Vendég Csapat (Away) Points Per Game">
+        </div>
 
         <button id="run-manual-btn" class="btn btn-analyze" style="width:100%; margin-top:1.5rem;">Elemzés Futtatása</button>
     `;
@@ -574,6 +594,10 @@ function runManualAnalysis() {
     const A_xG_raw = (document.getElementById('manual-a-xg')).value;
     const A_xGA_raw = (document.getElementById('manual-a-xga')).value;
     
+    // === ÚJ v144.0: PPG értékek beolvasása ===
+    const H_PPG_raw = (document.getElementById('manual-h-ppg')).value;
+    const A_PPG_raw = (document.getElementById('manual-a-ppg')).value;
+    
     let manualXgData = {};
     if (!home || !away || !leagueName) { 
         showToast('Minden kötelező mezőt ki kell tölteni (Hazai, Vendég, Bajnokságnév).', 'error');
@@ -596,6 +620,16 @@ function runManualAnalysis() {
                 manual_A_xG: A_xG,
                 manual_A_xGA: A_xGA
             };
+        }
+    }
+    
+    // === ÚJ v144.0: PPG értékek hozzáadása ===
+    if (H_PPG_raw && A_PPG_raw) {
+        const H_PPG = parseFloat(H_PPG_raw.replace(',', '.'));
+        const A_PPG = parseFloat(A_PPG_raw.replace(',', '.'));
+        if (!isNaN(H_PPG) && !isNaN(A_PPG)) {
+            manualXgData.manual_H_PPG = H_PPG;
+            manualXgData.manual_A_PPG = A_PPG;
         }
     }
     
@@ -701,6 +735,10 @@ function renderFixturesForDesktop(fixtures) {
                                         <input type="text" inputmode="decimal" placeholder="V xG" class="xg-input xg-input-a-xg">
                                         <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input xg-input-a-xga">
                                     </div>
+                                    <div class="manual-xg-grid" style="margin-top: 0.5rem;">
+                                        <input type="text" inputmode="decimal" placeholder="H PPG" class="xg-input xg-input-h-ppg" title="Hazai Csapat Points Per Game">
+                                        <input type="text" inputmode="decimal" placeholder="V PPG" class="xg-input xg-input-a-ppg" title="Vendég Csapat Points Per Game">
+                                    </div>
                                     
                                     <button class="btn btn-analyze" 
                                         onclick="runAnalysisFromCard(this, '${escape(fx.home)}', '${escape(fx.away)}', '${escape(fx.utcKickoff)}', '${escape(fx.league || '')}')">
@@ -724,7 +762,7 @@ function renderFixturesForDesktop(fixtures) {
 function renderFixturesForMobileList(fixtures) {
     const container = document.getElementById('mobile-list-container');
     if (!container) return;
-    (document.getElementById('placeholder')).style.display = 'none';
+    (document.getElementById('placeholder')).style.display = 'none'; 
     
     // === v133.1: MOBIL LISTA LÁTHATÓVÁ TÉTELE ===
     container.style.display = 'block'; // Mobil lista látható
@@ -785,6 +823,10 @@ function renderFixturesForMobileList(fixtures) {
                                            <input type="text" inputmode="decimal" placeholder="H xGA" class="xg-input xg-input-h-xga">
                                            <input type="text" inputmode="decimal" placeholder="V xG" class="xg-input xg-input-a-xg">
                                            <input type="text" inputmode="decimal" placeholder="V xGA" class="xg-input xg-input-a-xga">
+                                        </div>
+                                        <div class="manual-xg-grid" style="margin-top: 0.5rem;">
+                                           <input type="text" inputmode="decimal" placeholder="H PPG" class="xg-input xg-input-h-ppg" title="Hazai Csapat Points Per Game">
+                                           <input type="text" inputmode="decimal" placeholder="V PPG" class="xg-input xg-input-a-ppg" title="Vendég Csapat Points Per Game">
                                         </div>
                                         
                                         <div class="mm-actions" style="margin-top: 20px; display:flex; gap:10px; align-items:center;">
@@ -1568,7 +1610,7 @@ function buildAnalysisHtml_CLIENTSIDE(
             <!-- 4. FÜL: AI CHAT -->
             <div class="tab-pane" id="tab-4">
                 ${chatHtml}
-            </div>
+        </div>
         </div>
     </div>`;
     
